@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 14  ·  persönlicher Kalender für alles
+ KALENDARIUM 15  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1459,7 +1459,8 @@ function defaultState(){
       weather:{ cities:[{key:'2601546', name:'Berlin'}, {key:'167558', name:'Augsburg'}, {key:'2608456', name:'Paris'}], active:'2601546' },
       travel:{ bufferPct:15, minBuffer:5, rainExtra:8, arriveEarly:5, stayGap:45, remind:true },
       sleep:{ on:true, hours:8, latency:15, routine:45, wakeWeek:'07:30', wakeWeekend:'08:30', flex:60, shift:30, remind:30, auto:true, cycles:true, windDown:30 },
-      style:{ font:'classic', tone:'cool', density:'normal', radius:'soft', dayColors:true, motion:true }
+      style:{ font:'classic', tone:'cool', density:'normal', radius:'soft', dayColors:true, motion:true },
+      ntfy:{ on:false, topic:'' }
     },
     categories: [
       {id:'privat', name:'Privat', color:'#576EAF', symbol:'haus'},
@@ -1642,7 +1643,7 @@ const Store = {
   }
 };
 function setSync(msg){ const el = document.getElementById('syncState'); if (el) el.textContent = msg || (STANDALONE ? GistSync.label() : Store.mode === 'cloud' ? 'In deinem Konto gespeichert' : 'Nur auf diesem Gerät gespeichert'); }
-function commit(){ Store.schedule(); invalidate(); render(); }
+function commit(){ Store.schedule(); invalidate(); render(); if (STANDALONE) Push.queue(); }
 
 /* ================================================================
    §8 FEIERTAGE  (berechnet, keine Internetverbindung nötig)
@@ -2167,27 +2168,35 @@ const Reminders = {
     if (o.kind === 'event') return Array.isArray(o.ref.reminders) ? o.ref.reminders : (S.event||[]);
     return [];
   },
+  /* Alle Erinnerungen zwischen from und to (ms), für die App und für Push */
+  plan(from, to){
+    const out = [], add = (t, key, title, body, sym, prio) => { if (t > from && t <= to) out.push({at:t, key, title, body, sym, prio}); };
+    for (const o of occurrences(new Date(from - 60000), new Date(to + 8*86400000))) {
+      if (o.allDay) continue;
+      const nm = o.kind === 'course' ? o.ref.title : o.title, pl = placeLabel(o);
+      for (const lead of this.leadsFor(o)) add(o.start.getTime() - lead*60000, `${o.key}:${lead}`, nm, `${o.kind==='deadline'?'Frist':o.kind==='course'?'Kurs':'Termin'} ${lead?'in '+dur(lead):'jetzt'} · ${hm(o.start)} Uhr${pl ? ' · ' + pl : ''}`, o.cat.symbol, o.kind === 'deadline' ? 5 : 4);
+    }
+    const d0 = startOfDay(new Date(from)), days = Math.min(5, Math.ceil((to - +d0) / 86400000) + 1);
+    if (state.settings.travel.remind) for (let k = 0; k < days; k++) for (const l of planDay(addDays(d0, k)).legs.filter(l => l.kind === 'go'))
+      add(l.depart.getTime() - 10*60000, `go:${l.before.key}`, 'In 10 min losgehen', `${l.before.kind === 'course' ? l.before.ref.title : l.before.title} · ${l.to.name} · ${dur(l.mins)} Weg`, 'kompass', 5);
+    if (state.settings.sleep.on && +state.settings.sleep.remind) { const SP = sleepPlan(); for (let k = 0; k < days; k++) {
+      const sp = SP[ymd(addDays(d0, k + 1))];
+      if (sp) add(sp.bed.getTime() - state.settings.sleep.remind*60000, `bed:${ymd(sp.bed)}`, 'Bald Schlafenszeit', `Ins Bett um ${hm(sp.bed)}, Wecker ${hm(sp.wake)}`, 'stern', 3);
+    } }
+    return out.sort((a, b) => a.at - b.at);
+  },
   check(){
     const now = Date.now(), from = this.last;
     if (now - from > 6*3600000) { this.last = now; return; }
-    const hit = (t, key, fn) => { if (t > from && t <= now && !this.fired[key]) { this.fired[key] = now; fn(); } };
-    for (const o of occurrences(new Date(from - 60000), new Date(now + 8*86400000))) {
-      if (o.allDay) continue;
-      for (const lead of this.leadsFor(o)) hit(o.start.getTime() - lead*60000, `${o.key}:${lead}`, () => this.fire(o.title, `${o.kind==='deadline'?'Frist':o.kind==='course'?'Kurs':'Termin'} ${lead?'in '+dur(lead):'jetzt'} · ${hm(o.start)} Uhr`, o.cat.symbol));
-    }
-    const today = new Date();
-    if (state.settings.travel.remind) for (const d of [today, addDays(today,1)]) for (const l of planDay(d).legs.filter(l => l.kind === 'go'))
-      hit(l.depart.getTime() - 10*60000, `go:${l.before.key}`, () => this.fire('In 10 min losgehen', `${l.before.title} · ${l.to.name} · ${dur(l.mins)} Weg`, 'kompass'));
-    if (state.settings.sleep.on && +state.settings.sleep.remind) {
-      const sp = sleepPlan()[ymd(addDays(today,1))];
-      if (sp) hit(sp.bed.getTime() - state.settings.sleep.remind*60000, `bed:${ymd(sp.bed)}`, () => this.fire('Bald Schlafenszeit', `Ins Bett um ${hm(sp.bed)}, Wecker ${hm(sp.wake)}`, 'stern'));
-    }
+    for (const a of this.plan(from, now)) if (!this.fired[a.key]) { this.fired[a.key] = now; this.fire(a.title, a.body, a.sym); }
     this.last = now; this.save();
   },
   fire(title, body, symbol){
     toast(title, body, {rem:true, sym:symbol, ttl:0});
     if (state.settings.sound) this.chime();
+    if (Push.on() && document.hidden) return;
     if (state.settings.vibrate) { try { navigator.vibrate && navigator.vibrate([180,90,180,90,320]); } catch {} }
+    if (Push.on()) return;
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
         if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification(title, {body, icon:'icon-192.png', badge:'icon-192.png', vibrate:[180,90,180,90,320], tag: title + body})).catch(() => {});
@@ -2811,6 +2820,7 @@ const VIEWS = {
         <div class="row"><div class="l"><b>Ton</b></div>${sw('sound', s.sound, 'Ton')}</div>
         <div class="row"><div class="l"><b>Vibration</b><small>Wenn der Browser es erlaubt</small></div>${sw('vibrate', s.vibrate, 'Vibration')}</div>
         <div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>
+        ${STANDALONE ? pushRows() : ''}
         <div class="row"><div class="l"><b>Kurse erinnern</b></div>${sw('courseReminders', s.courseReminders, 'Kurse erinnern')}</div>
         ${['event','deadline','course'].map(k => `<div class="row"><div class="l"><b>Standard ${({event:'Termine',deadline:'Fristen',course:'Kurse'})[k]}</b><small>${remList(s.reminders[k])}</small></div><button class="btn sm" data-act="editDefaultRem" data-k="${k}">Ändern</button></div>`).join('')}
         <p class="note">Erinnerungen erscheinen, solange die Seite offen ist. Damit dein Handy auch sonst vibriert, übernimm den Kalender per Export in die Kalender-App deines Handys. Losgeh-Erinnerungen werden mit exportiert.</p>
@@ -3815,6 +3825,18 @@ async function saveFile(filename, data){
 function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 const ACTIONS = {
+  pushOn(){
+    const rnd = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijkmnopqrstuvwxyz23456789'[b % 33]).join('');
+    state.settings.ntfy = {on:true, topic: state.settings.ntfy && state.settings.ntfy.topic || ('kal-' + rnd)};
+    commit(); toast('Push eingeschaltet', 'Jetzt noch die ntfy-App einrichten, Schritt 1 und 2.');
+  },
+  pushOff(el){ if (!armConfirm(el, 'Wirklich ausschalten?')) return; Push.clear(); state.settings.ntfy.on = false; commit(); toast('Push ausgeschaltet', ''); },
+  async pushTest(){
+    try { await Push.send({title:'Kalendarium', body:'Test: So kommen deine Erinnerungen an.', prio:4}); toast('Test gesendet', 'Kommt gleich als Benachrichtigung von ntfy.'); }
+    catch { toast('Test hat nicht geklappt', navigator.onLine ? 'ntfy.sh ist gerade nicht erreichbar.' : 'Du bist offline.'); }
+  },
+  async pushNow(){ await Push.sync(true); toast(Push.err ? 'Planen hat nicht geklappt' : 'Erinnerungen geplant', Push.err || `${Push.count} in den nächsten ${Math.round(Push.horizonH)} Stunden`); render(); },
+  copyTopic(){ const t = state.settings.ntfy.topic; try { navigator.clipboard.writeText(t); toast('Kopiert', t); } catch { toast('Thema', t); } },
   async gistConnect(){
     const inp = document.getElementById('gistToken'), tok = inp && inp.value.trim();
     if (!tok) { toast('Schlüssel fehlt', 'Füge den Zugangsschlüssel von GitHub ein.'); return; }
@@ -4157,6 +4179,62 @@ function showKeys(){
     ${row(['Enter'], 'Speichern')}
     ${row(['Esc'], 'Schließen')}
   </dl></div>`, {keys:true});
+}
+
+/* ================================================================
+   §16h PUSH ÜBER NTFY: Erinnerungen und Vibration auch bei
+   geschlossener App. Die App plant die Erinnerungen der nächsten
+   Stunden als verzögerte Nachrichten auf einem geheimen ntfy-Thema
+   (ntfy.sh, kostenlos). Die ntfy-App auf dem Handy zeigt sie zur
+   richtigen Zeit an, auch wenn Kalendarium geschlossen ist.
+   Jede Erinnerung hat eine feste Kennung (sequence id): geänderte
+   Zeiten werden ersetzt, gelöschte Termine werden zurückgezogen.
+   ================================================================ */
+const Push = {
+  srv:'https://ntfy.sh', timer:null, busy:false, count:0, err:'', horizonH:60, lastSync:0,
+  on(){ const n = state && state.settings.ntfy; return !!(STANDALONE && n && n.on && n.topic); },
+  topic(){ return state.settings.ntfy.topic; },
+  seq(key){ let a = 5381, b = 52711; for (let i = 0; i < key.length; i++) { const c = key.charCodeAt(i); a = ((a * 33) ^ c) >>> 0; b = ((b * 31) + c) >>> 0; } return 'k' + a.toString(36) + b.toString(36); },
+  url(extra = ''){ return `${this.srv}/${encodeURIComponent(this.topic())}${extra}`; },
+  async send(a, seq){
+    const q = new URLSearchParams({title: a.title, priority: String(a.prio || 4), tags: 'calendar', click: APP_URL});
+    if (a.at) q.set('delay', String(Math.round(a.at / 1000)));
+    const r = await fetch(this.url((seq ? '/' + seq : '') + '?' + q.toString()), {method:'POST', body: a.body});
+    if (!r.ok) { const e = new Error('ntfy ' + r.status); e.status = r.status; throw e; }
+  },
+  queue(){ if (!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 6000); },
+  async known(){
+    const r = await fetch(this.url('/json?poll=1&sched=1&since=all'), {cache:'no-store'}); if (!r.ok) throw new Error('poll');
+    const now = Date.now() / 1000, k = {};
+    for (const line of (await r.text()).split('\n')) { if (!line.trim()) continue; try { const m = JSON.parse(line); if (m.event === 'message' && m.sequence_id && m.time > now + 5) k[m.sequence_id] = m.time; } catch {} }
+    return k;
+  },
+  async sync(force){
+    if (!this.on() || this.busy) return; if (navigator.onLine === false) { this.err = 'Offline'; return; }
+    this.busy = true; this.err = '';
+    try {
+      const now = Date.now(), want = Reminders.plan(now + 20000, now + this.horizonH * 3600000), known = await this.known(), ids = new Set();
+      for (const a of want) {
+        const id = this.seq(a.key); ids.add(id);
+        if (known[id] && Math.abs(known[id] - Math.round(a.at / 1000)) < 30) continue;
+        try { await this.send(a, id); }
+        catch (e) { if (e.status === 400 && this.horizonH > 12) { this.horizonH = Math.max(12, this.horizonH / 2); this.busy = false; return this.sync(force); } throw e; }
+      }
+      for (const id in known) if (!ids.has(id) && id.startsWith('k')) { try { await fetch(this.url('/' + id), {method:'DELETE'}); } catch {} }
+      this.count = want.length; this.lastSync = Date.now();
+    } catch (e) { this.err = e && e.status === 429 ? 'Zu viele Nachrichten heute, versuche es später.' : 'ntfy.sh nicht erreichbar.'; }
+    finally { this.busy = false; }
+  },
+  async clear(){ if (!state.settings.ntfy || !state.settings.ntfy.topic) return; try { const k = await this.known(); for (const id in k) await fetch(this.url('/' + id), {method:'DELETE'}); } catch {} }
+};
+function pushRows(){
+  const n = state.settings.ntfy || {};
+  if (!n.on) return `<div class="row"><div class="l"><b>Erinnerungen bei geschlossener App</b><small>Mit Vibration und Ton über die kostenlose App ntfy. Kalendarium plant die Erinnerungen voraus, ntfy meldet sie pünktlich.</small></div><button class="btn sm primary" data-act="pushOn">Einschalten</button></div>`;
+  const play = 'https://play.google.com/store/apps/details?id=io.heckel.ntfy', sub = `ntfy://ntfy.sh/${encodeURIComponent(n.topic)}`;
+  const st = Push.err ? Push.err : Push.lastSync ? `${Push.count} Erinnerungen für die nächsten ${Math.round(Push.horizonH)} Stunden geplant` : 'Wird beim nächsten Öffnen geplant';
+  return `<div class="row"><div class="l"><b>Erinnerungen bei geschlossener App</b><small>${esc(st)}</small></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" data-act="pushTest">Test</button><button class="btn sm" data-act="pushNow">Neu planen</button><button class="btn sm danger" data-act="pushOff">Aus</button></span></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><div class="l" style="flex-basis:100%"><b>Einrichten am Handy</b><small>1. ntfy installieren. 2. Thema abonnieren (öffnet ntfy). 3. Auf „Test“ tippen.</small></div><a class="btn sm" href="${play}" target="_blank" rel="noopener">${ic('runter','s')}1. ntfy installieren</a><a class="btn sm primary" href="${sub}">${ic('glocke','s')}2. Abonnieren</a><button class="btn sm" data-act="copyTopic" title="Falls Abonnieren nicht öffnet: in ntfy auf + tippen und dieses Thema einfügen">${ic('kopie','s')}Thema kopieren</button></div>
+    <p class="note">Falls „Abonnieren“ nicht direkt öffnet: In ntfy auf <b>+</b> tippen und das Thema <b>${esc(n.topic)}</b> einfügen. Vibration stellst du in ntfy pro Thema ein. Öffne Kalendarium mindestens alle zwei Tage, damit es weiter vorausplant. Wer das Thema kennt, kann deine Erinnerungen lesen, also nicht weitergeben.</p>`;
 }
 
 /* ================================================================
@@ -4706,6 +4784,7 @@ function init(){
   applyTheme(); bindEvents(); bindDrag(); bindSwipe(); setSync(); render();
   Reminders.load(); Reminders.last = Date.now();
   setInterval(() => Reminders.check(), 20000);
+  if (STANDALONE) { setTimeout(() => Push.sync(), 4000); setInterval(() => { if (!document.hidden) Push.sync(); }, 20*60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Push.queue(); }); }
   let lastMin = new Date().getMinutes(), lastDay = ymd(new Date());
   setInterval(() => {
     const n = new Date();
