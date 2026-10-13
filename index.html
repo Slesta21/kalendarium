@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 22  ·  persönlicher Kalender für alles
+ KALENDARIUM 23  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1294,7 +1294,15 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 .dep.x{opacity:.55;text-decoration:line-through}
 .xfer .qr-box{display:flex;justify-content:center;padding:var(--s2) 0}
 .xfer .qr{width:min(300px, 78vw);height:auto;border-radius:12px;animation:memin var(--d2) var(--ease) both}
-.xfer .qr-wait{display:grid;place-items:center;min-height:300px}
+.xfer .qr-wait{display:grid;place-items:center;align-content:center;gap:14px;min-height:300px}
+.qr-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:qrspin .8s linear infinite}
+@keyframes qrspin{to{transform:rotate(360deg)}}
+.xfer .qr-box{padding:var(--s2) 0 var(--s1)}
+.xfer .qr{width:min(320px, 80vw);box-shadow:none;border-radius:18px;padding:0}
+.qr-done{display:grid;place-items:center;gap:6px;min-height:280px;text-align:center;animation:memin var(--d2) var(--ease) both}
+.qr-done svg{width:54px;height:54px;color:var(--ok, #2e9e5b)}
+.qr-done b{font-size:22px}
+.qr-done span{color:var(--muted)}
 .xfer-steps{margin:0 auto;padding:0;list-style:none;counter-reset:st;display:grid;gap:8px;max-width:340px}
 .xfer-steps li{counter-increment:st;display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:baseline;font-size:15.5px}
 .xfer-steps li::before{content:counter(st);font-weight:700;color:var(--accent-ink);font-variant-numeric:tabular-nums}
@@ -4562,7 +4570,7 @@ function defaultState(){
       showWeekend:true, hideEmptyWeekend:false, holidayRegion:'DE-BE', observances:true,
       courseReminders:false, reminders:{ event:[30], deadline:[1440,120], course:[10] },
       weather:{ cities:[{key:'2601546', name:'Berlin'}, {key:'167558', name:'Augsburg'}, {key:'2608456', name:'Paris'}], active:'2601546' },
-      travel:{ bufferPct:15, minBuffer:5, rainExtra:8, arriveEarly:5, stayGap:45, remind:true },
+      travel:{ bufferPct:15, minBuffer:5, rainExtra:8, arriveEarly:5, stayGap:45, remind:true, remindAt:[10, 3] },
       loc:{ on:false },
       sleep:{ on:true, hours:8, latency:15, routine:45, wakeWeek:'07:30', wakeWeekend:'08:30', flex:60, shift:30, remind:30, auto:true, cycles:true, windDown:30 },
       style:{ font:'classic', tone:'cool', density:'normal', radius:'soft', dayColors:true, motion:true },
@@ -5208,7 +5216,7 @@ function planDay(date){
   let loc = home, freeAt = null, prev = null, locO = null;
   const homeLeg = (from, at0, fromO, extra = {}) => {
     const c = fromO && Transit.cache['back:' + fromO.key], lvB = c && Math.abs(c.after - at0) < 60000 ? c : null;
-    const R = fromO && fromO.ref && routeOk(fromO.ref.routeBack) ? fromO.ref.routeBack : null;
+    const R = fromO && fromO.ref && routeOk(fromO.ref.routeBack) ? fromO.ref.routeBack : from && routeOk(from.routeBack) ? from.routeBack : null;
     const lv = lvB || (R ? routeTripFrom(R, at0) : null);
     if (lv) return {kind:'home', from, to:home, depart: new Date(lv.depart), arrive: new Date(lv.arrive), mins: Math.round((lv.arrive - lv.depart) / 60000), live: lv, after: fromO, ...extra};
     const back = travelMinutes(from, at0).total;
@@ -5234,7 +5242,7 @@ function planDay(date){
       if (gap > back + there + (+T.stayGap||0)) { legs.push(homeLeg(loc, freeAt, locO)); loc = home; }
     }
     if (loc && loc.id === pl.id) { prev = o; freeAt = o.end; locO = o; continue; }
-    const tr = between(loc, pl, arriveBy), own = o.ref && routeOk(o.ref.route) && loc && loc.id === (o.ref.fromId || 'home') ? o.ref.route : null,
+    const tr = between(loc, pl, arriveBy), own = o.ref && o.ref.fromId && routeOk(o.ref.route) && loc && loc.id === o.ref.fromId ? o.ref.route : null,
       lv = Transit.liveFor(o.key, arriveBy) || (own ? routeTrip({name: pl.name, route: own}, arriveBy) : loc && loc.home && pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null);
     const depart = lv ? lv.depart : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
     const tight = !!(freeAt && depart < freeAt);
@@ -5380,8 +5388,15 @@ const Reminders = {
       for (const lead of this.leadsFor(o)) add(o.start.getTime() - lead*60000, `${o.key}:${lead}`, nm, `${o.kind==='deadline'?'Frist':o.kind==='course'?'Kurs':'Termin'} ${lead?'in '+dur(lead):'jetzt'} · ${hm(o.start)} Uhr${pl ? ' · ' + pl : ''}`, o.cat.symbol, o.kind === 'deadline' ? 5 : 4);
     }
     const d0 = startOfDay(new Date(from)), days = Math.min(5, Math.ceil((to - +d0) / 86400000) + 1);
-    if (state.settings.travel.remind) for (let k = 0; k < days; k++) for (const l of planDay(addDays(d0, k)).legs.filter(l => l.kind === 'go'))
-      add(l.depart.getTime() - 10*60000, `go:${l.before.key}`, 'In 10 min losgehen', l.live ? `${l.live.summary}${l.live.delay ? ` (+${l.live.delay} min)` : ''} · für ${l.before.kind === 'course' ? l.before.ref.title : l.before.title}` : `${l.before.kind === 'course' ? l.before.ref.title : l.before.title} · ${l.to.name} · ${dur(l.mins)} Weg`, 'kompass', 5);
+    const T = state.settings.travel, leads = Array.isArray(T.remindAt) && T.remindAt.length ? T.remindAt : [10];
+    const nmOf = o => o.kind === 'course' ? o.ref.title : o.title;
+    if (T.remind) for (let k = 0; k < days; k++) for (const l of planDay(addDays(d0, k)).legs.filter(l => l.kind === 'go' || (l.kind === 'home' && l.live && l.after))) {
+      const f = l.live && l.live.legs ? l.live.legs.find(g => !g.walk) : null, go = l.kind === 'go';
+      const how = f ? `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.ddel > 0 ? ` (+${f.ddel})` : ''}${f.from ? ' ab ' + f.from : ''}${f.plat ? ', Gleis ' + f.plat : ''}` : `${dur(l.mins)} Weg`;
+      for (const lead of leads) add(l.depart.getTime() - lead * 60000, `${go ? 'go' : 'back'}:${(go ? l.before : l.after).key}:${lead}`,
+        lead <= 3 ? (go ? `Jetzt losgehen, in ${lead} min` : `In ${lead} min los nach Hause`) : (go ? `In ${lead} min losgehen` : `In ${lead} min los nach Hause`),
+        go ? `${how} · für ${nmOf(l.before)}${l.to && l.to.name ? ' · ' + l.to.name : ''}` : `${how} · zuhause ${hm(l.arrive)}`, 'kompass', lead <= 5 ? 5 : 4);
+    }
     if (state.settings.sleep.on && +state.settings.sleep.remind) { const SP = sleepPlan(); for (let k = 0; k < days; k++) {
       const sp = SP[ymd(addDays(d0, k + 1))];
       if (sp) add(sp.bed.getTime() - state.settings.sleep.remind*60000, `bed:${ymd(sp.bed)}`, 'Bald Schlafenszeit', `Ins Bett um ${hm(sp.bed)}, Wecker ${hm(sp.wake)}`, 'stern', 3);
@@ -5590,7 +5605,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '22';
+const APP_VERSION = '23';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -5782,10 +5797,10 @@ function routeFromJourney(j, all){
   const L = j.legs, tl = L.filter(g => !g.walk), i0 = L.indexOf(tl[0]), i1 = L.indexOf(tl[tl.length - 1]);
   const same = all.filter(x => segKey(x) === segKey(j)), gr = groupJourneys(same)[0];
   const legs = tl.map((g, i) => {
-    const deps = [...new Set(same.filter(x => x.legs.filter(y => !y.walk)[i].line === g.line).map(x => +new Date(x.legs.filter(y => !y.walk)[i].pdep || x.legs.filter(y => !y.walk)[i].dep)))].sort((a, b) => a - b);
+    const deps = [...new Set(same.map(x => +new Date(x.legs.filter(y => !y.walk)[i].pdep || x.legs.filter(y => !y.walk)[i].dep)))].sort((a, b) => a - b);
     let every = 0; for (let k = 1; k < deps.length; k++) { const d = Math.round((deps[k] - deps[k - 1]) / 60000); if (d >= 2 && (!every || d < every)) every = d; }
     if (!every) every = {suburban:10, subway:5, tram:10, bus:10, regional:60, express:60, ferry:60}[g.product] || 10;
-    const alt = [];
+    const alt = gr ? gr.lines[i].filter(l => l !== g.line) : [];
     return {line: g.line, alt, from: g.from, to: g.to, ride: mm(g.pdep || g.dep, g.parr || g.arr) || 1, every, at: hm(new Date(g.pdep || g.dep)), dir: g.dir, fromId: g.fromId || null, src: g.src || null};
   });
   return {walkTo: L.slice(0, i0).reduce((a, g) => a + mm(g.dep, g.arr), 0), walkFrom: L.slice(i1 + 1).reduce((a, g) => a + mm(g.dep, g.arr), 0), legs};
@@ -5834,7 +5849,7 @@ function leaveUpdate(f){
       const tl = tr.legs.filter(g => !g.walk), g0 = tl[0];
       const segs = tr.legs.map(g => g.walk ? `<span class="sg">${ic('laeufer','s')}${g.mins} min</span>` : `<span class="sg">${lnBadge(g.line, g.product)} ${Math.round((g.arr - g.dep) / 60000)} min</span>`).join('<i class="sg-sep">›</i>');
       h = `<div class="lv-top"><b>Losgehen ${hm(tr.depart)}</b>${btn}</div><div class="lv-seg">${segs}</div><span class="lv-l"><span>${g0.approx ? '' : hm(new Date(g0.dep)) + ' '}${g0.from ? 'ab ' + esc(g0.from) + ' ' : ''}· da um ${hm(tr.arrive)}</span></span>
-        <small>${f.querySelector('[data-trip]') ? `Fußwege und Umstiege eingerechnet, ${T.arriveEarly} min vor Beginn da. Kurz vorher prüft die App live auf Verspätungen.` : tr.exact ? `Nach Fahrplan, ${T.arriveEarly} min vor Beginn da.` : 'Ungefähr. Mit einer Abfahrtszeit wird es minutengenau.'}</small>`;
+        <small>${f.querySelector('[data-trip]') ? `Fußwege und Umstiege eingerechnet, ${T.arriveEarly} min vor Beginn da. Die Strecke gilt für alle Termine an diesem Ort.` : tr.exact ? `Nach Fahrplan, ${T.arriveEarly} min vor Beginn da.` : 'Ungefähr. Mit einer Abfahrtszeit wird es minutengenau.'}</small>`;
     } else {
       const t = travelMinutes(pl, arriveBy);
       h = `<div class="lv-top"><b>Losgehen ${hm(addMin(arriveBy, -t.total))}</b>${btn}</div><span class="lv-l">${dur(t.total)} bis ${esc(pl.name)}, Puffer eingerechnet</span>`;
@@ -5911,7 +5926,7 @@ function routeTripFrom(R, t0){
   return {legs, depart: leave, arrive, first: f.line, plan: true, exact, delay: 0, cancelled: false, alts: [], after: +t0, summary: `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.from ? ' ab ' + f.from : ''}`};
 }
 function twChipsHtml(groups, reps, sel, k){
-  return groups.slice(0, 4).map((gr, gi) => `<button type="button" class="chip" data-act="twChoose" data-k="${k}" data-g="${gi}" aria-pressed="${gi === sel}">${gi === sel ? reps[gi].legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ') : groupBadges(gr)} <span>${dur(Math.round((reps[gi].arrive - reps[gi].depart) / 60000))}</span>${k === 'back' ? ` <span class="muted">ab ${hm(reps[gi].depart)}</span>` : ''}</button>`).join('');
+  return groups.slice(0, 4).map((gr, gi) => `<button type="button" class="chip" data-act="twChoose" data-k="${k}" data-g="${gi}" aria-pressed="${gi === sel}">${groupBadges(gr)} <span>${dur(Math.round((reps[gi].arrive - reps[gi].depart) / 60000))}</span>${k === 'back' ? ` <span class="muted">ab ${hm(reps[gi].depart)}</span>` : ''}</button>`).join('');
 }
 let _twBTok = 0;
 async function twBack(f, keep){
@@ -5928,11 +5943,12 @@ async function twBack(f, keep){
     if (!groups.length) { box.innerHTML = ''; inp.value = ''; leaveUpdate(f); return; }
     const reps = groups.map(gr => gr.js.slice().sort((a, b) => a.arrive - b.arrive)[0]);
     let cur = null; try { cur = keep && inp.value ? JSON.parse(inp.value) : null; } catch {}
+    if (!cur && E.toP && routeOk(E.toP.routeBack)) cur = E.toP.routeBack;
     const curKey = cur ? routeLegs(cur).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|') : '';
     let sel = curKey ? groups.findIndex(g => g.key === curKey) : -1;
     if (sel < 0 || sel > 3) { sel = 0; reps.slice(0, 4).forEach((r, i) => { if (r.arrive < reps[sel].arrive) sel = i; }); }
     ui._twBack = {groups, reps, js}; inp.value = JSON.stringify(routeFromJourney(reps[sel], js));
-    box.innerHTML = `<span class="rlab">Rückweg nach Hause ab ${hm(t0)}</span><div class="chips">${twChipsHtml(groups, reps, sel, 'back')}</div>`;
+    box.innerHTML = `<span class="rlab">Rückweg nach Hause ab ${hm(t0)}${E.toP && routeOk(E.toP.routeBack) ? ' · deine Strecke' : ''}</span><div class="chips">${twChipsHtml(groups, reps, sel, 'back')}</div>`;
   } catch { if (tok === _twBTok) box.innerHTML = '<span class="muted" style="font-size:13.5px">Rückweg: Fahrplan gerade nicht erreichbar.</span>'; }
   leaveUpdate(f);
 }
@@ -5951,12 +5967,14 @@ async function twConn(f, keep){
     const groups = groupJourneys(js);
     if (!groups.length) { box.innerHTML = '<span class="muted" style="font-size:13.5px">Keine Verbindung gefunden. Der Kalender schätzt den Weg.</span>'; leaveUpdate(f); return; }
     let cur = null; try { cur = keep && tripIn.value ? JSON.parse(tripIn.value) : null; } catch {}
+    if (!cur && !E.fid && E.toP && routeOk(E.toP.route)) cur = E.toP.route;
     const reps = groups.map(gr => repOf(gr, arr)), curKey = cur ? routeLegs(cur).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|') : '';
     const best = reps.filter(j => j.arrive <= addMin(arr, 1)).sort((a, b) => b.depart - a.depart)[0] || reps[0];
     const shown = groups.slice(0, 4), selG = (curKey && shown.find(g => g.key === curKey)) || shown[reps.indexOf(best)] || shown[0];
     const selI = groups.indexOf(selG);
     ui._twJs = js; ui._twTo = {groups, reps, js}; tripIn.value = JSON.stringify(routeFromJourney(reps[selI], js));
-    box.innerHTML = `<span class="rlab">Hinweg · tipp an, wenn du lieber anders fährst</span><div class="chips">${twChipsHtml(groups, reps, selI, 'to')}</div>`;
+    const isFav = !E.fid && E.toP && routeOk(E.toP.route) && routeLegs(E.toP.route).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|') === groups[selI].key;
+    box.innerHTML = `<span class="rlab">Hinweg${isFav ? ' · deine Strecke' : ''} · tipp an, wenn du lieber anders fährst</span><div class="chips">${twChipsHtml(groups, reps, selI, 'to')}</div>`;
     twBack(f, keep);
   } catch {
     if (tok !== _twTok) return;
@@ -6017,12 +6035,14 @@ function takeTrip(form){
   if (pid === '__vbb') pid = mk(v('toVbb'));
   if (fid === '__vbb') fid = mk(v('fromVbb'));
   if (fid === 'home') fid = '';
-  const dest = pid && placeById(pid);
+  let dest = pid && placeById(pid);
+  if (!pid) { const cat = state.categories.find(c => c.id === (form.elements.catId && form.elements.catId.value)); dest = cat && cat.placeId ? placeById(cat.placeId) : null; }
   if (dest && !dest.home && !trip && +v('est') && !routeOk(dest.route) && !fid) dest.minutes = +v('est');
-  if (dest && !dest.home && trip) { dest.mode = 'oepnv'; if (!fid) { dest.route = trip; dest.minutes = routeBase(trip); } else if (!dest.minutes) dest.minutes = routeBase(trip); }
-  if (typeof Transit !== 'undefined') Transit.reset();
+  if (dest && !dest.home && trip) { dest.mode = 'oepnv'; if (!fid) { dest.route = trip; dest.minutes = routeBase(trip); dest.fav = true; } else if (!dest.minutes) dest.minutes = routeBase(trip); }
   let back = null; try { back = v('tripBack') ? JSON.parse(v('tripBack')) : null; } catch {}
-  return {placeId: pid, fromId: fid, route: trip, routeBack: back};
+  if (dest && !dest.home && back) dest.routeBack = back;
+  if (typeof Transit !== 'undefined') Transit.reset();
+  return {placeId: pid, fromId: fid, route: fid ? trip : null, routeBack: null};
 }
 function cat_autoclear(pid, fd){ const cat = state.categories.find(c => c.id === fd.get('catId')); return cat && cat.placeId === pid ? '' : pid; }
 function catPlaceOptions(sel){ return `<option value="">Kein Standardort</option>` + state.places.filter(p => !p.home).map(p => `<option value="${esc(p.id)}" ${p.id===sel?'selected':''}>${esc(p.name)}</option>`).join(''); }
@@ -6318,7 +6338,8 @@ const VIEWS = {
         <div class="row"><div class="l"><b>Regenzuschlag</b><small>Für Rad und Fußweg bei Regen</small></div><span>${numIn('travel.rainExtra', T.rainExtra, 0, 60, 1, 'Regenzuschlag')} min</span></div>
         <div class="row"><div class="l"><b>Vor Ort bleiben</b><small>Kein Heimweg, wenn die Lücke kürzer ist als Hin- und Rückweg plus</small></div><span>${numIn('travel.stayGap', T.stayGap, 0, 240, 5, 'Vor Ort bleiben')} min</span></div>
         </details>
-        <div class="row"><div class="l"><b>Erinnerung zum Losgehen</b><small>10 min vorher</small></div>${sw('travel.remind', T.remind, 'Erinnerung zum Losgehen')}</div>
+        <div class="row"><div class="l"><b>Erinnerung zum Losgehen</b><small>Mit Vibration und Banner, auch für den Heimweg</small></div>${sw('travel.remind', T.remind, 'Erinnerung zum Losgehen')}</div>
+        ${T.remind ? `<div class="row"><div class="l"><b>Wie lange vorher?</b></div><div class="remchips">${[1, 3, 5, 10, 15, 30].map(m => `<label><input type="checkbox" data-remgo="1" value="${m}" ${(T.remindAt || [10]).includes(m) ? 'checked' : ''}><span>${m} min</span></label>`).join('')}</div></div>` : ''}
         <p class="note">${STANDALONE ? 'Im Termin gibst du nur das Ziel an. Fußwege, Linien, Fahrzeit und Verspätungen holt der Kalender aus dem Fahrplan, die Puffer gelten nur für Wege ohne Fahrplan.' : 'Wegzeit einmal pro Ort eintragen. In der App rechnet der Kalender mit dem echten Fahrplan.'}</p>
       </section>
 
@@ -7418,6 +7439,7 @@ const ACTIONS = {
   async transferShare(){ const inp = document.getElementById('xferLink'); if (!inp) return; try { await navigator.share({title:'Kalendarium übertragen', url: inp.value}); } catch {} },
   async importApply(){
     const d = ui._import; if (!d) return; ui._import = null; try { sessionStorage.removeItem('kal-xfer'); } catch {}
+    if (ui._xferTok) { const tp = ui._xferTok.split('.')[0]; ui._xferTok = null; fetch(`${XFER_SRV}/${tp}?title=ok`, {method: 'POST', body: 'ok'}).catch(() => {}); }
     pushUndo();
     state = migrate(d.state); state.settings.onboarded = true; Store.fromExample = false;
     if (d.gist && d.gist.token && d.gist.id) { GistSync.cfg = {token: d.gist.token, id: d.gist.id}; GistSync.save(); }
@@ -7718,6 +7740,12 @@ const ACTIONS = {
   removeRow(el){ el.parentElement.remove(); },
   accent(el){ state.settings.accent = el.dataset.c; applyTheme(); commit(); },
   setv(el){ setPath(el.dataset.k, el.dataset.num ? +el.dataset.v : el.dataset.v); applyTheme(); commit(); },
+  remGo(el){
+    const v = +el.value, T = state.settings.travel, cur = new Set(Array.isArray(T.remindAt) ? T.remindAt : [10]);
+    if (el.checked) cur.add(v); else cur.delete(v);
+    if (!cur.size) { el.checked = true; toast('Mindestens eine Zeit', ''); return; }
+    T.remindAt = [...cur].sort((a, b) => b - a); commit(); if (typeof Push !== 'undefined') Push.queue();
+  },
   toggle(el){ const k = el.dataset.k; setPath(k, !getPath(k)); applyTheme(); commit(); if (k === 'loc.on') Loc.sync(true); },
   wxCity(el){ state.settings.weather.active = el.dataset.key; WX.watch(el.dataset.key); commit(); },
   wxAdd(el){ const c = state.settings.weather.cities; if (!c.some(x => x.key === el.dataset.key)) c.push({key: el.dataset.key, name: el.dataset.name}); toast('Ort hinzugefügt', el.dataset.name); commit(); },
@@ -8053,16 +8081,17 @@ async function unpackState(code){
    im QR-Code. */
 const XFER_SRV = 'https://ntfy.sh';
 function qrSvg(text, ecc = 'M'){
+  /* klassische eckige Module: am zuverlässigsten für jede Handy-Kamera, auch bei schwachem Licht und aus Abstand */
   const q = QRGen(0, ecc); q.addData(text); q.make();
-  const n = q.getModuleCount(); let d = '';
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) d += `M${x} ${y}h1v1h-1z`;
-  return `<svg class="qr" viewBox="-3 -3 ${n + 6} ${n + 6}" shape-rendering="crispEdges" role="img" aria-label="QR-Code zum Übertragen"><rect x="-3" y="-3" width="${n + 6}" height="${n + 6}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  const n = q.getModuleCount(), Z = 4, S = n + Z * 2; let d = '';
+  for (let y = 0; y < n; y++) { let x = 0; while (x < n) { if (!q.isDark(y, x)) { x++; continue; } let w = 1; while (x + w < n && q.isDark(y, x + w)) w++; d += `M${x + Z} ${y + Z}h${w}v1h-${w}z`; x += w; } }
+  return `<svg class="qr" viewBox="0 0 ${S} ${S}" shape-rendering="crispEdges" role="img" aria-label="QR-Code zum Übertragen"><rect width="${S}" height="${S}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 }
 async function xferUpload(code){
   const keyRaw = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await crypto.subtle.importKey('raw', keyRaw, 'AES-GCM', false, ['encrypt']);
   const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, new TextEncoder().encode(code)));
-  const blob = b64u(iv) + '.' + b64u(ct), topic = 'kalx-' + b64u(crypto.getRandomValues(new Uint8Array(15))).replace(/[-_]/g, 'x');
+  const blob = b64u(iv) + '.' + b64u(ct), topic = 'kx' + b64u(crypto.getRandomValues(new Uint8Array(12))).replace(/[-_]/g, 'x');
   const parts = []; for (let i = 0; i < blob.length; i += 3800) parts.push(blob.slice(i, i + 3800));
   for (let i = 0; i < parts.length; i++) {
     const r = await fetch(`${XFER_SRV}/${topic}?title=${i + 1}/${parts.length}`, {method: 'POST', body: parts[i]});
@@ -8084,29 +8113,45 @@ async function xferDownload(tok){
 }
 async function transferSheet(){
   const title = 'Aufs Handy übertragen';
-  openSheet(`<div class="detail xfer">${head(title)}<div class="qr-wait"><span class="muted">QR-Code wird erstellt …</span></div></div>`, {xfer:true});
+  clearInterval(ui._xferPoll);
+  openSheet(`<div class="detail xfer">${head(title)}<div class="qr-wait"><span class="qr-spin"></span><span class="muted">Code wird erstellt …</span></div></div>`, {xfer:true});
   const withSync = STANDALONE && GistSync.on(), extra = withSync ? {gist: {token: GistSync.cfg.token, id: GistSync.cfg.id}} : {};
-  let code, link, viaCloud = true;
+  let code, link, tok = null;
   try { code = await packState(extra); } catch { openSheet(`<div class="detail">${head(title)}<p>Die Daten konnten nicht vorbereitet werden.</p></div>`); return; }
-  try { link = APP_URL + '#t=' + await xferUpload(code); }
-  catch { viaCloud = false; link = APP_URL + '#x=' + await packState({}); }
+  try { tok = await xferUpload(code); link = APP_URL + '#t=' + tok; }
+  catch { link = APP_URL + '#x=' + await packState({}); }
   if (!sheet.ctx || !sheet.ctx.xfer) return;
-  let qr = '';
-  try { qr = qrSvg(link, viaCloud ? 'M' : 'L'); } catch { qr = ''; }
+  let qr = ''; try { qr = qrSvg(link, tok ? 'M' : 'L'); } catch { qr = ''; }
   const n = k => (state[k] || []).filter(x => !x.ex).length;
   const what = [[n('events'), 'Termin', 'Termine'], [n('courses'), 'Kurs', 'Kurse'], [n('deadlines'), 'Frist', 'Fristen'], [n('todos'), 'To-do', 'To-dos']].filter(x => x[0]).map(([c, a, b]) => `${c} ${c === 1 ? a : b}`).join(', ') || 'Einstellungen';
-  ui._xferLink = link;
+  ui._xferLink = link; const until = addMin(new Date(), 180);
   openSheet(`<div class="detail xfer">${head(title)}
-    ${qr ? `<div class="qr-box">${qr}</div>
+    ${qr ? `<div class="qr-box" data-qrbox>${qr}</div>
       <ol class="xfer-steps"><li><span>Handy-Kamera öffnen und auf den Code halten</span></li><li><span>Link antippen, dann <b>Übernehmen</b></span></li></ol>
-      <p class="xfer-note">${esc(what)} und alle Einstellungen.${viaCloud ? ' Verschlüsselt, der Code gilt 3 Stunden.' : ''}</p>`
+      <p class="xfer-note" data-xstat>${esc(what)} und alle Einstellungen.${tok ? ` Verschlüsselt, gültig bis ${hm(until)}.` : ''}</p>
+      <div class="sheet-foot"><button class="btn ghost" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button><div class="r"><button class="btn" data-act="transfer">${ic('wdh','s')}Neuer Code</button></div></div>`
     : `<p style="font-size:16px">Zu viele Daten für einen QR-Code. Kopier den Link und öffne ihn auf dem Handy.</p><div class="sheet-foot"><button class="btn primary" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button></div>`}
   </div>`, {xfer:true});
+  if (tok) {
+    const topic = tok.split('.')[0], t0 = Math.floor(Date.now() / 1000) - 5;
+    ui._xferPoll = setInterval(async () => {
+      if (!sheet.ctx || !sheet.ctx.xfer || !document.querySelector('[data-qrbox]')) { clearInterval(ui._xferPoll); return; }
+      try {
+        const r = await fetch(`${XFER_SRV}/${topic}/json?poll=1&since=${t0}`, {cache: 'no-store'}); if (!r.ok) return;
+        if ((await r.text()).split('\n').some(l => { try { return JSON.parse(l).title === 'ok'; } catch { return false; } })) {
+          clearInterval(ui._xferPoll); haptic(20);
+          const box = document.querySelector('[data-qrbox]'); if (box) box.innerHTML = `<div class="qr-done">${ic('haken')}<b>Fertig</b><span>Dein Handy hat alles übernommen.</span></div>`;
+          const st = document.querySelector('[data-xstat]'); if (st) st.textContent = '';
+          document.querySelectorAll('.xfer-steps').forEach(x => x.remove());
+        }
+      } catch {}
+    }, 2500);
+  }
 }
 async function importFromToken(tok){
   toast('Daten werden geholt …', '');
   let code;
-  try { code = await xferDownload(tok); }
+  try { code = await xferDownload(tok); ui._xferTok = tok; }
   catch (e) { try { sessionStorage.removeItem('kal-xfer'); } catch {} toast(e && e.message === 'weg' ? 'Code abgelaufen' : 'Übertragen hat nicht geklappt', e && e.message === 'weg' ? 'Der QR-Code gilt 3 Stunden. Erstell am PC einfach einen neuen.' : navigator.onLine === false ? 'Das Handy ist offline.' : 'Scanne den Code noch einmal.'); maybeOnboard(); return; }
   return importFromCode(code);
 }
@@ -8299,7 +8344,7 @@ const Transit = {
         if (!force && c && c.after === +at0 && now - c.fetchedAt < (soon ? 90000 : 20 * 60000)) continue;
         try {
           const js = (await this.options(hl.from.vbb, home.vbb, at0, 'departure', {stopovers: 'true', polylines: 'true', remarks: 'true'})).filter(j => j.depart >= addMin(at0, -1));
-          const pref = routeLegs(hl.after.ref.routeBack).map(g => normLine(g.line)), isPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line)));
+          const pref = routeLegs(routeOk(hl.after.ref.routeBack) ? hl.after.ref.routeBack : hl.from.routeBack).flatMap(g => [g.line, ...(g.alt || [])]).map(normLine), isPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line)));
           const best = js.find(isPref) || js[0];
           if (best) {
             const quicker = js.filter(j => j !== best && !j.cancelled).sort((a, b) => a.arrive - b.arrive)[0];
@@ -8575,7 +8620,7 @@ const Push = {
   seq(key){ let a = 5381, b = 52711; for (let i = 0; i < key.length; i++) { const c = key.charCodeAt(i); a = ((a * 33) ^ c) >>> 0; b = ((b * 31) + c) >>> 0; } return 'k' + a.toString(36) + b.toString(36); },
   url(extra = ''){ return `${this.srv}/${encodeURIComponent(this.topic())}${extra}`; },
   async send(a, seq){
-    const q = new URLSearchParams({title: a.title, priority: String(a.prio || 4), tags: 'calendar', click: APP_URL});
+    const q = new URLSearchParams({title: a.title, priority: String(a.prio || 4), click: APP_URL});
     if (a.at) q.set('delay', String(Math.round(a.at / 1000)));
     const r = await fetch(this.url((seq ? '/' + seq : '') + '?' + q.toString()), {method:'POST', body: a.body});
     if (!r.ok) { const e = new Error('ntfy ' + r.status); e.status = r.status; throw e; }
@@ -8607,7 +8652,7 @@ const Push = {
 };
 function pushRows(){
   const n = state.settings.ntfy || {};
-  if (!n.on) return `<div class="row"><div class="l"><b>Erinnerungen bei geschlossener App</b><small>Mit Vibration und Ton über die kostenlose App ntfy. Kalendarium plant die Erinnerungen voraus, ntfy meldet sie pünktlich.</small></div><button class="btn sm primary" data-act="pushOn">Einschalten</button></div>`;
+  if (!n.on) return `<div class="row"><div class="l"><b>Banner und Vibration auch bei geschlossener App</b><small>Auch auf dem Sperrbildschirm, über die kostenlose App ntfy. Kalendarium plant die Erinnerungen voraus, ntfy meldet sie pünktlich.</small></div><button class="btn sm primary" data-act="pushOn">Einschalten</button></div>`;
   const play = 'https://play.google.com/store/apps/details?id=io.heckel.ntfy', sub = `ntfy://ntfy.sh/${encodeURIComponent(n.topic)}`;
   const st = Push.err ? Push.err : Push.lastSync ? `${Push.count} Erinnerungen für die nächsten ${Math.round(Push.horizonH)} Stunden geplant` : 'Wird beim nächsten Öffnen geplant';
   return `<div class="row"><div class="l"><b>Erinnerungen bei geschlossener App</b><small>${esc(st)}</small></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" data-act="pushTest">Test</button><button class="btn sm" data-act="pushNow">Neu planen</button><button class="btn sm danger" data-act="pushOff">Aus</button></span></div>
@@ -9184,6 +9229,7 @@ function bindEvents(){
   });
   document.addEventListener('change', async ev => {
     const t = ev.target;
+    if (t.dataset && t.dataset.remgo) { ACTIONS.remGo(t); return; }
     if (t.dataset && t.dataset.set) {
       let v = t.type === 'number' ? parseFloat(t.value) : t.value;
       if (t.type === 'number' && isNaN(v)) return;
