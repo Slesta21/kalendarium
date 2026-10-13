@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 35  ·  persönlicher Kalender für alles
+ KALENDARIUM 36  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2647,6 +2647,16 @@ main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
   .sl2-log > button,.sl2-log details > button{grid-template-columns:minmax(0,1fr) auto;gap:2px 12px}
   .sl2-log .dt{grid-column:1}.sl2-log .tm{grid-column:1;grid-row:2;color:var(--muted)}.sl2-log b{grid-column:2;grid-row:1;text-align:right}.sl2-log .q{grid-column:2;grid-row:2;justify-content:flex-end}
 }
+
+.sl2-setup{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;background:var(--zone);color:var(--on-zone)}
+.sl2-setup .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:color-mix(in oklab, var(--on-zone) 18%, transparent)}
+.sl2-setup .ic svg{width:22px;height:22px}
+.sl2-setup b{display:block;font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:-.03em}
+.sl2-setup small{display:block;font-size:14px;line-height:1.5;margin-top:4px;opacity:.9}
+.sl2-setup .act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sl2-setup .btn.primary{background:var(--on-zone);color:var(--zone)}.sl2-setup .btn.ghost{background:none;color:var(--on-zone)}
+.sl2-night small.auto{display:flex;align-items:center;gap:6px;color:var(--zone-ink);font-weight:600}.sl2-night small.auto svg{width:15px;height:15px}
+.notice .acts.sq{flex-wrap:wrap}.notice .acts.sq .btn{min-width:40px;justify-content:center}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6400,7 +6410,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '35';
+const APP_VERSION = '36';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6944,6 +6954,7 @@ const VIEWS = {
       <span class="lbl">${ic('mond', 's')}Heute Nacht</span>
       ${tn ? `<div class="tt"><b>${hm(tn.bed)}</b><i>${ic('weiter')}</i><b>${hm(tn.wake)}</b></div>
       <small>${fmtH(tn.sleepMin)} Schlaf${tn.short ? ', weniger als dein Bedarf' : ''}. Ab ${hm(wd)} Bildschirm weg und Licht dimmen.</small>` : `<small>Kein Plan für heute Nacht. Schalte die Schlafplanung in den Einstellungen ein.</small>`}
+      ${SleepAuto.on() ? `<small class="auto">${ic('handy','s')}Die nächste Nacht erkennt die App von selbst.</small>` : ''}
       <div class="act">${logged ? `<button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('stift', 's')}Letzte Nacht ändern</button>` : `<button class="btn sm primary" data-act="sleepLog" data-date="${today}">${ic('plus', 's')}Letzte Nacht eintragen</button>${spToday ? `<button class="btn sm" data-act="sleepAsPlanned" data-date="${today}">Wie geplant</button>` : ''}`}
       ${tn ? `<button class="btn sm ghost" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">Warum diese Zeit</button>` : ''}</div>
     </section>`;
@@ -6965,7 +6976,7 @@ const VIEWS = {
     const week = sleepWeekTile(D), chrono = sleepChronoTile(st);
     const duo = week || chrono ? `${week ? `<section class="sl2-tile ${chrono ? 'sl2-half' : ''}"><div class="sl2-h"><h2>Wochentage</h2><small>Abend des Tages</small></div>${week}</section>` : ''}${chrono ? `<section class="sl2-tile ${week ? 'sl2-half' : ''}"><div class="sl2-h"><h2>Innere Uhr</h2><small>nach MCTQ</small></div>${chrono}</section>` : ''}` : '';
     const log = (state.sleepLog || []).slice().sort((a, b) => b.date.localeCompare(a.date));
-    const logRow = x => { const n = sleepNight(x), ext = [n.se != null ? `Effizienz ${n.se} %` : '', n.sol != null ? `${n.sol} min bis Schlaf` : '', n.waso ? `${n.waso} min wach` : '', x.alarm === false ? 'ohne Wecker' : '', ...(x.tags || []).map(t => (SLEEP_TAGS.find(z => z[0] === t) || [, t])[1])].filter(Boolean);
+    const logRow = x => { const n = sleepNight(x), ext = [n.se != null ? `Effizienz ${n.se} %` : '', n.sol != null ? `${n.sol} min bis Schlaf` : '', n.waso ? `${n.waso} min wach` : '', x.src === 'handy' ? (x.auto ? 'vom Handy erkannt' : 'vom Handy, angepasst') : '', x.alarm === false ? 'ohne Wecker' : '', ...(x.tags || []).map(t => (SLEEP_TAGS.find(z => z[0] === t) || [, t])[1])].filter(Boolean);
       return `<button data-act="sleepLog" data-date="${x.date}"><span class="dt">${esc(fmtShort(parseYMD(x.date)))}</span><span class="tm">${x.bed} – ${x.wake}${ext.length ? `<small>${esc(ext.join(' · '))}</small>` : ''}</span><b class="${n.dur < D.need - 45 ? 'lo' : ''}">${fmtH(n.dur)}</b><span class="q" aria-label="Erholung ${x.q || 0} von 5">${[1,2,3,4,5].map(k => `<i class="${k <= x.q ? 'on' : ''}"></i>`).join('')}</span></button>`; };
     const proto = `<section class="sl2-tile sl2-log"><div class="sl2-h"><h2>Protokoll</h2><button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('plus','s')}Nacht eintragen</button></div>
       ${log.length ? log.slice(0, 5).map(logRow).join('') : emptyArt('frei', 'Noch keine Nacht eingetragen.', 'Am besten morgens kurz nach dem Aufstehen, das dauert 20 Sekunden.')}
@@ -6978,7 +6989,8 @@ const VIEWS = {
       <ul class="src">${SLEEP_SRC.map(([a, b]) => `<li><b>${esc(a)}</b> ${esc(b)}</li>`).join('')}</ul>
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
-    return `<div class="sl2">${hero}${night}${kpis}${muster}${chart}${duo}${proto}${how}</div>`;
+    const setup = SleepAuto.avail() && S.detect !== false && !SleepAuto.ok() ? `<section class="sl2-tile sl2-setup"><span class="ic">${ic('handy')}</span><div><b>Nicht mehr eintragen</b><small>Kalendarium kann aus der Zeit, in der dein Handy nachts unbenutzt war, erkennen, wann du geschlafen hast. Dafür braucht die App den Zugriff auf Nutzungsdaten. Nichts verlässt dein Handy.</small><div class="act"><button class="btn sm primary" data-act="sleepUsage">Erlauben</button><button class="btn sm ghost" data-act="sleepDetectOff">Lieber selbst eintragen</button></div></div></section>` : '';
+    return `<div class="sl2">${hero}${night}${setup}${kpis}${muster}${chart}${duo}${proto}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7167,6 +7179,7 @@ const VIEWS = {
       <section class="panel">
         <div class="panel-h"><h2>Schlaf</h2>${sw('sleep.on', S.on, 'Schlafplanung')}</div>
         <div class="row"><div class="l"><b>Schlafdauer</b></div><span>${numIn('sleep.hours', S.hours, 5, 11, .5, 'Schlafdauer')} h</span></div>
+        ${Native.has('sleep') ? `<div class="row"><div class="l"><b>Nächte vom Handy erkennen</b><small>${SleepAuto.ok() ? 'Aus der Zeit, in der dein Handy nachts unbenutzt war. Bleibt auf dem Gerät.' : 'Braucht den Zugriff auf Nutzungsdaten'}</small></div>${SleepAuto.ok() ? sw('sleep.detect', S.detect !== false, 'Nächte vom Handy erkennen') : '<button class="btn sm" data-act="sleepUsage">Erlauben</button>'}</div>` : ''}
         <div class="row"><div class="l"><b>Automatisch berechnen</b><small>Fester Rhythmus aus deinem Stundenplan, frühe Tage vorbereitet, späte Abende berücksichtigt</small></div>${sw('sleep.auto', S.auto !== false, 'Schlafzeiten automatisch berechnen')}</div>
         ${S.auto !== false && state.settings.sleep.on ? (() => { sleepPlan(); const m = _sleepMeta; return m ? `<p class="note">Dein Rhythmus: werktags <b>${toHM(m.anchorW)}</b>, am Wochenende <b>${toHM(m.anchorWE)}</b> aufstehen (${m.anchorSrc}). Schlaf: ${m.cycles ? `${m.cycles} Zyklen, ${dur(m.sleepT)}` : dur(m.sleepT)}.</p>` : ''; })() : ''}
         <div class="row"><div class="l"><b>In Schlafzyklen planen</b><small>90-min-Zyklen, Wecker am Zyklusende</small></div>${sw('sleep.cycles', S.cycles !== false, 'Schlafzyklen')}</div>
@@ -7931,10 +7944,12 @@ const foot = canDel => `<div class="sheet-foot">${canDel ? `<button type="button
 const EDITORS = {
   sleepEntry(date){
     const ex = (state.sleepLog || []).find(x => x.date === date), sp = sleepPlan()[date] || null;
-    const e = ex || {date, bed: sp ? hm(sp.bed) : '23:30', wake: sp ? hm(sp.wake) : '07:30', q: 0, tags: [], note: ''};
+    let e = ex || {date, bed: sp ? hm(sp.bed) : '23:30', wake: sp ? hm(sp.wake) : '07:30', q: 0, tags: [], note: ''};
+    if (e.bedRaw) { const L = +state.settings.sleep.latency || 0; e = {...e, bed: toHM(minutesOf(e.bed) + L), lat: e.lat ?? L}; }
     const pick = (k, lbl, opts, v) => `<div class="f"><span>${lbl}</span><input type="hidden" name="${k}" value="${v == null ? '' : v}"><div class="seg sp">${(() => { const has = v != null && v !== '', near = has ? opts.reduce((p, c) => Math.abs(c[0] - v) < Math.abs(p[0] - v) ? c : p)[0] : null; return opts.map(([o, l]) => `<button type="button" data-act="sleepPick" data-k="${k}" data-v="${o}" aria-pressed="${has && near === o}">${l}</button>`).join(''); })()}</div></div>`;
     const qs = [[1,'Schlecht'],[2,'Unruhig'],[3,'Okay'],[4,'Gut'],[5,'Sehr gut']];
     openSheet(`${head('Wie war die Nacht?')}<form class="form" data-form="sleepEntry">
+      ${e.src === 'handy' ? `<p class="note" style="margin:0">${ic('handy','s')} Vom Handy erkannt${e.auto ? '' : ' und von dir angepasst'}. Einschlafzeit ist geschätzt, korrigier sie, wenn du es weißt.</p>` : ''}
       <p class="muted" style="margin:0">${esc(fmtWD(addDays(parseYMD(date), -1)))} auf ${esc(fmtWD(parseYMD(date)))}, ${esc(fmtDM(parseYMD(date)))}${sp ? ` · geplant ${hm(sp.bed)} bis ${hm(sp.wake)}` : ''}</p>
       <div class="frow"><label class="f"><span>Eingeschlafen etwa</span><input type="time" name="bed" required value="${esc(e.bed)}"></label><label class="f"><span>Aufgewacht</span><input type="time" name="wake" required value="${esc(e.wake)}"></label></div>
       ${pick('lat', 'Bis zum Einschlafen', [[5,'5'],[15,'15'],[30,'30'],[45,'45'],[60,'60+']], e.lat)}
@@ -8128,7 +8143,7 @@ const SAVE = {
     const date = fd.get('date'), bed = fd.get('bed'), wake = fd.get('wake');
     if (!/^\d\d:\d\d$/.test(bed) || !/^\d\d:\d\d$/.test(wake)) { toast('Uhrzeiten fehlen', ''); return; }
     const num = k => { const v = fd.get(k); return v === '' || v == null ? null : +v; };
-    upsertSleep({date, bed, wake, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(fd.get('note') || '').trim(), lat: num('lat'), waso: num('waso'), alarm: fd.get('noalarm') ? false : true});
+    upsertSleep({date, bed, wake, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(fd.get('note') || '').trim(), lat: num('lat'), waso: num('waso'), alarm: fd.get('noalarm') ? false : true, bedRaw: false, auto: false});
     closeSheet(); toast('Nacht gespeichert', `${fmtShort(addDays(parseYMD(date), -1))} auf ${fmtShort(parseYMD(date))}`);
   },
   onb(f, fd){
@@ -8313,6 +8328,9 @@ const ACTIONS = {
   },
   sleepQ(el){ const f = el.closest('form'); f.elements.q.value = el.dataset.v; f.querySelectorAll('[data-act=sleepQ]').forEach(b => b.setAttribute('aria-pressed', b === el)); },
   sleepRange(el){ ui.sleepRange = +el.dataset.v; render(); },
+  sleepUsage(){ try { window.KalNative.usageOpen(); } catch {} toast('Nutzungsdaten erlauben', 'Kalendarium in der Liste antippen und „Zugriff erlauben“ einschalten, dann zurück zur App.'); },
+  sleepDetectOff(){ state.settings.sleep.detect = false; commit(); toast('Erkennung aus', 'Du kannst sie in den Einstellungen unter Schlaf wieder einschalten.'); },
+  sleepQuickQ(el){ const x = (state.sleepLog || []).find(o => o.date === el.dataset.date); if (!x) return; x.q = +el.dataset.v; commit(); haptic && haptic(); toast('Danke', 'Erholung gespeichert.'); },
   sleepPick(el){ const f = el.closest('form'), inp = f.elements[el.dataset.k], on = el.getAttribute('aria-pressed') === 'true'; inp.value = on ? '' : el.dataset.v; el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', !on && b === el)); },
   sleepNeedSet(el){ const m = +el.dataset.m; if (!(m >= 300 && m <= 660)) return; pushUndo(); state.settings.sleep.hours = Math.round(m / 30) / 2; commit(); toast('Bedarf angepasst', `${fmtH(m)} pro Nacht. Der Schlafplan rechnet ab jetzt damit.`, undoOpt); },
   transfer(){ transferSheet(); },
@@ -9013,7 +9031,7 @@ function sleepNight(x){
   if (ib != null && (ib > b || b - ib > 300)) ib = null;
   const waso = x.waso != null && x.waso !== '' ? +x.waso || 0 : null;
   const dur = Math.max(0, w - b - (waso || 0)), tib = ib != null ? w - ib : null;
-  return {b, w, dur, mid: b + (w - b) / 2, ib, tib, sol: ib != null ? b - ib : null, waso, se: tib ? Math.max(0, Math.min(100, Math.round(dur / tib * 100))) : null};
+  return {b, w, dur, mid: b + (w - b) / 2, ib, tib, solEst: !!x.bedRaw && (x.lat == null || x.lat === ''), sol: ib != null ? b - ib : null, waso, se: tib ? Math.max(0, Math.min(100, Math.round(dur / tib * 100))) : null};
 }
 const sAvg = a => a.length ? a.reduce((p, c) => p + c, 0) / a.length : null;
 const sMed = a => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), k = s.length >> 1; return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2; };
@@ -9031,7 +9049,7 @@ function sleepDeep(){
   const cur = all.filter(n => n.date >= since(7)), prev = all.filter(n => n.date >= since(14) && n.date < since(7));
   out.trend = cur.length >= 3 && prev.length >= 3 ? {dur: sAvg(cur.map(n => n.dur)) - sAvg(prev.map(n => n.dur)), on: sAvg(cur.map(n => n.b)) - sAvg(prev.map(n => n.b)), q: (sAvg(cur.filter(n => n.q).map(n => n.q)) ?? 0) - (sAvg(prev.filter(n => n.q).map(n => n.q)) ?? 0)} : null;
   /* Effizienz, Einschlafdauer, nächtliches Wachsein */
-  const seA = base.filter(n => n.se != null), solA = base.filter(n => n.sol != null), wasoA = base.filter(n => n.waso != null);
+  const seA = base.filter(n => n.se != null), solA = base.filter(n => n.sol != null && !n.solEst), wasoA = base.filter(n => n.waso != null);
   out.se = seA.length >= 3 ? Math.round(sAvg(seA.map(n => n.se))) : null; out.seN = seA.length;
   out.sol = solA.length >= 3 ? sAvg(solA.map(n => n.sol)) : null;
   out.waso = wasoA.length >= 3 ? sAvg(wasoA.map(n => n.waso)) : null;
@@ -9219,8 +9237,77 @@ function sleepDurChart(st){
   g += `<line class="need" x1="${left}" y1="${Y(st.need)}" x2="${W}" y2="${Y(st.need)}"/><text x="${W - 2}" y="${Y(st.need) - 6}" text-anchor="end" font-size="${fs}">Bedarf ${fmtH(st.need)}</text>`;
   return `<svg class="sl-chart" font-size="${fs}" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Schlafdauer pro Nacht">${g}</svg>`;
 }
+/* ================================================================
+   §S3 NACHT VOM HANDY ERKENNEN (v36, nur Android-App)
+   Android merkt sich einige Tage lang, wann der Bildschirm an war und
+   wann entsperrt wurde. Die längste Pause in der Nacht ist die Schlaf-
+   phase: Handy weg = ins Bett (Einschlafzeit aus den Einstellungen
+   kommt dazu), erste echte Nutzung am Morgen = aufgewacht.
+   Kurze Blicke aufs Handy mitten in der Nacht teilen die Nacht nicht,
+   sie zählen als Wachzeit. Bildschirm kurz an durch eine Mitteilung
+   (nicht entsperrt, keine App, unter 45 s) zählt nicht als Nutzung.
+   Alles bleibt auf dem Gerät.
+   ================================================================ */
+const SleepAuto = {
+  _t: 0,
+  avail(){ return Native.has('sleep'); },
+  ok(){ try { return !!window.KalNative.usageOk(); } catch { return false; } },
+  on(){ return this.avail() && state.settings.sleep.on !== false && state.settings.sleep.detect !== false && this.ok(); },
+  events(from, to){ try { const a = JSON.parse(window.KalNative.screenEvents(+from, +to) || '[]'); return Array.isArray(a) ? a.sort((x, y) => x[0] - y[0]) : []; } catch { return []; } },
+  /* Nutzungsabschnitte [an, aus] */
+  uses(ev, now = Date.now()){
+    const out = []; let on = null, real = false;
+    for (const [t, k] of ev) {
+      if (k === 1) { if (on == null) { on = t; real = false; } }
+      else if (k === 2 || k === 4) { if (on == null) on = t; real = true; }
+      else if (k === 0) { if (on != null) { if (real || t - on > 45000) out.push([on, t]); on = null; real = false; } }
+    }
+    if (on != null && (real || now - on > 45000)) out.push([on, now]);
+    return out;
+  },
+  /* Die Nacht vor dem Morgen `date` */
+  night(date, now = Date.now()){
+    const d = parseYMD(date), from = +at(ymd(addDays(d, -1)), '18:00'), to = Math.min(+at(date, '14:00'), now);
+    if (to - from < 6 * 3600000) return null;
+    const U = this.uses(this.events(from - 2 * 3600000, to), now).filter(u => u[1] > from - 3600000 && u[0] < to + 1);
+    if (U.length < 2) return null;
+    const sp = sleepPlan()[date], bedRef = sp ? +sp.bed : +at(ymd(addDays(d, -1)), '23:00'), wakeRef = sp ? +sp.wake : +at(date, '07:30');
+    /* längste Pause, deren Mitte zwischen 21 und 12 Uhr liegt */
+    const lo = +at(ymd(addDays(d, -1)), '21:00'), hi = +at(date, '12:00');
+    let best = -1, bl = 0;
+    for (let i = 0; i < U.length - 1; i++) { const a = U[i][1], b = U[i + 1][0], mid = (a + b) / 2, L = b - a; if (L >= 3 * 3600000 && mid >= lo && mid <= hi && L > bl) { bl = L; best = i; } }
+    if (best < 0) return null;
+    let i0 = best, i1 = best + 1, waso = 0;
+    /* kurze Blicke zusammenfassen: Nutzung ≤ 10 min mit langer Pause daneben (vorher ≥ 60 min, danach ≥ 45 min), nicht kurz vor dem üblichen Aufstehen */
+    while (i0 > 0) { const u = U[i0], gap = u[0] - U[i0 - 1][1]; if (u[1] - u[0] <= 10 * 60000 && gap >= 60 * 60000 && U[i0 - 1][1] >= bedRef - 90 * 60000) { waso += u[1] - u[0] + 10 * 60000; i0--; } else break; }
+    while (i1 < U.length - 1) { const u = U[i1], gap = U[i1 + 1][0] - u[1]; if (u[1] - u[0] <= 10 * 60000 && gap >= 45 * 60000 && u[0] < wakeRef - 75 * 60000 && U[i1 + 1][0] <= wakeRef + 3 * 3600000) { waso += u[1] - u[0] + 10 * 60000; i1++; } else break; }
+    const off = new Date(U[i0][1]), onT = new Date(U[i1][0]), len = (onT - off) / 60000;
+    if (len < 180 || len > 16 * 60) return null;
+    return {bed: hm(off), wake: hm(onT), waso: Math.round(waso / 60000 / 5) * 5, wakes: i1 - i0 - 1, off: +off, on: +onT};
+  },
+  run(force){
+    if (!this.on()) return 0;
+    if (!force && Date.now() - this._t < 2 * 60000) return 0; this._t = Date.now();
+    const t0 = startOfDay(new Date()); let n = 0; state.sleepLog = state.sleepLog || [];
+    for (let k = 6; k >= 0; k--) {
+      const date = ymd(addDays(t0, -k)), ex = state.sleepLog.find(x => x.date === date);
+      if (ex && !ex.ex && !ex.auto) continue;
+      let r; try { r = this.night(date); } catch { r = null; }
+      if (!r) continue;
+      if (k === 0) { const sp = sleepPlan()[date], wr = sp ? +sp.wake : +at(date, '07:30'); if (Date.now() < r.on + 20 * 60000 || r.on < wr - 150 * 60000) continue; }
+      const o = {bed: r.bed, wake: r.wake, bedRaw: true, waso: r.waso, wakes: r.wakes, src: 'handy', auto: true};
+      if (ex && !ex.ex) { if (ex.bed === o.bed && ex.wake === o.wake && ex.waso === o.waso) continue; Object.assign(ex, o); }
+      else { if (ex) state.sleepLog.splice(state.sleepLog.indexOf(ex), 1); state.sleepLog.push({id: uid(), date, q: 0, tags: [], ...o}); }
+      n++;
+    }
+    if (n) { state.sleepLog.sort((a, b) => a.date.localeCompare(b.date)); commit(); }
+    return n;
+  }
+};
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
+  const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
+  if (au && now.getHours() < 15) { const n = sleepNight(au); return `<div class="notice morning" style="cursor:default">${ic('schlaf')}<span><b>Erkannt: etwa ${fmtH(n.dur)} Schlaf.</b> Handy weg um ${au.bed}, wieder in der Hand um ${au.wake}${au.wakes ? `, ${au.wakes}× kurz drauf geschaut` : ''}. Wie erholt bist du?</span><span class="acts sq">${[1,2,3,4,5].map(v => `<button class="btn sm" data-act="sleepQuickQ" data-date="${k}" data-v="${v}" aria-label="Erholung ${v} von 5">${v}</button>`).join('')}<button class="btn sm ghost" data-act="sleepLog" data-date="${k}">Ändern</button></span></div>`; }
   if (!sp || (state.sleepLog || []).some(x => x.date === k && !x.ex) || now < addMin(sp.wake, -60) || now.getHours() >= 15) return '';
   return `<div class="notice morning" style="cursor:default">${ic('schlaf')}<span><b>Wie war die Nacht?</b> Geplant ${hm(sp.bed)} bis ${hm(sp.wake)}. Ein Tipp genügt, die Analyse wird damit genauer.</span><span class="acts"><button class="btn sm primary" data-act="sleepAsPlanned" data-date="${k}">Wie geplant</button><button class="btn sm" data-act="sleepLog" data-date="${k}">Anders eintragen</button></span></div>`;
 }
@@ -10750,6 +10837,7 @@ function init(){
   setInterval(() => Reminders.check(), 20000);
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
+  if (Native.has('sleep')) { setTimeout(() => SleepAuto.run(true), 2500); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => SleepAuto.run(), 600); }); }
   if (Native.on()) { setTimeout(() => Native.sync(true), 1500); setInterval(() => Native.sync(), 5 * 60000); document.addEventListener('visibilitychange', () => { if (document.hidden) Native.sync(); }); }
   setInterval(() => document.querySelectorAll('[data-ago]').forEach(e => { const a = Math.max(0, Math.round((Date.now() - +e.dataset.ago) / 60000)); e.textContent = a ? `vor ${a} min aktualisiert` : 'gerade aktualisiert'; }), 15000);
   if (STANDALONE) { setTimeout(() => Transit.refresh(), 2500); setInterval(() => { if (!document.hidden) Transit.refresh(); }, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Transit.refresh(); }); }
