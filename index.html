@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 17  ·  persönlicher Kalender für alles
+ KALENDARIUM 18  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1245,6 +1245,68 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 .tleg .tx small{display:block;color:var(--muted);font-size:12.5px}
 .tleg.x .tx,.tleg.x .tm{opacity:.55;text-decoration:line-through}
 .trip-alt{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px}
+
+/* ===== Schlafanalyse ===== */
+.sl-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s3) var(--s4);align-items:center;margin-bottom:var(--s4)}
+.sl-score{position:relative;width:132px;height:132px}
+.sl-score svg{width:132px;height:132px;transform:rotate(-90deg)}
+.sl-score .bg{fill:none;stroke:var(--line);stroke-width:9}
+.sl-score .fg{fill:none;stroke:var(--sleep);stroke-width:9;stroke-linecap:round;transition:stroke-dasharray 1s var(--ease)}
+.sl-score .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sl-score .num b{font-family:var(--f-display);font-size:44px;font-weight:300;line-height:1}
+.sl-score .num small{font-size:12.5px;color:var(--muted)}
+.sl-parts{display:flex;flex-direction:column;gap:9px;min-width:0}
+.sl-part{display:grid;grid-template-columns:minmax(130px,170px) minmax(0,1fr) 36px;gap:10px;align-items:center;font-size:14px}
+.sl-part i{height:6px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.sl-part i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--v);background:var(--pc, var(--sleep));border-radius:3px}
+.sl-part b{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.sl-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s3);margin:0 0 var(--s4);padding:var(--s3) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sl-kpi{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sl-kpi small{font-size:12.5px;color:var(--muted)}
+.sl-kpi b{font-family:var(--f-display);font-size:28px;font-weight:400;line-height:1.1;font-variant-numeric:tabular-nums}
+.sl-kpi span{font-size:12.5px;color:var(--muted)}
+.sl-kpi span.bad{color:var(--danger)} .sl-kpi span.good{color:var(--ok)}
+.sl-chart{width:100%;height:auto;display:block}
+.sl-chart text{fill:var(--muted);font-family:var(--f-body)}
+.sl-chart .grid{stroke:var(--line);stroke-width:1}
+.sl-chart .plan{fill:none;stroke:color-mix(in oklab, var(--sleep) 55%, transparent);stroke-width:1.2;stroke-dasharray:3 3}
+.sl-chart .act{fill:var(--sleep)}
+.sl-chart .mid{fill:var(--paper);stroke:var(--sleep);stroke-width:1.5}
+.sl-chart .we{fill:color-mix(in oklab, var(--sleep) 7%, transparent)}
+.sl-chart .need{stroke:var(--ink);stroke-width:1;stroke-dasharray:4 4;opacity:.55}
+.sl-chart .bar{fill:color-mix(in oklab, var(--sleep) 70%, transparent)}
+.sl-chart .bar.short{fill:color-mix(in oklab, var(--danger) 60%, transparent)}
+.sl-chart .fut{fill:none;stroke:color-mix(in oklab, var(--sleep) 60%, transparent);stroke-width:1.2;stroke-dasharray:3 3}
+.sl-sec{margin:var(--s4) 0 var(--s2);display:flex;align-items:baseline;justify-content:space-between;gap:8px 10px;flex-wrap:wrap}
+.sl-sec h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:var(--fs-l, 22px)}
+.sl-sec small{color:var(--muted);font-size:13px}
+.chrono{position:relative;height:34px;margin:6px 0 4px}
+.chrono .track{position:absolute;left:0;right:0;top:14px;height:6px;border-radius:3px;background:var(--line)}
+.chrono .track::before,.chrono .track::after{content:"";position:absolute;top:-4px;width:1px;height:14px;background:var(--faint)}
+.chrono .track::before{left:46%}.chrono .track::after{left:62%}
+.chrono .pin{background:var(--sleep)!important;width:12px!important;height:12px!important;border-radius:50%!important;top:11px!important;margin-left:-6px!important}
+.chrono .pin{position:absolute;top:6px;width:4px;height:22px;margin-left:-2px;border-radius:2px;background:var(--ink)}
+.chrono-l{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.sl-ins{display:flex;flex-direction:column}
+.sl-ins .it{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.sl-ins .it:first-child{border-top:1px solid var(--line)}
+.sl-ins .it svg{width:18px;height:18px;color:var(--sleep);margin-top:2px}
+.sl-ins .it.warn svg{color:var(--warn)} .sl-ins .it.good svg{color:var(--ok)}
+.sl-ins b{font-weight:600}
+.sl-ins small{display:block;color:var(--muted);font-size:13.5px;margin-top:2px;line-height:1.45}
+.sl-tags{display:grid;grid-template-columns:minmax(0,1fr) 120px 48px;gap:6px 12px;align-items:center;font-size:14px}
+.sl-tags i{height:6px;border-radius:3px;background:var(--line);position:relative}
+.sl-tags i::after{content:"";position:absolute;top:-3px;width:2px;height:12px;left:var(--z);background:var(--muted)}
+.sl-tags i em{position:absolute;top:0;height:6px;border-radius:3px;left:min(var(--z),var(--p));width:calc(max(var(--z),var(--p)) - min(var(--z),var(--p)));background:var(--pc)}
+.sl-tags b{text-align:right;font-variant-numeric:tabular-nums}
+.sl-log{display:flex;flex-direction:column}
+.sl-log button{display:grid;grid-template-columns:90px minmax(0,1fr) auto;gap:10px;align-items:center;border:0;background:none;text-align:left;padding:10px 2px;border-bottom:1px solid var(--line);color:var(--ink);font-size:14px}
+.sl-log button:hover{background:color-mix(in oklab, var(--ink) 3%, transparent)}
+.sl-log .q{display:flex;gap:3px}.sl-log .q i{width:7px;height:7px;border-radius:50%;background:var(--line)}.sl-log .q i.on{background:var(--sleep)}
+.seg.sq{display:flex;flex-wrap:wrap}.seg.sq button{flex:1}
+.morning{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}
+.morning .acts{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:860px){ .sl-sec .seg{flex-basis:100%;display:flex} .sl-sec .seg button{flex:1} .sl-head{grid-template-columns:1fr;justify-items:center} .sl-parts{width:100%} .sl-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .sl-tags{grid-template-columns:minmax(0,1fr) 80px 44px} }
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -1344,6 +1406,7 @@ const UI = {
   stift:'<path d="M15 5l4 4L8.5 19.5H4.5v-4z"/><path d="M13 7l4 4"/>',
   weg:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6.5a3.5 3.5 0 000-7h-5a3.5 3.5 0 010-7H16"/>',
   mond:'<path d="M19 14.5A7.5 7.5 0 019.5 5a7.5 7.5 0 109.5 9.5z"/>',
+  schlaf:'<path d="M17.5 14A6.5 6.5 0 019.5 6a6.5 6.5 0 108 8z"/><path d="M15 4.5h3.5L15 8h3.5"/>',
   sonne:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
   feiertag:'<path d="M12 3.5l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.8l5-.7z"/>',
   block:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 8h16M4 16h16" stroke-dasharray="2 2"/>',
@@ -1491,7 +1554,7 @@ function defaultState(){
       {id:'reisen', name:'Reisen', color:'#916A18', symbol:'flugzeug'},
       {id:'haushalt', name:'Haushalt & Erledigungen', color:'#A35C3A', symbol:'einkauf'}
     ],
-    events: [], courses: [], deadlines: [], todos: [], birthdays: [], links: [], habits: [], notes: {},
+    events: [], courses: [], deadlines: [], todos: [], birthdays: [], links: [], habits: [], notes: {}, sleepLog: [],
     places: [ {id:'home', name:'Zuhause', minutes:0, mode:'oepnv', home:true} ],
     templates: [
       {id:'t-uni', name:'Uni-Block', dur:90, bb:15, ba:15, catId:'uni', placeId:''},
@@ -1560,6 +1623,14 @@ function exampleState(){
     {id:uid(), label:'MOSES', url:'https://moseskonto.tu-berlin.de', group:'uni', symbol:'hexagon', ex:true},
     {id:uid(), label:'Discord', url:'https://discord.com/app', group:'discord', symbol:'sprechblase', ex:true}
   ];
+  /* Beispiel-Schlafprotokoll: 16 Nächte */
+  s.sleepLog = Array.from({length:16}, (_, k) => {
+    const w = addDays(t, -k), we = isoDow(w) >= 6, j = ((k * 37) % 11) - 5;
+    const bed = we ? 60 + j * 6 : (k % 5 === 2 ? 45 : -25) + j * 5, wake = we ? 9*60 + 40 + j * 8 : 7*60 + 15 + (k % 3) * 10;
+    const tags = [k % 4 === 1 ? 'koffein' : '', k % 5 === 2 ? 'bildschirm' : '', k % 3 === 0 ? 'sport' : ''].filter(Boolean);
+    const q = Math.max(1, Math.min(5, 4 - (tags.includes('koffein') ? 1 : 0) - (tags.includes('bildschirm') ? 1 : 0) + (tags.includes('sport') ? 1 : 0) + (we ? 0 : (k % 2 ? 0 : -1)) + 0));
+    return {id: 'sl' + k, date: ymd(w), bed: toHM(bed), wake: toHM(wake), q, tags, ex: true};
+  }).filter(x => x.date < ymd(addDays(t, 1)));
   return s;
 }
 function migrate(s){
@@ -1574,7 +1645,7 @@ function migrate(s){
     style:{...base.settings.style, ...(ss.style||{})}};
   if (old) { s.settings.accent = base.settings.accent; if (s.settings.dayEnd < 23) s.settings.dayEnd = 23; }
   if (!Array.isArray(s.settings.weather.cities) || !s.settings.weather.cities.length) s.settings.weather.cities = base.settings.weather.cities;
-  for (const k of ['categories','events','courses','deadlines','todos','birthdays','links','places','templates','habits']) if (!Array.isArray(s[k])) s[k] = base[k] || [];
+  for (const k of ['categories','events','courses','deadlines','todos','birthdays','links','places','templates','habits','sleepLog']) if (!Array.isArray(s[k])) s[k] = base[k] || [];
   if (!s.notes || typeof s.notes !== 'object' || Array.isArray(s.notes)) s.notes = {};
   s.settings.layers = {courses:true, work:true, travel:true, ...(s.settings.layers||{})};
   if (!s.places.some(p => p.home)) s.places.unshift({id:'home', name:'Zuhause', minutes:0, mode:'oepnv', home:true});
@@ -1593,7 +1664,7 @@ function migrate(s){
 /* ================================================================
    §7 SPEICHER  (privat: data/users/<id>/<abschnitt>)
    ================================================================ */
-const SECTIONS = ['settings','categories','events','courses','deadlines','todos','birthdays','places','templates','links','semester','habits','notes'];
+const SECTIONS = ['settings','categories','events','courses','deadlines','todos','birthdays','places','templates','links','semester','habits','notes','sleepLog'];
 const LS_KEY = 'kalendarium.v1';
 const Store = {
   db:null, uid:null, mode:'local', hashes:{}, timer:null, writing:false, pending:false, fromExample:false,
@@ -2400,7 +2471,7 @@ function parseQuick(text){
 let state = null;
 const ui = { view:'kalender', mode:'woche', cursor:startOfDay(new Date()), fcat:'all', showDone:false, search:'', _sf:false, chat:[], _chatFocus:false, peek:'', miniOff:0, _cmd:[], _cmdSel:0 };
 const NAV = [
-  {id:'kalender', label:'Kalender'}, {id:'aufgaben', label:'Fristen & To-dos'}, {id:'stundenplan', label:'Stundenplan'}, {id:'wetter', label:'Wetter'},
+  {id:'kalender', label:'Kalender'}, {id:'aufgaben', label:'Fristen & To-dos'}, {id:'stundenplan', label:'Stundenplan'}, {id:'schlaf', label:'Schlaf'}, {id:'wetter', label:'Wetter'},
   {sep:true}, {id:'links', label:'Links'}, {id:'einstellungen', label:'Einstellungen'}
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
@@ -2442,6 +2513,7 @@ function renderTop(){
   if (v === 'stundenplan') sub = '';
   if (v === 'links') sub = `${state.links.length} Links`;
   if (v === 'einstellungen') sub = 'Stil, Wetter, Orte, Schlaf, Erinnerungen, Daten';
+  if (v === 'schlaf') sub = 'Analyse der letzten Nächte und Plan';
   document.getElementById('top').innerHTML = `
     <div><h1>${title}</h1>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>
     ${modes}
@@ -2633,6 +2705,41 @@ const VIEWS = {
     const mid = weekHero(days) + layersBar() + (short ? `<div class="notices">${short}</div>` : '') + weekGrid(days) + weekReview(days);
     if (!isWide()) return mid;
     return `<div class="wide3"><aside class="w-left" aria-label="Monatsübersicht">${miniMonth()}${sideUpcoming()}</aside><div class="w-mid">${mid}</div><aside class="w-right" aria-label="Ausgewählter Tag">${dayPeek(days)}</aside></div>`;
+  },
+
+  /* ---------- SCHLAF ---------- */
+  schlaf(){
+    const days = ui.sleepRange || 14, st = sleepStats(days), ins = sleepInsights(st), P = sleepPlan(), t0 = startOfDay(new Date()), tonight = P[ymd(addDays(t0, 1))];
+    const short = st.durAvg != null ? st.need - st.durAvg : null;
+    const lead = st.N >= 3
+      ? `<p class="lead">In den letzten ${days} Nächten hast du im Schnitt <b>${fmtH(st.durAvg)}</b> geschlafen${short > 15 ? `, <b class="hot">${dur(Math.round(short))} unter Bedarf</b>` : short < -15 ? ', etwas mehr als geplant' : ', genau im Bedarf'}.${tonight ? ` Heute Nacht: ins Bett um <button class="ln" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">${hm(tonight.bed)}</button>, Wecker ${hm(tonight.wake)}.` : ''}</p>`
+      : `<p class="lead">Noch keine Analyse. ${tonight ? `Heute Nacht: ins Bett um <button class="ln" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">${hm(tonight.bed)}</button>, Wecker ${hm(tonight.wake)}.` : ''}</p>`;
+    const kpi = (lbl, val, sub, cls = '') => `<div class="sl-kpi"><small>${lbl}</small><b>${val}</b><span class="${cls}">${sub}</span></div>`;
+    const range = `<div class="seg" role="group" aria-label="Zeitraum">${[[7,'7 Nächte'],[14,'14 Nächte'],[30,'30 Nächte']].map(([v,l]) => `<button data-act="sleepRange" data-v="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div>`;
+    const tags = st.tagFx.length ? `<div class="sl-sec"><h2>Einflüsse auf die Erholung</h2><small>Erholung mit / ohne, Skala 1–5</small></div><div class="sl-tags">${st.tagFx.map(f => { const dq = f.with - f.without; return `<span>${esc(f.l)} <small class="faint">(${f.n}×)</small></span><i style="--z:${(f.without - 1) / 4 * 100}%;--p:${(f.with - 1) / 4 * 100}%;--pc:${dq < 0 ? 'var(--danger)' : 'var(--ok)'}"><em></em></i><b style="color:${dq < 0 ? 'var(--danger)' : 'var(--ok)'}">${dq > 0 ? '+' : ''}${dq.toFixed(1).replace('.', ',')}</b>`; }).join('')}</div>` : '';
+    const chrono = st.msfsc != null ? `<div class="sl-sec"><h2>Chronotyp</h2><small>nach MCTQ, Schlafmitte an freien Tagen</small></div>
+      <div class="chrono"><span class="track"></span><span class="pin" style="left:${Math.max(0, Math.min(100, (((st.msfsc + 720) % 1440) / 60 - 1.5) / 6.5 * 100))}%"></span></div>
+      <div class="chrono-l"><span>Früh 01:30</span><span><b style="color:var(--ink)">${chronoLabel(st.msfsc)}</b> · Mitte ${fmtMid(st.msfsc)}</span><span>Spät 08:00</span></div>` : '';
+    const log = (state.sleepLog || []).slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10).map(x => { const n = sleepNight(x); return `<button data-act="sleepLog" data-date="${x.date}"><span>${esc(fmtShort(parseYMD(x.date)))}</span><span>${x.bed} – ${x.wake} · ${fmtH(n.dur)}${(x.tags || []).length ? ` <small class="faint">${x.tags.map(t => (SLEEP_TAGS.find(z => z[0] === t) || [, t])[1]).join(', ')}</small>` : ''}</span><span class="q">${[1,2,3,4,5].map(i => `<i class="${i <= x.q ? 'on' : ''}"></i>`).join('')}</span></button>`; }).join('');
+    return `${lead}
+      <section class="sl-head">${sleepScoreRing(st.score)}<div class="sl-parts">${st.parts.length ? st.parts.map(p => `<div class="sl-part"><span>${p.l}</span><i style="--v:${p.v}%;--pc:${p.v < 50 ? 'var(--danger)' : p.v < 75 ? 'var(--warn)' : 'var(--sleep)'}"></i><b>${p.v}</b></div>`).join('') : '<p class="muted" style="margin:0">Der Schlafwert entsteht aus Dauer, Regelmäßigkeit, Wochenend-Rhythmus, Erholung und Plantreue, sobald ein paar Nächte eingetragen sind.</p>'}</div></section>
+      <div class="sl-kpis">
+        ${kpi('Ø Schlaf', st.durAvg != null ? fmtH(st.durAvg) : '–', short != null ? (short > 15 ? `${dur(Math.round(short))} zu wenig` : short < -15 ? `${dur(Math.round(-short))} mehr` : 'im Bedarf') : `Bedarf ${fmtH(st.need)}`, short > 15 ? 'bad' : short != null ? 'good' : '')}
+        ${kpi('Schlafschuld 7 Nächte', st.N ? fmtH(Math.max(0, st.debtNow)) : '–', st.debtNow > 120 ? 'langsam abbauen' : 'unkritisch', st.debtNow > 120 ? 'bad' : 'good')}
+        ${kpi('Regelmäßigkeit', st.sri != null ? `SRI ${st.sri}` : st.sdBed != null ? `±${Math.round(st.sdBed)} min` : '–', st.sri != null ? (st.sri >= 80 ? 'sehr regelmäßig' : st.sri >= 70 ? 'regelmäßig' : 'unregelmäßig') : 'Schwankung Bettzeit', st.sri != null && st.sri < 70 ? 'bad' : 'good')}
+        ${kpi('Sozialer Jetlag', st.sjl != null ? fmtH(st.sjl) : '–', st.sjl != null ? (st.sjl > 120 ? 'hoch' : st.sjl > 60 ? 'mittel' : 'gering') : 'braucht Werk- und freie Tage', st.sjl > 120 ? 'bad' : st.sjl != null && st.sjl <= 60 ? 'good' : '')}
+      </div>
+      <div class="sl-sec"><h2>Was auffällt</h2>${range}</div>
+      <div class="sl-ins">${ins.map(x => `<div class="it ${x.lvl}">${ic(x.icon)}<div><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div></div>`).join('')}</div>
+      <div class="sl-sec"><h2>Nächte</h2><small>Geschlafen gegen Plan, inklusive der nächsten beiden</small></div>
+      ${sleepNightsChart(st)}
+      <div class="sl-sec"><h2>Schlafdauer</h2><small>${days} Nächte, rot: mehr als 45 min unter Bedarf</small></div>
+      ${sleepDurChart(st)}
+      ${chrono}
+      ${tags}
+      <div class="sl-sec"><h2>Protokoll</h2><button class="btn sm primary" data-act="sleepLog" data-date="${ymd(t0)}">${ic('plus','s')}Nacht eintragen</button></div>
+      <div class="sl-log">${log || emptyArt('frei', 'Noch keine Nacht eingetragen.', 'Am besten morgens kurz nach dem Aufstehen.')}</div>
+      <p class="note" style="margin-top:var(--s3)">Methoden: Sleep Regularity Index nach Phillips et al. (2017), Chronotyp und sozialer Jetlag nach dem Munich ChronoType Questionnaire (Roenneberg). Die Werte beruhen auf deinen Einträgen und ersetzen keine ärztliche Untersuchung.</p>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -2949,6 +3056,7 @@ function dayDashboard(d){
   occurrences(d, addDays(d, today ? 8 : 1)).filter(o => o.kind === 'birthday').forEach(b => { const n = Math.round((startOfDay(b.start) - t0)/86400000); notes.push(`<button class="notice" data-act="detail" data-kind="birthday" data-id="${b.id}" data-date="${ymd(b.start)}">${ic('geschenk')}<span><b>${n===0?'Heute':n===1?'Morgen':n>1?'In '+n+' Tagen':fmtShort(b.start)}: ${esc(b.ref.name)}</b>${b.age?` wird ${b.age}`:''}</span></button>`); });
   plan.warnings.forEach(x => notes.push(`<div class="notice warn">${ic('weg')}<span>${esc(x)}</span></div>`));
   if (bed && bed.short) notes.push(`<button class="notice warn" data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('mond')}<span><b>Kurze Nacht:</b> Nach ${esc(bed.late.title)} bleiben nur ${dur(bed.sleepMin)} Schlaf.</span></button>`);
+  if (today && s.sleep.on) { const mc = sleepMorningCard(d); if (mc) notes.unshift(mc); }
   if (today) planDay(addDays(d,1)).warnings.forEach(x => notes.push(`<div class="notice warn">${ic('weg')}<span><b>Morgen:</b> ${esc(x)}</span></div>`));
   if (today && isoDow(d) === 7) notes.push(`<button class="notice" data-act="mode" data-v="woche">${ic('woche')}<span><b>Sonntag:</b> Dein Wochenrückblick ist fertig.</span></button>`);
   const wk = workFor(d); if (wk.length) notes.push(`<div class="notice" style="cursor:default">${ic('aufgaben')}<span><b>${dur(wk.reduce((a,w) => a + (w.end-w.start)/60000, 0))} Arbeitszeit eingeplant:</b> ${[...new Set(wk.map(w => w.ref.title))].map(esc).join(', ')}</span></div>`);
@@ -3542,6 +3650,19 @@ function remChips(name, selected){ const sel = new Set(selected||[]); return `<d
 function symPicker(name, current){ return `<div class="symgrid">${Object.keys(SYM).map(k => `<label title="${k}"><input type="radio" name="${name}" value="${k}" ${k===current?'checked':''}>${sy(k,'i')}</label>`).join('')}</div>`; }
 const foot = canDel => `<div class="sheet-foot">${canDel ? `<button type="button" class="btn sm danger" data-act="deleteItem">Löschen</button>` : ''}<div class="r"><button type="button" class="btn" data-act="closeSheet">Abbrechen</button><button type="submit" class="btn primary">Speichern</button></div></div>`;
 const EDITORS = {
+  sleepEntry(date){
+    const ex = (state.sleepLog || []).find(x => x.date === date), sp = sleepPlan()[date] || null;
+    const e = ex || {date, bed: sp ? hm(sp.bed) : '23:30', wake: sp ? hm(sp.wake) : '07:30', q: 0, tags: [], note: ''};
+    const qs = [[1,'Schlecht'],[2,'Unruhig'],[3,'Okay'],[4,'Gut'],[5,'Sehr gut']];
+    openSheet(`${head('Wie war die Nacht?')}<form class="form" data-form="sleepEntry">
+      <p class="muted" style="margin:0">${esc(fmtWD(addDays(parseYMD(date), -1)))} auf ${esc(fmtWD(parseYMD(date)))}, ${esc(fmtDM(parseYMD(date)))}${sp ? ` · geplant ${hm(sp.bed)} bis ${hm(sp.wake)}` : ''}</p>
+      <div class="frow"><label class="f"><span>Eingeschlafen etwa</span><input type="time" name="bed" required value="${esc(e.bed)}"></label><label class="f"><span>Aufgewacht</span><input type="time" name="wake" required value="${esc(e.wake)}"></label></div>
+      <label class="f"><span>Datum (Morgen)</span><input type="date" name="date" required value="${esc(date)}"></label>
+      <div class="f"><span>Wie erholt fühlst du dich?</span><input type="hidden" name="q" value="${+e.q || 0}"><div class="seg sq">${qs.map(([v,l]) => `<button type="button" data-act="sleepQ" data-v="${v}" aria-pressed="${+e.q === v}">${l}</button>`).join('')}</div></div>
+      <div class="f"><span>Was war los? (optional)</span><div class="remchips">${SLEEP_TAGS.map(([k,l]) => `<label><input type="checkbox" name="tags" value="${k}" ${(e.tags||[]).includes(k)?'checked':''}><span>${l}</span></label>`).join('')}</div></div>
+      <label class="f"><span>Notiz</span><input name="note" value="${esc(e.note || '')}" placeholder="z. B. zweimal aufgewacht"></label>
+      ${foot(false)}</form>`, {kind:'sleep', id: ex ? ex.id : null});
+  },
   event(e, opts = {}){
     const isNew = !e;
     e = e || { title:'', catId:'privat', placeId:'', date: opts.date || ymd(new Date()), allDay:false, start: opts.start || '10:00', end: opts.end || '11:00', bufferBefore:0, bufferAfter:0, location:'', notes:'', link:'', repeat:{freq:'none', interval:1, until:''}, reminders:null, ...(opts.prefill||{}) };
@@ -3690,7 +3811,7 @@ const EDITORS = {
       <button data-act="newLink">${ic('links')}<span><b>Link</b><small>Uni-Portal, Discord oder Website</small></span></button>
     </div>`);
   },
-  more(){ openSheet(`${head('Mehr')}<div class="menu">${['links','einstellungen'].map(id => `<button data-act="go" data-v="${id}">${ic(id)}<span><b>${NAV.find(n=>n.id===id).label}</b></span></button>`).join('')}<button data-act="installApp">${ic('plus')}<span><b>Als App auf den Startbildschirm</b></span></button></div>`); },
+  more(){ openSheet(`${head('Mehr')}<div class="menu">${['schlaf','links','einstellungen'].map(id => `<button data-act="go" data-v="${id}">${ic(id)}<span><b>${NAV.find(n=>n.id===id).label}</b></span></button>`).join('')}<button data-act="installApp">${ic('plus')}<span><b>Als App auf den Startbildschirm</b></span></button></div>`); },
   importIcs(){
     openSheet(`${head('ICS importieren')}<div class="form">
       <p class="muted" style="margin:0">Exportiere deinen Stundenplan oder Kalender als .ics (zum Beispiel in MOSES oder im ISIS-Kalender) und wähle die Datei aus. Bereits importierte Einträge werden aktualisiert.</p>
@@ -3712,6 +3833,12 @@ function upsert(listKey, id, obj, defaults = {}){
   state[listKey].push({id:uid(), ...defaults, ...obj}); return true;
 }
 const SAVE = {
+  sleepEntry(form, fd){
+    const date = fd.get('date'), bed = fd.get('bed'), wake = fd.get('wake');
+    if (!/^\d\d:\d\d$/.test(bed) || !/^\d\d:\d\d$/.test(wake)) { toast('Uhrzeiten fehlen', ''); return; }
+    upsertSleep({date, bed, wake, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(fd.get('note') || '').trim()});
+    closeSheet(); toast('Nacht gespeichert', `${fmtShort(addDays(parseYMD(date), -1))} auf ${fmtShort(parseYMD(date))}`);
+  },
   onb(f, fd){
     const step = +f.dataset.step, s = state.settings;
     if (step === 1) s.name = String(fd.get('name') || '').trim().slice(0, 40);
@@ -3730,7 +3857,7 @@ const SAVE = {
       s.sleep.on = true; s.onboarded = true;
       const clear = hasExamples() && !fd.get('keepEx');
       if (clear) {
-        for (const k of ['events','courses','deadlines','todos','birthdays','links','places','habits']) state[k] = state[k].filter(x => !x.ex);
+        for (const k of ['events','courses','deadlines','todos','birthdays','links','places','habits','sleepLog']) state[k] = (state[k] || []).filter(x => !x.ex);
         state.categories.forEach(c => { if (c.placeId && !placeById(c.placeId)) c.placeId = ''; });
         if (state.semester.ex) state.semester = {name:'', start:'', end:'', breaks:[]};
       }
@@ -3850,6 +3977,14 @@ async function saveFile(filename, data){
 function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 const ACTIONS = {
+  sleepLog(el){ EDITORS.sleepEntry(el.dataset.date || ymd(new Date())); },
+  sleepAsPlanned(el){
+    const date = el.dataset.date, sp = sleepPlan()[date]; if (!sp) return;
+    upsertSleep({date, bed: hm(sp.bed), wake: hm(sp.wake), q: 0, tags: []}); haptic();
+    toast('Nacht eingetragen', `${hm(sp.bed)} bis ${hm(sp.wake)}, wie geplant. Bewertung kannst du noch ergänzen.`, undoOpt);
+  },
+  sleepQ(el){ const f = el.closest('form'); f.elements.q.value = el.dataset.v; f.querySelectorAll('[data-act=sleepQ]').forEach(b => b.setAttribute('aria-pressed', b === el)); },
+  sleepRange(el){ ui.sleepRange = +el.dataset.v; render(); },
   transfer(){ transferSheet(); },
   async transferCopy(){
     const inp = document.getElementById('xferLink'); if (!inp) return;
@@ -4073,7 +4208,7 @@ const ACTIONS = {
   importIcsText(){ const t = document.getElementById('icsText').value; if (!/BEGIN:VCALENDAR/.test(t)) { toast('Kein Kalenderinhalt erkannt', 'Der Text muss mit BEGIN:VCALENDAR beginnen.'); return; } const r = importICS(t); closeSheet(); toast('Import abgeschlossen', `${r.added} neu, ${r.updated} aktualisiert`); commit(); },
   clearExamples(){
     pushUndo();
-    for (const k of ['events','courses','deadlines','todos','birthdays','links','places','habits']) state[k] = state[k].filter(x => !x.ex);
+    for (const k of ['events','courses','deadlines','todos','birthdays','links','places','habits','sleepLog']) state[k] = (state[k] || []).filter(x => !x.ex);
     state.categories.forEach(c => { if (c.placeId && !placeById(c.placeId)) c.placeId = ''; });
     ['events','courses'].forEach(k => state[k].forEach(x => { if (x.placeId && !placeById(x.placeId)) x.placeId = ''; }));
     if (state.semester.ex) state.semester = {name:'', start:'', end:'', breaks:[]};
@@ -4233,6 +4368,132 @@ function showKeys(){
     ${row(['Enter'], 'Speichern')}
     ${row(['Esc'], 'Schließen')}
   </dl></div>`, {keys:true});
+}
+
+/* ================================================================
+   §16k SCHLAFANALYSE
+   Protokoll: jeden Morgen eine Zeile (eingeschlafen, aufgewacht,
+   Erholung 1–5, Einflüsse). Daraus nach anerkannten Kennzahlen:
+   · Schlafdauer gegen Bedarf, Schlafschuld (14 Nächte, gewichtet)
+   · Sleep Regularity Index (SRI, Phillips et al. 2017): Wahrscheinlichkeit,
+     zu einer Uhrzeit im selben Zustand zu sein wie 24 h vorher, −100…100
+   · Schlafmittelpunkt, Chronotyp MSFsc und sozialer Jetlag (MCTQ, Roenneberg)
+   · Planabweichung, Einflüsse auf die Erholung (nur ab 3 Nächten je Einfluss)
+   Ergebnis: Schlafwert 0–100 aus fünf gewichteten Teilen und konkrete Empfehlungen.
+   ================================================================ */
+const SLEEP_TAGS = [['koffein','Koffein nach 15 Uhr'],['bildschirm','Bildschirm im Bett'],['sport','Sport am Tag'],['spaet','Spät gegessen'],['alkohol','Alkohol'],['stress','Stress'],['nap','Mittagsschlaf'],['krank','Krank']];
+function upsertSleep(o){
+  state.sleepLog = state.sleepLog || []; pushUndo();
+  const ex = state.sleepLog.find(x => x.date === o.date);
+  if (ex) { Object.assign(ex, o); delete ex.ex; } else state.sleepLog.push({id: uid(), ...o});
+  state.sleepLog.sort((a, b) => a.date.localeCompare(b.date));
+  commit();
+}
+/* Eine Nacht als Intervall in Minuten relativ zu 12:00 des Vortags (0…1440) */
+function sleepNight(x){
+  const lat = +state.settings.sleep.latency || 0;
+  let b = minutesOf(x.bed), w = minutesOf(x.wake);
+  b = b >= 720 ? b - 720 : b + 720; w = w >= 720 ? w - 720 : w + 720;
+  if (w <= b) w += 1440;
+  const dur = Math.max(0, w - b - (x.bedRaw ? lat : 0));
+  return {b, w, dur, mid: b + (w - b) / 2};
+}
+const fmtMid = m => toHM((m + 720) % 1440);
+const fmtH = m => { const h = Math.floor(Math.abs(m) / 60), mm = Math.round(Math.abs(m) % 60); return `${m < 0 ? '−' : ''}${h} h${mm ? ' ' + String(mm).padStart(2, '0') : ''}`; };
+function sleepStats(days = 14){
+  const S = state.settings.sleep, need = (+S.hours || 8) * 60, t0 = startOfDay(new Date());
+  const from = ymd(addDays(t0, -days + 1)), log = (state.sleepLog || []).filter(x => x.date >= from && x.date <= ymd(t0)).sort((a, b) => a.date.localeCompare(b.date));
+  const nights = log.map(x => { const d = parseYMD(x.date), n = sleepNight(x), free = isoDow(d) >= 6 || isHoliday(d); return {...x, ...n, d, free}; });
+  const N = nights.length, avg = a => a.length ? a.reduce((p, c) => p + c, 0) / a.length : null;
+  const sd = a => { if (a.length < 2) return null; const m = avg(a); return Math.sqrt(avg(a.map(v => (v - m) ** 2))); };
+  const durAvg = avg(nights.map(n => n.dur));
+  /* Schlafschuld: jüngere Nächte zählen mehr */
+  let debt = 0, wsum = 0; nights.slice().reverse().forEach((n, k) => { const wgt = Math.pow(0.85, k); debt += (need - n.dur) * wgt; wsum += wgt; });
+  const debtNow = nights.slice(-7).reduce((p, n) => p + (need - n.dur), 0);
+  /* SRI über aufeinanderfolgende Tage, 5-min-Raster */
+  const asleep = n => { const a = new Uint8Array(288); for (let i = Math.max(0, Math.floor(n.b / 5)); i < Math.min(288, Math.ceil(n.w / 5)); i++) a[i] = 1; if (n.w > 1440) for (let i = 0; i < Math.ceil((n.w - 1440) / 5); i++) a[i] = a[i]; return a; };
+  let agree = 0, total = 0;
+  for (let k = 1; k < N; k++) { if (Math.round((nights[k].d - nights[k-1].d) / 86400000) !== 1) continue; const A = asleep(nights[k-1]), B = asleep(nights[k]); for (let i = 0; i < 288; i++) { total++; if (A[i] === B[i]) agree++; } }
+  const sri = total >= 288 * 3 ? Math.round(200 * agree / total - 100) : null;
+  const sdBed = sd(nights.map(n => n.b)), sdWake = sd(nights.map(n => n.w));
+  /* MCTQ: Schlafmitte an Arbeits- und freien Tagen */
+  const W = nights.filter(n => !n.free), F = nights.filter(n => n.free);
+  const msw = avg(W.map(n => n.mid)), msf = avg(F.map(n => n.mid)), sdw = avg(W.map(n => n.dur)), sdf = avg(F.map(n => n.dur));
+  const msfsc = msf != null ? (sdf != null && sdw != null && sdf > sdw ? msf - (sdf - sdw) / 2 : msf) : null;
+  const sjl = msw != null && msf != null ? Math.abs(msf - msw) : null;
+  /* Plan-Abweichung */
+  const P = sleepPlan(), dev = nights.map(n => { const p = P[n.date]; if (!p) return null; const pb = sleepNight({bed: hm(p.bed), wake: hm(p.wake)}); return n.b - pb.b; }).filter(v => v != null);
+  const devAbs = avg(dev.map(Math.abs)), devMean = avg(dev);
+  const rated = nights.filter(n => n.q > 0), qAvg = avg(rated.map(n => n.q));
+  /* Einflüsse */
+  const tagFx = SLEEP_TAGS.map(([k, l]) => { const w = rated.filter(n => (n.tags || []).includes(k)), wo = rated.filter(n => !(n.tags || []).includes(k)); return w.length >= 3 && wo.length >= 3 ? {k, l, n: w.length, with: avg(w.map(n => n.q)), without: avg(wo.map(n => n.q)), durWith: avg(w.map(n => n.dur)), durWithout: avg(wo.map(n => n.dur))} : null; }).filter(Boolean).sort((a, b) => (a.with - a.without) - (b.with - b.without));
+  /* Teilwerte und Gesamtwert */
+  const clamp100 = v => Math.max(0, Math.min(100, Math.round(v)));
+  const parts = [];
+  if (durAvg != null) { const short = need - durAvg; parts.push({k:'dur', l:'Dauer', w:35, v: clamp100(short > 0 ? 100 - short * 0.9 : 100 - Math.max(0, -short - 90) * 0.5)}); }
+  if (sri != null) parts.push({k:'reg', l:'Regelmäßigkeit', w:25, v: clamp100((sri - 40) / 50 * 100)});
+  else if (sdBed != null) parts.push({k:'reg', l:'Regelmäßigkeit', w:25, v: clamp100(100 - ((sdBed + sdWake) / 2 - 15) * 1.4)});
+  if (sjl != null) parts.push({k:'jet', l:'Rhythmus Wochenende', w:15, v: clamp100(100 - Math.max(0, sjl - 30) * 0.75)});
+  if (qAvg != null) parts.push({k:'q', l:'Erholung', w:15, v: clamp100((qAvg - 1) / 4 * 100)});
+  if (devAbs != null) parts.push({k:'plan', l:'Plan eingehalten', w:10, v: clamp100(100 - Math.max(0, devAbs - 15) * 1.1)});
+  const wt = parts.reduce((p, c) => p + c.w, 0), score = wt ? Math.round(parts.reduce((p, c) => p + c.v * c.w, 0) / wt) : null;
+  return {need, N, nights, durAvg, debt: wsum ? debt / wsum * Math.min(N, 7) / 1 : 0, debtNow, sri, sdBed, sdWake, msw, msf, msfsc, sjl, sdw, sdf, devAbs, devMean, qAvg, tagFx, parts, score, days};
+}
+function chronoLabel(m){ const h = (m + 720) % 1440 / 60; return h < 2.5 ? 'Sehr früher Typ' : h < 3.5 ? 'Früher Typ' : h < 4.5 ? 'Mitteltyp, eher früh' : h < 5.5 ? 'Mitteltyp, eher spät' : h < 6.5 ? 'Später Typ' : 'Sehr später Typ'; }
+function sleepInsights(st){
+  const out = [], add = (lvl, icon, t, sub) => out.push({lvl, icon, t, sub});
+  if (st.N < 3) { add('', 'schlaf', 'Noch zu wenig Nächte für eine Analyse', 'Trag ein paar Morgen lang ein, wann du eingeschlafen und aufgewacht bist. Ab 3 Nächten gibt es erste Werte, ab 7 Nächten eine belastbare Analyse.'); return out; }
+  const short = st.need - st.durAvg;
+  if (short > 30) add('warn', 'uhr', `Dir fehlen im Schnitt ${dur(Math.round(short))} pro Nacht`, `Über die letzte Woche summiert sich das auf ${fmtH(Math.max(0, st.debtNow))}. Geh die nächsten Abende jeweils 15 bis 20 min früher ins Bett, statt am Wochenende lange zu schlafen. Das hält den Rhythmus stabil.`);
+  else if (short < -75) add('', 'uhr', `Du schläfst im Schnitt ${dur(Math.round(-short))} mehr als geplant`, 'Wenn du dich trotzdem nicht erholt fühlst, liegt es eher an Regelmäßigkeit oder Einflüssen als an der Dauer.');
+  else add('good', 'haken', 'Deine Schlafdauer passt', `Im Schnitt ${fmtH(st.durAvg)} bei ${fmtH(st.need)} Bedarf.`);
+  if (st.sri != null) {
+    if (st.sri < 70) add('warn', 'wdh', `Unregelmäßiger Rhythmus (SRI ${st.sri})`, `Dein Schlafbeginn schwankt um etwa ±${Math.round(st.sdBed || 0)} min. Eine feste Aufstehzeit, auch am Wochenende, stabilisiert die innere Uhr am stärksten. Werte über 80 gelten als sehr regelmäßig.`);
+    else add('good', 'wdh', `Regelmäßiger Rhythmus (SRI ${st.sri})`, 'Du schläfst an aufeinanderfolgenden Tagen meist zu ähnlichen Zeiten. Das ist einer der stärksten Faktoren für erholsamen Schlaf.');
+  }
+  if (st.sjl != null && st.sjl > 60) add(st.sjl > 105 ? 'warn' : '', 'flugzeug', `Sozialer Jetlag von ${fmtH(st.sjl)}`, `Am Wochenende liegt deine Schlafmitte bei ${fmtMid(st.msf)}, unter der Woche bei ${fmtMid(st.msw)}. Das wirkt wie eine wöchentliche Zeitverschiebung. Am Wochenende höchstens 1 h später aufstehen.`);
+  if (st.devMean != null && st.devAbs > 30) add('', 'kalender', `Du gehst im Schnitt ${dur(Math.round(Math.abs(st.devMean)))} ${st.devMean > 0 ? 'später' : 'früher'} schlafen als geplant`, st.devMean > 0 ? 'Die Erinnerung vor der Schlafenszeit hilft. Stell sie in den Einstellungen auf 45 bis 60 min, damit Zeit zum Abschalten bleibt.' : 'Wenn du regelmäßig früher müde bist, stell den Rhythmus etwas früher.');
+  for (const f of st.tagFx.slice(0, 3)) { const dq = f.with - f.without; if (Math.abs(dq) < 0.4) continue; add(dq < 0 ? 'warn' : 'good', dq < 0 ? 'glocke' : 'stern', `${f.l}: Erholung ${dq < 0 ? 'schlechter' : 'besser'} (${f.with.toFixed(1).replace('.', ',')} statt ${f.without.toFixed(1).replace('.', ',')})`, `Aus ${f.n} Nächten mit und ${st.nights.filter(n => n.q > 0).length - f.n} ohne. ${dq < 0 ? 'Probier eine Woche ohne und schau, ob sich der Wert ändert.' : 'Behalte das bei.'}`); }
+  /* Ausblick aus dem Plan */
+  const P = sleepPlan(), t0 = startOfDay(new Date()), up = []; for (let k = 1; k <= 7; k++) { const x = P[ymd(addDays(t0, k))]; if (x && (x.short || x.bedWhy === 'late')) up.push(`${dayLabel(addDays(t0, k - 1))}: ${x.short ? `nur ${dur(x.sleepMin)}` : `spät ins Bett (${hm(x.bed)})`}`); }
+  if (up.length) add('warn', 'mond', 'Kurze Nächte in Sicht', up.join(' · ') + '. Der Plan gleicht das in den Nächten danach aus.');
+  return out;
+}
+function sleepScoreRing(v){ const C = 2 * Math.PI * 56, p = Math.max(0, Math.min(100, v || 0)) / 100; return `<div class="sl-score"><svg viewBox="0 0 132 132" aria-hidden="true"><circle class="bg" cx="66" cy="66" r="56"/><circle class="fg" cx="66" cy="66" r="56" stroke-dasharray="${(C * p).toFixed(1)} ${C.toFixed(1)}"/></svg><span class="num"><b data-count="${v ?? 0}">${v ?? '–'}</b><small>Schlafwert</small></span></div>`; }
+/* Nächte als Zeitstrahl 20:00–12:00, mit Plan, Schlaf und Mitte */
+function sleepNightsChart(st){
+  const m = isNarrow(), fs = m ? 19 : 11, S = 20*60, E = 36*60, W = 640, rowH = m ? 34 : 22, left = m ? 92 : 64, top = m ? 30 : 20, t0 = startOfDay(new Date()), P = sleepPlan();
+  const rows = []; for (let k = st.days - 1; k >= -2; k--) rows.push(addDays(t0, -k));
+  const X = v => left + (v - S) / (E - S) * (W - left - 8), H = top + rows.length * rowH + (m ? 30 : 16);
+  const toAbs = m => m + 720; /* relative zu 12:00 Vortag → Minuten ab 0:00 Vortag */
+  let g = '';
+  for (let h = 20; h <= 36; h += m ? 4 : 2) g += `<line class="grid" x1="${X(h*60)}" y1="${top - 6}" x2="${X(h*60)}" y2="${H - 16}"/><text x="${X(h*60)}" y="${top - 9}" text-anchor="middle" font-size="${fs}">${String(h % 24).padStart(2, '0')}</text>`;
+  rows.forEach((d, i) => {
+    const y = top + i * rowH, key = ymd(d), n = st.nights.find(x => x.date === key), p = P[key], free = isoDow(d) >= 6 || isHoliday(d), fut = d > t0;
+    if (free) g += `<rect class="we" x="0" y="${y}" width="${W}" height="${rowH}"/>`;
+    g += `<text x="4" y="${y + rowH / 2 + fs / 3}" font-size="${fs}">${m ? '' : WD_SHORT[(isoDow(addDays(d, -1)) - 1)] + '/'}${WD_SHORT[isoDow(d) - 1]} ${d.getDate()}.</text>`;
+    if (p) { const pb = sleepNight({bed: hm(p.bed), wake: hm(p.wake)}); g += `<rect class="${fut ? 'fut' : 'plan'}" x="${X(toAbs(pb.b))}" y="${y + 5}" width="${Math.max(2, X(toAbs(pb.w)) - X(toAbs(pb.b)))}" height="${rowH - 10}" rx="4"/>`; }
+    if (n) { g += `<rect class="act" x="${X(toAbs(n.b))}" y="${y + 6}" width="${Math.max(2, X(toAbs(n.w)) - X(toAbs(n.b)))}" height="${rowH - 12}" rx="4" opacity="${n.q ? 0.45 + n.q * 0.11 : 0.8}"><title>${n.bed}–${n.wake} · ${fmtH(n.dur)}${n.q ? ' · Erholung ' + n.q + '/5' : ''}</title></rect><circle class="mid" cx="${X(toAbs(n.mid))}" cy="${y + rowH / 2}" r="${m ? 4.5 : 3}"/>`; }
+  });
+  g += m ? `<g transform="translate(4,${H - 2})" font-size="${fs}"><rect class="act" width="20" height="10" rx="4" y="-10"/><text x="26" y="0">Geschlafen</text><rect class="plan" x="150" width="20" height="10" rx="4" y="-10"/><text x="176" y="0">Plan</text><circle class="mid" cx="250" cy="-5" r="4"/><text x="260" y="0">Mitte</text></g>` : `<g transform="translate(${left},${H - 4})"><rect class="act" width="14" height="7" rx="3" y="-7"/><text x="20" y="0">Geschlafen</text><rect class="plan" x="100" width="14" height="7" rx="3" y="-7"/><text x="120" y="0">Plan</text><circle class="mid" cx="190" cy="-3.5" r="3"/><text x="198" y="0">Schlafmitte</text><rect class="we" x="290" width="14" height="9" y="-8"/><text x="310" y="0">Wochenende</text></g>`;
+  return `<svg class="sl-chart" font-size="${fs}" viewBox="0 0 ${W} ${H + 6}" role="img" aria-label="Schlafzeiten der letzten Nächte">${g}</svg>`;
+}
+function sleepDurChart(st){
+  const m = isNarrow(), fs = m ? 19 : 11, W = 640, Hh = m ? 220 : 130, left = m ? 56 : 34, bot = m ? 30 : 18, t0 = startOfDay(new Date()), max = 11 * 60, min = 4 * 60;
+  const days = []; for (let k = st.days - 1; k >= 0; k--) days.push(addDays(t0, -k));
+  const bw = (W - left) / days.length, Y = m => Hh - bot - (Math.max(min, Math.min(max, m)) - min) / (max - min) * (Hh - bot - 8);
+  let g = '';
+  for (let h = 5; h <= 11; h += 2) g += `<line class="grid" x1="${left}" y1="${Y(h*60)}" x2="${W}" y2="${Y(h*60)}"/><text x="${left - 6}" y="${Y(h*60) + fs / 3}" text-anchor="end" font-size="${fs}">${h} h</text>`;
+  days.forEach((d, i) => { const n = st.nights.find(x => x.date === ymd(d)), x = left + i * bw + bw * 0.18;
+    if (n) g += `<rect class="bar${n.dur < st.need - 45 ? ' short' : ''}" x="${x}" y="${Y(n.dur)}" width="${bw * 0.64}" height="${Hh - bot - Y(n.dur)}" rx="3"><title>${fmtH(n.dur)}</title></rect>`;
+    if (!m || i % 2 === days.length % 2) g += `<text x="${x + bw * 0.32}" y="${Hh - 6}" text-anchor="middle" font-size="${fs}">${d.getDate()}</text>`; });
+  g += `<line class="need" x1="${left}" y1="${Y(st.need)}" x2="${W}" y2="${Y(st.need)}"/><text x="${W - 2}" y="${Y(st.need) - 6}" text-anchor="end" font-size="${fs}">Bedarf ${fmtH(st.need)}</text>`;
+  return `<svg class="sl-chart" font-size="${fs}" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Schlafdauer pro Nacht">${g}</svg>`;
+}
+function sleepMorningCard(d){
+  const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
+  if (!sp || (state.sleepLog || []).some(x => x.date === k && !x.ex) || now < addMin(sp.wake, -60) || now.getHours() >= 15) return '';
+  return `<div class="notice morning" style="cursor:default">${ic('schlaf')}<span><b>Wie war die Nacht?</b> Geplant ${hm(sp.bed)} bis ${hm(sp.wake)}. Ein Tipp genügt, die Analyse wird damit genauer.</span><span class="acts"><button class="btn sm primary" data-act="sleepAsPlanned" data-date="${k}">Wie geplant</button><button class="btn sm" data-act="sleepLog" data-date="${k}">Anders eintragen</button></span></div>`;
 }
 
 /* ================================================================
