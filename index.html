@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 34  ·  persönlicher Kalender für alles
+ KALENDARIUM 35  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2533,6 +2533,120 @@ main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
 @keyframes vt2-zi-new{from{opacity:0;transform:scale(.985)}}
 ::view-transition-old(segpill),::view-transition-new(segpill),::view-transition-old(navpill),::view-transition-new(navpill),::view-transition-old(tabpill),::view-transition-new(tabpill){animation-duration:.4s}
 @media (prefers-reduced-motion: reduce){ ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important} }
+/* §S2 Schlaf (v35) · Kacheln in Violett, flach */
+.sl2{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+.sl2 > *{grid-column:span 12;min-width:0;animation:tilein .42s cubic-bezier(.2,.8,.2,1) both}
+.sl2 > :nth-child(2){animation-delay:.03s}.sl2 > :nth-child(3){animation-delay:.06s}.sl2 > :nth-child(4){animation-delay:.08s}.sl2 > :nth-child(5){animation-delay:.1s}.sl2 > :nth-child(6){animation-delay:.12s}.sl2 > :nth-child(n+7){animation-delay:.14s}
+@media (prefers-reduced-motion: reduce){ .sl2 > *{animation:none} }
+.sl2-tile{background:var(--tile);border-radius:var(--r-tile);padding:20px 22px}
+.sl2-hero{grid-column:span 7}.sl2-night{grid-column:span 5}.sl2-kpi{grid-column:span 3}.sl2-half{grid-column:span 6}
+.sl2-hero .sc{display:flex;align-items:flex-end;gap:14px}
+.sl2-hero .sc > b{font-family:var(--f-display);font-weight:800;font-size:clamp(72px,9vw,104px);line-height:.82;letter-spacing:-.055em;color:var(--zone-ink);font-variant-numeric:tabular-nums}
+.sl2-hero .sc span{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:-.02em;line-height:1.1;padding-bottom:4px}
+.sl2-hero .sc span small{display:block;font-family:var(--f-body);font-weight:500;font-size:13px;letter-spacing:0;color:var(--muted)}
+.sl2-hero p{font-family:var(--f-display);font-weight:500;font-size:20px;line-height:1.3;letter-spacing:-.015em;margin:16px 0 18px;text-wrap:pretty}
+.sl2-hero p b{font-weight:800}
+.sl2-parts{display:grid;gap:8px}
+.sl2-parts div{display:grid;grid-template-columns:minmax(110px,150px) minmax(0,1fr) 28px;gap:12px;align-items:center;font-size:14px}
+.sl2-parts span{color:var(--muted)}
+.sl2-parts i{height:8px;border-radius:4px;background:var(--tile-2);overflow:hidden}
+.sl2-parts em{display:block;height:100%;background:var(--zone);border-radius:4px;transform-origin:left;animation:sl2grow .8s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes sl2grow{from{transform:scaleX(0)}}
+.sl2-parts b{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.sl2-night{background:var(--zone-soft);display:flex;flex-direction:column;gap:8px}
+.sl2-night .lbl{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--zone-ink)}
+.sl2-night .lbl svg{width:18px;height:18px}
+.sl2-night .tt{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:800;font-size:clamp(44px,5.4vw,60px);letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;margin:6px 0 2px}
+.sl2-night .tt i{display:grid;color:var(--zone-ink)}.sl2-night .tt i svg{width:26px;height:26px}
+.sl2-night small{color:var(--muted);font-size:14px;line-height:1.45}
+.sl2-night .act{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:12px}
+.sl2-night .btn{background:var(--tile)}.sl2-night .btn.primary{background:var(--zone);color:var(--on-zone)}.sl2-night .btn.ghost{background:none}
+.sl2-kpi{background:var(--tile);border-radius:var(--r-tile);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.sl2-kpi > span{font-size:13px;color:var(--muted);font-weight:600}
+.sl2-kpi > b{font-family:var(--f-display);font-weight:800;font-size:30px;letter-spacing:-.035em;line-height:1.05;font-variant-numeric:tabular-nums}
+.sl2-kpi .m{display:block;height:6px;border-radius:3px;background:var(--tile-2);overflow:hidden;margin:6px 0 2px}
+.sl2-kpi .m em{display:block;height:100%;background:var(--zone);border-radius:3px;transform-origin:left;animation:sl2grow .8s cubic-bezier(.2,.8,.2,1) .2s both}
+.sl2-kpi small{font-size:13px;color:var(--muted);line-height:1.35}
+.sl2 .bad{color:var(--danger)}.sl2 small.good{color:var(--ok)}
+.sl2-h{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:0 0 12px}
+.sl2-h h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:24px;letter-spacing:-.03em;color:var(--ink)}
+.sl2-h small{color:var(--muted);font-size:13px}
+.sl2-pat{display:grid;grid-template-columns:38px minmax(0,1fr) 200px;gap:14px;align-items:start;padding:14px 0;border-top:1px solid var(--line)}
+.sl2-pat .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--tile-2);color:var(--ink)}
+.sl2-pat.warn .ic{background:var(--zone);color:var(--on-zone)}
+.sl2-pat.good .ic{background:color-mix(in oklab, var(--ok) 16%, var(--tile));color:var(--ok)}
+.sl2-pat .ic svg{width:19px;height:19px}
+.sl2-pat .tx b{display:block;font-weight:700;font-size:16px;line-height:1.3}
+.sl2-pat .tx small{display:block;color:var(--muted);font-size:14px;line-height:1.5;margin-top:3px;text-wrap:pretty}
+.sl2-pat .pa{margin-top:10px}
+.sl2-pat .vzw{padding-top:2px}
+.vz{width:200px;height:auto;display:block;overflow:visible}
+.vz text{font-size:8px;fill:var(--faint);font-family:var(--f-body);font-variant-numeric:tabular-nums}
+.vz .ok,.vz .hi,.vz .in{fill:var(--zone)}
+.vz .mu{fill:color-mix(in oklab, var(--zone) 28%, var(--tile-2))}
+.vz .lo,.vz .off{fill:color-mix(in oklab, var(--danger) 75%, var(--tile))}
+.vz .nd{stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;opacity:.45}
+.vz .band{fill:var(--zone-soft)}
+.vz .jl{stroke:var(--zone);stroke-width:3;stroke-linecap:round;opacity:.35}
+.vz .wd{fill:var(--ink)}.vz .fr{fill:var(--zone)}
+.sl2-more{border-top:1px solid var(--line)}
+.sl2-more > summary{list-style:none;cursor:pointer;padding:14px 0 2px;font-weight:700;color:var(--zone-ink)}
+.sl2-more > summary::-webkit-details-marker{display:none}
+.sl2-more[open] > summary{padding-bottom:4px}
+.sl2 .sl-chart .act{fill:var(--zone)}
+.sl2 .sl-chart .lat{fill:color-mix(in oklab, var(--zone) 28%, var(--tile-2))}
+.sl2 .sl-chart .plan,.sl2 .sl-chart .fut{stroke:color-mix(in oklab, var(--zone) 60%, transparent)}
+.sl2 .sl-chart .we{fill:color-mix(in oklab, var(--zone) 6%, transparent)}
+.sl2 .sl-chart .bar{fill:var(--zone)}
+.sl2 .sl-chart .bar.short{fill:color-mix(in oklab, var(--danger) 75%, var(--tile))}
+.sl2 .sl-chart .shortt{fill:var(--danger)}
+.sl2 .sx-legend i.a{background:var(--zone)}
+.sl2-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center}
+.sl2-week .c{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.sl2-week .d{font-size:13px;font-weight:700;color:var(--muted)}.sl2-week .we .d{color:var(--zone-ink)}
+.sl2-week .bar{width:100%;max-width:36px;height:96px;background:var(--tile-2);border-radius:10px;display:flex;align-items:flex-end;overflow:hidden}
+.sl2-week .bar i{display:block;width:100%;background:var(--zone);border-radius:10px;transform-origin:bottom;animation:sl2up .7s cubic-bezier(.2,.8,.2,1) .15s both}
+.sl2-week .bar i.lo{background:color-mix(in oklab, var(--danger) 75%, var(--tile))}
+@keyframes sl2up{from{transform:scaleY(0)}}
+.sl2-week b{font-size:13px;font-variant-numeric:tabular-nums}
+.sl2-week small{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.sl2-note{font-size:12px;color:var(--faint);margin:12px 0 0}
+.sl2-chrono > b{display:block;font-family:var(--f-display);font-weight:800;font-size:28px;letter-spacing:-.035em;line-height:1.1}
+.sl2-chrono > small{display:block;color:var(--muted);font-size:14px;margin:4px 0 18px}
+.sl2-chrono .scale{position:relative;height:10px;border-radius:5px;background:var(--tile-2)}
+.sl2-chrono .scale i{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--zone);box-shadow:0 0 0 4px var(--tile)}
+.sl2-chrono .lbls{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:10px}
+.sl2-jl{display:flex;justify-content:space-between;align-items:baseline;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+.sl2-jl span{color:var(--muted);font-size:14px}.sl2-jl b{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:-.03em}
+.sl2-log > button{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr) auto auto;gap:14px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:12px 4px;border-top:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer;border-radius:0}
+.sl2-log > button:hover,.sl2-log details > button:hover{background:color-mix(in oklab, var(--ink) 3%, transparent)}
+.sl2-log details > button{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr) auto auto;gap:14px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:12px 4px;border-top:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer}
+.sl2-log .dt{font-weight:600}
+.sl2-log .tm{font-variant-numeric:tabular-nums}.sl2-log .tm small{display:block;color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl2-log b{font-variant-numeric:tabular-nums}.sl2-log b.lo{color:var(--danger)}
+.sl2-log .q{display:flex;gap:3px}.sl2-log .q i{width:7px;height:7px;border-radius:50%;background:var(--tile-2)}.sl2-log .q i.on{background:var(--zone)}
+.sl2-how summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sl2-how summary::-webkit-details-marker{display:none}
+.sl2-how summary b{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.025em}
+.sl2-how summary small{color:var(--muted);font-size:13px}
+.sl2-how p{color:var(--muted);font-size:14px;line-height:1.55;margin:12px 0 0}.sl2-how p b{color:var(--ink)}
+.sl2-how .src{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.sl2-how .src b{color:var(--ink);font-weight:600}
+.sl2-how .faint{color:var(--faint)}
+/* Formular */
+.sheet .seg.sp{display:flex;flex-wrap:wrap}.sheet .seg.sp button{flex:1;min-width:44px}
+@media (max-width:860px){
+  .sl2{gap:10px}
+  .sl2-hero,.sl2-night,.sl2-half{grid-column:span 12}
+  .sl2-kpi{grid-column:span 6}
+  .sl2-tile{padding:18px}
+  .sl2-pat{grid-template-columns:38px minmax(0,1fr)}
+  .sl2-pat .vzw{grid-column:2}
+  .vz{width:100%;max-width:190px}
+  .sl2-h .seg{flex-basis:100%;display:flex}.sl2-h .seg button{flex:1}
+  .sl2-log > button,.sl2-log details > button{grid-template-columns:minmax(0,1fr) auto;gap:2px 12px}
+  .sl2-log .dt{grid-column:1}.sl2-log .tm{grid-column:1;grid-row:2;color:var(--muted)}.sl2-log b{grid-column:2;grid-row:1;text-align:right}.sl2-log .q{grid-column:2;grid-row:2;justify-content:flex-end}
+}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -5146,13 +5260,14 @@ function exampleState(){
     {id:uid(), label:'MOSES', url:'https://moseskonto.tu-berlin.de', group:'uni', symbol:'hexagon', ex:true},
     {id:uid(), label:'Discord', url:'https://discord.com/app', group:'discord', symbol:'sprechblase', ex:true}
   ];
-  /* Beispiel-Schlafprotokoll: 16 Nächte */
-  s.sleepLog = Array.from({length:16}, (_, k) => {
+  /* Beispiel-Schlafprotokoll: 4 Wochen */
+  s.sleepLog = Array.from({length:28}, (_, k) => {
     const w = addDays(t, -k), we = isoDow(w) >= 6, j = ((k * 37) % 11) - 5;
     const bed = we ? 60 + j * 6 : (k % 5 === 2 ? 45 : -25) + j * 5, wake = we ? 9*60 + 40 + j * 8 : 7*60 + 15 + (k % 3) * 10;
     const tags = [k % 4 === 1 ? 'koffein' : '', k % 5 === 2 ? 'bildschirm' : '', k % 3 === 0 ? 'sport' : ''].filter(Boolean);
     const q = Math.max(1, Math.min(5, 4 - (tags.includes('koffein') ? 1 : 0) - (tags.includes('bildschirm') ? 1 : 0) + (tags.includes('sport') ? 1 : 0) + (we ? 0 : (k % 2 ? 0 : -1)) + 0));
-    return {id: 'sl' + k, date: ymd(w), bed: toHM(bed), wake: toHM(wake), q, tags, ex: true};
+    const lat = 10 + (tags.includes('bildschirm') ? 25 : 0) + (tags.includes('koffein') ? 15 : 0) + Math.abs(j) * 2, waso = tags.includes('koffein') ? 25 : k % 7 === 3 ? 35 : 5;
+    return {id: 'sl' + k, date: ymd(w), bed: toHM(bed), wake: toHM(wake), q, tags, lat, waso, alarm: !we, ex: true};
   }).filter(x => x.date < ymd(addDays(t, 1)));
   return s;
 }
@@ -6285,7 +6400,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '34';
+const APP_VERSION = '35';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6812,39 +6927,58 @@ const VIEWS = {
 
   /* ---------- SCHLAF: ruhig, das Wichtigste zuerst, Details auf Wunsch ---------- */
   schlaf(){
-    const days = ui.sleepRange || 7, st = sleepStats(days), P = sleepPlan(), t0 = startOfDay(new Date()), tn = P[ymd(addDays(t0, 1))];
-    const short = st.durAvg != null ? st.need - st.durAvg : null, enough = st.N >= 3;
-    const verdict = st.score == null ? '' : st.score >= 85 ? 'Sehr gut' : st.score >= 70 ? 'Gut' : st.score >= 55 ? 'Ausbaufähig' : 'Unruhig';
-    const ins = sleepInsights(st).filter(x => x.lvl !== 'good').slice(0, 2);
-    const tips = ins.length ? ins : sleepInsights(st).slice(0, 1);
-    const tonight = tn ? `Heute Nacht ins Bett um <button class="ln" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">${hm(tn.bed)}</button>, Wecker ${hm(tn.wake)}.` : '';
-    const stat = (lbl, val, sub, cls = '') => `<div class="sx-stat"><span>${lbl}</span><b>${val}</b><small class="${cls}">${sub}</small></div>`;
-    const regTxt = st.sri != null ? (st.sri >= 80 ? 'sehr regelmäßig' : st.sri >= 70 ? 'regelmäßig' : 'schwankt') : st.sdBed != null ? (st.sdBed < 30 ? 'regelmäßig' : 'schwankt') : '';
+    const days = ui.sleepRange || 7, D = sleepDeep(), st = D.st, stR = days === 14 ? st : sleepStats(days), P = sleepPlan(), t0 = startOfDay(new Date()), today = ymd(t0), tn = P[ymd(addDays(t0, 1))];
+    const enough = st.N >= 3, sc = D.score, S = state.settings.sleep;
+    const verdict = sc == null ? '' : sc >= 85 ? 'Sehr gut' : sc >= 70 ? 'Gut' : sc >= 55 ? 'Ausbaufähig' : 'Unruhig';
+    const short = enough ? D.need - st.durAvg : 0;
+    const lead = !enough ? 'Trag ein paar Nächte ein. Ab 3 Nächten gibt es erste Werte, ab einer Woche ein belastbares Bild, ab vier Wochen Muster nach Wochentag und Einflüssen.'
+      : `${short > 30 ? `Dir fehlen im Schnitt <b>${dur(Math.round(short))}</b> pro Nacht` : short > 10 ? `Mit <b>${fmtH(st.durAvg)}</b> liegst du knapp unter deinem Bedarf` : short < -45 ? `Du schläfst <b>${dur(Math.round(-short))}</b> mehr als dein Bedarf` : `Mit <b>${fmtH(st.durAvg)}</b> schläfst du genug`}${st.sri != null ? (st.sri >= 75 ? ', dein Rhythmus ist stabil.' : ', aber dein Rhythmus schwankt.') : st.sdBed != null ? (st.sdBed < 35 ? ', dein Rhythmus ist stabil.' : ', aber dein Rhythmus schwankt.') : '.'}`;
+    const logged = (state.sleepLog || []).some(x => x.date === today && !x.ex), spToday = P[today];
+    const hero = `<section class="sl2-tile sl2-hero">
+      <div class="sc">${enough ? `<b data-count="${sc}">${sc}</b><span>${verdict}<small>Schlafwert, ${D.N28 >= 7 ? `${Math.min(st.N, 14)} Nächte` : `${st.N} Nächte`}</small></span>` : `<b>–</b><span>Noch keine Werte</span>`}</div>
+      <p>${lead}</p>
+      ${enough ? `<div class="sl2-parts">${D.parts.map(p => `<div><span>${p.l}</span><i><em style="width:${p.v}%"></em></i><b>${p.v}</b></div>`).join('')}</div>` : ''}
+    </section>`;
+    const wd = tn ? addMin(tn.bed, -(S.windDown == null ? 30 : +S.windDown)) : null;
+    const night = `<section class="sl2-tile sl2-night">
+      <span class="lbl">${ic('mond', 's')}Heute Nacht</span>
+      ${tn ? `<div class="tt"><b>${hm(tn.bed)}</b><i>${ic('weiter')}</i><b>${hm(tn.wake)}</b></div>
+      <small>${fmtH(tn.sleepMin)} Schlaf${tn.short ? ', weniger als dein Bedarf' : ''}. Ab ${hm(wd)} Bildschirm weg und Licht dimmen.</small>` : `<small>Kein Plan für heute Nacht. Schalte die Schlafplanung in den Einstellungen ein.</small>`}
+      <div class="act">${logged ? `<button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('stift', 's')}Letzte Nacht ändern</button>` : `<button class="btn sm primary" data-act="sleepLog" data-date="${today}">${ic('plus', 's')}Letzte Nacht eintragen</button>${spToday ? `<button class="btn sm" data-act="sleepAsPlanned" data-date="${today}">Wie geplant</button>` : ''}`}
+      ${tn ? `<button class="btn sm ghost" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">Warum diese Zeit</button>` : ''}</div>
+    </section>`;
+    const kpi = (lbl, val, sub, cls = '', bar = null) => `<div class="sl2-kpi"><span>${lbl}</span><b>${val}</b>${bar != null ? `<i class="m"><em style="width:${Math.max(2, Math.min(100, bar)).toFixed(0)}%"></em></i>` : ''}<small class="${cls}">${sub}</small></div>`;
+    const kpis = enough ? [
+      kpi('Schlaf pro Nacht', fmtH(st.durAvg), `Bedarf ${fmtH(D.need)}`, short > 30 ? 'bad' : 'good', st.durAvg / D.need * 100),
+      kpi('Regelmäßigkeit', st.sri != null ? String(st.sri) : st.sdBed != null ? `±${Math.round(st.sdBed)} min` : '–', st.sri != null ? `${st.sri >= 80 ? 'sehr regelmäßig' : st.sri >= 70 ? 'regelmäßig' : 'schwankt'} (SRI)` : 'Schwankung beim Einschlafen', (st.sri != null ? st.sri < 70 : st.sdBed >= 35) ? 'bad' : 'good', st.sri != null ? Math.max(0, st.sri) : null),
+      kpi('Schlafschuld', st.debtNow > 15 ? fmtH(st.debtNow) : 'keine', 'in den letzten 7 Nächten', st.debtNow > 120 ? 'bad' : 'good'),
+      D.se != null ? kpi('Effizienz', `${D.se} %`, [D.sol != null ? `${dur(Math.round(D.sol))} bis zum Einschlafen` : '', D.waso != null ? `${dur(Math.round(D.waso))} nachts wach` : ''].filter(Boolean).join(', ') || 'Ziel ab 85 %', D.se >= 85 ? 'good' : 'bad', D.se)
+        : kpi('Erholung', st.qAvg != null ? st.qAvg.toFixed(1).replace('.', ',') : '–', st.qAvg != null ? 'von 5' : 'noch nicht bewertet', '', st.qAvg != null ? (st.qAvg - 1) / 4 * 100 : null)
+    ].join('') : '';
+    const pats = sleepPatterns(D);
+    const patRow = x => `<div class="sl2-pat ${x.lvl}"><span class="ic">${ic(x.icon)}</span><div class="tx"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small>${x.act ? `<div class="pa">${x.act}</div>` : ''}</div>${x.viz ? `<div class="vzw">${x.viz}</div>` : ''}</div>`;
+    const muster = enough ? `<section class="sl2-tile sl2-muster"><div class="sl2-h"><h2>Muster</h2><small>${pats.filter(x => x.lvl === 'warn').length ? `${pats.filter(x => x.lvl === 'warn').length} zum Angehen, ` : ''}aus ${D.N28} Nächten der letzten 4 Wochen</small></div>
+      ${pats.slice(0, 6).map(patRow).join('')}
+      ${pats.length > 6 ? `<details class="sl2-more"><summary>${pats.length - 6} weitere Muster</summary>${pats.slice(6).map(patRow).join('')}</details>` : ''}</section>` : '';
+    const chart = `<section class="sl2-tile"><div class="sl2-h"><h2>Nächte</h2><div class="seg" role="group" aria-label="Zeitraum">${[[7,'7 Tage'],[14,'14 Tage'],[30,'30 Tage']].map(([v,l]) => `<button data-act="sleepRange" data-v="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div></div>
+      ${days === 30 ? sleepDurChart(stR) : sleepNightsChart(stR)}</section>`;
+    const week = sleepWeekTile(D), chrono = sleepChronoTile(st);
+    const duo = week || chrono ? `${week ? `<section class="sl2-tile ${chrono ? 'sl2-half' : ''}"><div class="sl2-h"><h2>Wochentage</h2><small>Abend des Tages</small></div>${week}</section>` : ''}${chrono ? `<section class="sl2-tile ${week ? 'sl2-half' : ''}"><div class="sl2-h"><h2>Innere Uhr</h2><small>nach MCTQ</small></div>${chrono}</section>` : ''}` : '';
     const log = (state.sleepLog || []).slice().sort((a, b) => b.date.localeCompare(a.date));
-    const logRow = x => { const n = sleepNight(x); return `<button data-act="sleepLog" data-date="${x.date}"><span>${esc(fmtShort(parseYMD(x.date)))}</span><span>${x.bed} – ${x.wake}</span><span class="d">${fmtH(n.dur)}</span><span class="q">${[1,2,3,4,5].map(k => `<i class="${k <= x.q ? 'on' : ''}"></i>`).join('')}</span></button>`; };
-    return `
-      <section class="sx-hero">
-        <div class="sx-score">${enough ? `<b data-count="${st.score}">${st.score}</b><span>${verdict}</span>` : `<b>–</b><span>noch keine Werte</span>`}</div>
-        <p class="lead" style="margin:0">${enough ? `Im Schnitt <b>${fmtH(st.durAvg)}</b> Schlaf${short > 15 ? `, <b class="hot">${dur(Math.round(short))} zu wenig</b>` : short < -15 ? ', etwas mehr als nötig' : ', genau richtig'}. ` : 'Trag ein paar Nächte ein, dann entsteht hier deine Auswertung. '}${tonight}</p>
-      </section>
-      ${enough ? `<div class="sx-stats">
-        ${stat('Schlaf pro Nacht', fmtH(st.durAvg), `Bedarf ${fmtH(st.need)}`, short > 15 ? 'bad' : 'good')}
-        ${stat('Rhythmus', st.sri != null ? String(st.sri) : st.sdBed != null ? `±${Math.round(st.sdBed)} min` : '–', regTxt, regTxt === 'schwankt' ? 'bad' : 'good')}
-        ${stat('Wochenende', st.sjl != null ? `+${fmtH(st.sjl)}` : '–', st.sjl == null ? 'später' : st.sjl > 90 ? 'zu viel Verschiebung' : 'im Rahmen', st.sjl > 90 ? 'bad' : 'good')}
-      </div>` : ''}
-      ${tips.length ? `<div class="sx-tips">${tips.map(x => `<div class="sx-tip ${x.lvl}">${ic(x.icon)}<div><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></div></div>`).join('')}</div>` : ''}
-      <div class="sx-h"><h2>Nächte</h2><div class="seg" role="group" aria-label="Zeitraum">${[[7,'7'],[14,'14'],[30,'30']].map(([v,l]) => `<button data-act="sleepRange" data-v="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div></div>
-      ${sleepNightsChart(st)}
-      <div class="sx-h"><h2>Protokoll</h2><button class="btn sm primary" data-act="sleepLog" data-date="${ymd(t0)}">${ic('plus','s')}Nacht eintragen</button></div>
-      <div class="sx-log">${log.length ? log.slice(0, 5).map(logRow).join('') : emptyArt('frei', 'Noch keine Nacht eingetragen.', 'Am besten morgens kurz nach dem Aufstehen.')}</div>
-      ${log.length > 5 ? `<details class="sx-more"><summary>Alle ${log.length} Nächte</summary><div class="sx-log">${log.slice(5).map(logRow).join('')}</div></details>` : ''}
-      ${enough ? `<details class="sx-more"><summary>Details zur Auswertung</summary>
-        <div class="sx-parts">${st.parts.map(p => `<div><span>${p.l}</span><i style="--v:${p.v}%"></i><b>${p.v}</b></div>`).join('')}</div>
-        ${st.msfsc != null ? `<p class="sx-p"><b>Chronotyp:</b> ${chronoLabel(st.msfsc)}. Deine Schlafmitte an freien Tagen liegt bei ${fmtMid(st.msfsc)}${st.msw != null ? `, unter der Woche bei ${fmtMid(st.msw)}` : ''}.</p>` : ''}
-        ${st.sri != null ? `<p class="sx-p"><b>Rhythmus ${st.sri}:</b> Wahrscheinlichkeit, zur selben Uhrzeit im selben Zustand zu sein wie am Vortag (Sleep Regularity Index, −100 bis 100). Über 80 ist sehr regelmäßig.</p>` : ''}
-        ${st.tagFx.length ? `<p class="sx-p"><b>Einflüsse auf die Erholung (1 bis 5):</b> ${st.tagFx.map(f => `${esc(f.l)} ${f.with.toFixed(1).replace('.', ',')} statt ${f.without.toFixed(1).replace('.', ',')}`).join(' · ')}.</p>` : ''}
-        <p class="sx-p faint">Berechnet aus deinen Einträgen nach SRI (Phillips 2017) und MCTQ (Roenneberg). Kein Ersatz für eine ärztliche Untersuchung.</p>
-      </details>` : ''}`;
+    const logRow = x => { const n = sleepNight(x), ext = [n.se != null ? `Effizienz ${n.se} %` : '', n.sol != null ? `${n.sol} min bis Schlaf` : '', n.waso ? `${n.waso} min wach` : '', x.alarm === false ? 'ohne Wecker' : '', ...(x.tags || []).map(t => (SLEEP_TAGS.find(z => z[0] === t) || [, t])[1])].filter(Boolean);
+      return `<button data-act="sleepLog" data-date="${x.date}"><span class="dt">${esc(fmtShort(parseYMD(x.date)))}</span><span class="tm">${x.bed} – ${x.wake}${ext.length ? `<small>${esc(ext.join(' · '))}</small>` : ''}</span><b class="${n.dur < D.need - 45 ? 'lo' : ''}">${fmtH(n.dur)}</b><span class="q" aria-label="Erholung ${x.q || 0} von 5">${[1,2,3,4,5].map(k => `<i class="${k <= x.q ? 'on' : ''}"></i>`).join('')}</span></button>`; };
+    const proto = `<section class="sl2-tile sl2-log"><div class="sl2-h"><h2>Protokoll</h2><button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('plus','s')}Nacht eintragen</button></div>
+      ${log.length ? log.slice(0, 5).map(logRow).join('') : emptyArt('frei', 'Noch keine Nacht eingetragen.', 'Am besten morgens kurz nach dem Aufstehen, das dauert 20 Sekunden.')}
+      ${log.length > 5 ? `<details class="sl2-more"><summary>Alle ${log.length} Nächte</summary>${log.slice(5).map(logRow).join('')}</details>` : ''}</section>`;
+    const how = `<section class="sl2-tile sl2-how"><details><summary><b>So wird gerechnet</b><small>Methoden und Quellen</small></summary>
+      <p><b>Schlafwert</b> aus ${enough ? D.parts.map(p => `${p.l} (${p.w} %)`).join(', ') : 'Dauer, Regelmäßigkeit, Wochenend-Rhythmus, Erholung, Plan und Effizienz'}. Dauer zählt voll ab deinem Bedarf; Regelmäßigkeit über den Sleep Regularity Index (Wahrscheinlichkeit, zur selben Uhrzeit im selben Zustand zu sein wie am Vortag, 0 bis 100).</p>
+      <p><b>Schlafzeit</b> ist die Zeit vom Einschlafen bis zum Aufwachen minus der Zeit, die du nachts wach warst. <b>Effizienz</b> ist Schlafzeit geteilt durch Zeit im Bett, Ziel ab 85 %.</p>
+      <p><b>Innere Uhr</b> ist die Mitte deines Schlafs an freien Tagen, korrigiert um nachgeholten Schlaf (MSFsc). <b>Sozialer Jetlag</b> ist der Abstand zur Schlafmitte an Werktagen.</p>
+      <p><b>Einflüsse</b> vergleichen Nächte mit und ohne einen Faktor. Die Stärke ist Cohens d: ab 0,5 spürbar, ab 0,8 deutlich. Bei wenigen Nächten sind das Hinweise, keine Beweise.</p>
+      <ul class="src">${SLEEP_SRC.map(([a, b]) => `<li><b>${esc(a)}</b> ${esc(b)}</li>`).join('')}</ul>
+      <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
+    </details></section>`;
+    return `<div class="sl2">${hero}${night}${kpis}${muster}${chart}${duo}${proto}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7798,10 +7932,15 @@ const EDITORS = {
   sleepEntry(date){
     const ex = (state.sleepLog || []).find(x => x.date === date), sp = sleepPlan()[date] || null;
     const e = ex || {date, bed: sp ? hm(sp.bed) : '23:30', wake: sp ? hm(sp.wake) : '07:30', q: 0, tags: [], note: ''};
+    const pick = (k, lbl, opts, v) => `<div class="f"><span>${lbl}</span><input type="hidden" name="${k}" value="${v == null ? '' : v}"><div class="seg sp">${(() => { const has = v != null && v !== '', near = has ? opts.reduce((p, c) => Math.abs(c[0] - v) < Math.abs(p[0] - v) ? c : p)[0] : null; return opts.map(([o, l]) => `<button type="button" data-act="sleepPick" data-k="${k}" data-v="${o}" aria-pressed="${has && near === o}">${l}</button>`).join(''); })()}</div></div>`;
     const qs = [[1,'Schlecht'],[2,'Unruhig'],[3,'Okay'],[4,'Gut'],[5,'Sehr gut']];
     openSheet(`${head('Wie war die Nacht?')}<form class="form" data-form="sleepEntry">
       <p class="muted" style="margin:0">${esc(fmtWD(addDays(parseYMD(date), -1)))} auf ${esc(fmtWD(parseYMD(date)))}, ${esc(fmtDM(parseYMD(date)))}${sp ? ` · geplant ${hm(sp.bed)} bis ${hm(sp.wake)}` : ''}</p>
       <div class="frow"><label class="f"><span>Eingeschlafen etwa</span><input type="time" name="bed" required value="${esc(e.bed)}"></label><label class="f"><span>Aufgewacht</span><input type="time" name="wake" required value="${esc(e.wake)}"></label></div>
+      ${pick('lat', 'Bis zum Einschlafen', [[5,'5'],[15,'15'],[30,'30'],[45,'45'],[60,'60+']], e.lat)}
+      ${pick('waso', 'Nachts wach, insgesamt', [[0,'0'],[10,'10'],[30,'30'],[60,'60'],[90,'90+']], e.waso)}
+      <p class="muted" style="margin:-6px 0 0;font-size:13px">In Minuten, grob geschätzt reicht. Daraus berechnet die App deine Schlafeffizienz.</p>
+      <div class="remchips"><label><input type="checkbox" name="noalarm" ${e.alarm === false ? 'checked' : ''}><span>Ohne Wecker aufgewacht</span></label></div>
       <label class="f"><span>Datum (Morgen)</span><input type="date" name="date" required value="${esc(date)}"></label>
       <div class="f"><span>Wie erholt fühlst du dich?</span><input type="hidden" name="q" value="${+e.q || 0}"><div class="seg sq">${qs.map(([v,l]) => `<button type="button" data-act="sleepQ" data-v="${v}" aria-pressed="${+e.q === v}">${l}</button>`).join('')}</div></div>
       <div class="f"><span>Was war los? (optional)</span><div class="remchips">${SLEEP_TAGS.map(([k,l]) => `<label><input type="checkbox" name="tags" value="${k}" ${(e.tags||[]).includes(k)?'checked':''}><span>${l}</span></label>`).join('')}</div></div>
@@ -7988,7 +8127,8 @@ const SAVE = {
   sleepEntry(form, fd){
     const date = fd.get('date'), bed = fd.get('bed'), wake = fd.get('wake');
     if (!/^\d\d:\d\d$/.test(bed) || !/^\d\d:\d\d$/.test(wake)) { toast('Uhrzeiten fehlen', ''); return; }
-    upsertSleep({date, bed, wake, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(fd.get('note') || '').trim()});
+    const num = k => { const v = fd.get(k); return v === '' || v == null ? null : +v; };
+    upsertSleep({date, bed, wake, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(fd.get('note') || '').trim(), lat: num('lat'), waso: num('waso'), alarm: fd.get('noalarm') ? false : true});
     closeSheet(); toast('Nacht gespeichert', `${fmtShort(addDays(parseYMD(date), -1))} auf ${fmtShort(parseYMD(date))}`);
   },
   onb(f, fd){
@@ -8173,6 +8313,8 @@ const ACTIONS = {
   },
   sleepQ(el){ const f = el.closest('form'); f.elements.q.value = el.dataset.v; f.querySelectorAll('[data-act=sleepQ]').forEach(b => b.setAttribute('aria-pressed', b === el)); },
   sleepRange(el){ ui.sleepRange = +el.dataset.v; render(); },
+  sleepPick(el){ const f = el.closest('form'), inp = f.elements[el.dataset.k], on = el.getAttribute('aria-pressed') === 'true'; inp.value = on ? '' : el.dataset.v; el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', !on && b === el)); },
+  sleepNeedSet(el){ const m = +el.dataset.m; if (!(m >= 300 && m <= 660)) return; pushUndo(); state.settings.sleep.hours = Math.round(m / 30) / 2; commit(); toast('Bedarf angepasst', `${fmtH(m)} pro Nacht. Der Schlafplan rechnet ab jetzt damit.`, undoOpt); },
   transfer(){ transferSheet(); },
   async transferCopy(){
     const link = ui._xferLink; if (!link) return;
@@ -8783,14 +8925,7 @@ function upsertSleep(o){
   commit();
 }
 /* Eine Nacht als Intervall in Minuten relativ zu 12:00 des Vortags (0…1440) */
-function sleepNight(x){
-  const lat = +state.settings.sleep.latency || 0;
-  let b = minutesOf(x.bed), w = minutesOf(x.wake);
-  b = b >= 720 ? b - 720 : b + 720; w = w >= 720 ? w - 720 : w + 720;
-  if (w <= b) w += 1440;
-  const dur = Math.max(0, w - b - (x.bedRaw ? lat : 0));
-  return {b, w, dur, mid: b + (w - b) / 2};
-}
+/* sleepNight steht jetzt in §S */
 const fmtMid = m => toHM((m + 720) % 1440);
 const fmtH = m => { const h = Math.floor(Math.abs(m) / 60), mm = Math.round(Math.abs(m) % 60); return `${m < 0 ? '−' : ''}${h} h${mm ? ' ' + String(mm).padStart(2, '0') : ''}`; };
 function sleepStats(days = 14){
@@ -8832,6 +8967,205 @@ function sleepStats(days = 14){
   const wt = parts.reduce((p, c) => p + c.w, 0), score = wt ? Math.round(parts.reduce((p, c) => p + c.v * c.w, 0) / wt) : null;
   return {need, N, nights, durAvg, debt: wsum ? debt / wsum * Math.min(N, 7) / 1 : 0, debtNow, sri, sdBed, sdWake, msw, msf, msfsc, sjl, sdw, sdf, devAbs, devMean, qAvg, tagFx, parts, score, days};
 }
+/* ================================================================
+   §S SCHLAF-ANALYSE 2 (v35)
+   Grundlage (Schlaftagebuch nach Consensus Sleep Diary, Carney 2012):
+   Ins Bett, Einschlafdauer, nachts wach, Aufwachen, mit/ohne Wecker,
+   Erholung 1–5, Einflüsse. Daraus:
+   · Gesamtschlafzeit (TST) gegen Bedarf: Erwachsene 7–9 h
+     (Hirshkowitz 2015, NSF; Watson 2015, AASM/SRS)
+   · Schlafschuld über 7 Nächte; chronische Verkürzung summiert sich
+     auch unbemerkt (Van Dongen 2003)
+   · Regelmäßigkeit: Sleep Regularity Index (Phillips 2017), SD von
+     Einschlafen und Aufwachen; Regelmäßigkeit sagt Gesundheit teils
+     besser voraus als Dauer (Windred 2024)
+   · Timing: Schlafmitte frei/Werktag, Chronotyp MSFsc und sozialer
+     Jetlag (Roenneberg MCTQ; Wittmann 2006; Jankowski 2017)
+   · Schlafeffizienz TST/Bettzeit, Ziel ≥ 85 %; Einschlafen > 30 min
+     oder > 30 min nachts wach gelten als auffällig (Lichstein 2003)
+   · persönlicher Bedarf aus Nächten ohne Wecker und aus der Dauer,
+     ab der die Erholung nicht mehr steigt
+   · Wochentag-Muster, Trend, Einflüsse (Tags) mit Effektstärke,
+     Einfluss des Kalenders (späte Termine, frühe Starts)
+   ================================================================ */
+const SLEEP_SRC = [
+  ['Hirshkowitz et al. 2015', 'National Sleep Foundation: 7–9 h für 18- bis 64-Jährige'],
+  ['Watson et al. 2015', 'AASM/SRS: regelmäßig mindestens 7 h'],
+  ['Van Dongen et al. 2003', 'Chronisch 6 h wirken auf Leistung wie eine durchwachte Nacht, ohne dass man es merkt'],
+  ['Phillips et al. 2017', 'Sleep Regularity Index'],
+  ['Windred et al. 2024', 'Regelmäßigkeit sagt Sterblichkeit stärker voraus als Dauer'],
+  ['Roenneberg et al. 2003/2012', 'MCTQ: Chronotyp aus der Schlafmitte freier Tage'],
+  ['Wittmann et al. 2006', 'Sozialer Jetlag'],
+  ['Carney et al. 2012', 'Consensus Sleep Diary'],
+  ['Lichstein et al. 2003', 'Einschlafen oder nächtliches Wachsein über 30 min als Kriterium'],
+  ['Drake et al. 2013', 'Koffein bis 6 h vor dem Schlafen verkürzt den Schlaf messbar'],
+  ['Chang et al. 2015', 'Bildschirmlicht am Abend verschiebt die innere Uhr'],
+  ['Khalsa et al. 2003', 'Licht am Morgen verschiebt die innere Uhr nach vorn']
+];
+function sleepNight(x){
+  const rel = t => { let m = minutesOf(t); return m >= 720 ? m - 720 : m + 720; };
+  const S = state.settings.sleep;
+  let b = rel(x.bed), w = rel(x.wake), ib = null;
+  if (x.bedRaw) { ib = b; b = ib + (+S.latency || 0); }
+  if (x.inBed) { ib = rel(x.inBed); }
+  else if (!x.bedRaw && x.lat != null && x.lat !== '') ib = b - (+x.lat || 0);
+  if (w <= b) w += 1440;
+  if (ib != null && (ib > b || b - ib > 300)) ib = null;
+  const waso = x.waso != null && x.waso !== '' ? +x.waso || 0 : null;
+  const dur = Math.max(0, w - b - (waso || 0)), tib = ib != null ? w - ib : null;
+  return {b, w, dur, mid: b + (w - b) / 2, ib, tib, sol: ib != null ? b - ib : null, waso, se: tib ? Math.max(0, Math.min(100, Math.round(dur / tib * 100))) : null};
+}
+const sAvg = a => a.length ? a.reduce((p, c) => p + c, 0) / a.length : null;
+const sMed = a => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), k = s.length >> 1; return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2; };
+const sSd = a => { if (a.length < 2) return null; const m = sAvg(a); return Math.sqrt(a.reduce((p, v) => p + (v - m) ** 2, 0) / (a.length - 1)); };
+const fmtClock = m => toHM(((m + 720) % 1440 + 1440) % 1440);
+const fmtDelta = m => `${m > 0 ? '+' : m < 0 ? '−' : '±'}${dur(Math.round(Math.abs(m)))}`;
+function sleepDeep(){
+  const t0 = startOfDay(new Date()), S = state.settings.sleep, need = (+S.hours || 8) * 60;
+  const all = (state.sleepLog || []).filter(x => x.date <= ymd(t0)).map(x => { const d = parseYMD(x.date), n = sleepNight(x); return {...x, ...n, d, free: isoDow(d) >= 6 || isHoliday(d), eve: isoDow(addDays(d, -1))}; }).sort((a, b) => a.date.localeCompare(b.date));
+  const since = k => ymd(addDays(t0, -k + 1)), base = all.filter(n => n.date >= since(28));
+  const st = sleepStats(14), out = {st, need, all, base, N28: base.length};
+  /* Wochentage nach dem Abend (Mo = Abend Montag → Nacht auf Dienstag) */
+  out.wk = [1, 2, 3, 4, 5, 6, 7].map(dw => { const a = base.filter(n => n.eve === dw); return {dw, n: a.length, dur: sAvg(a.map(n => n.dur)), on: sAvg(a.map(n => n.b)), q: sAvg(a.filter(n => n.q > 0).map(n => n.q))}; });
+  /* Trend: letzte 7 gegen die 7 davor */
+  const cur = all.filter(n => n.date >= since(7)), prev = all.filter(n => n.date >= since(14) && n.date < since(7));
+  out.trend = cur.length >= 3 && prev.length >= 3 ? {dur: sAvg(cur.map(n => n.dur)) - sAvg(prev.map(n => n.dur)), on: sAvg(cur.map(n => n.b)) - sAvg(prev.map(n => n.b)), q: (sAvg(cur.filter(n => n.q).map(n => n.q)) ?? 0) - (sAvg(prev.filter(n => n.q).map(n => n.q)) ?? 0)} : null;
+  /* Effizienz, Einschlafdauer, nächtliches Wachsein */
+  const seA = base.filter(n => n.se != null), solA = base.filter(n => n.sol != null), wasoA = base.filter(n => n.waso != null);
+  out.se = seA.length >= 3 ? Math.round(sAvg(seA.map(n => n.se))) : null; out.seN = seA.length;
+  out.sol = solA.length >= 3 ? sAvg(solA.map(n => n.sol)) : null;
+  out.waso = wasoA.length >= 3 ? sAvg(wasoA.map(n => n.waso)) : null;
+  /* Persönlicher Bedarf: ohne Wecker und Dauer, ab der die Erholung nicht mehr steigt */
+  const noAlarm = base.filter(n => n.alarm === false && n.dur > 240);
+  out.needAlarmFree = noAlarm.length >= 3 ? sMed(noAlarm.map(n => n.dur)) : null; out.noAlarmN = noAlarm.length;
+  const rated = base.filter(n => n.q > 0), bins = {};
+  rated.forEach(n => { const k = Math.max(300, Math.min(570, Math.round(n.dur / 30) * 30)); (bins[k] = bins[k] || []).push(n.q); });
+  const bl = Object.entries(bins).map(([k, a]) => ({m: +k, n: a.length, q: sAvg(a)})).filter(x => x.n >= 2).sort((a, b) => a.m - b.m);
+  if (bl.length >= 3) { const top = Math.max(...bl.map(x => x.q)), first = bl.find(x => x.q >= top - 0.25); out.sweet = {m: first.m, q: top, bins: bl}; } else out.sweet = null;
+  /* Einflüsse mit Effektstärke (Cohen d) auf Erholung, Dauer, Einschlafen */
+  out.fx = SLEEP_TAGS.map(([k, l]) => {
+    const w = base.filter(n => (n.tags || []).includes(k)), wo = base.filter(n => !(n.tags || []).includes(k));
+    if (w.length < 3 || wo.length < 3) return w.length ? {k, l, n: w.length, few: true} : null;
+    const qw = w.filter(n => n.q > 0).map(n => n.q), qo = wo.filter(n => n.q > 0).map(n => n.q);
+    const sp = Math.sqrt(((sSd(qw) || 0) ** 2 + (sSd(qo) || 0) ** 2) / 2) || 1;
+    return {k, l, n: w.length, dq: qw.length >= 3 && qo.length >= 3 ? sAvg(qw) - sAvg(qo) : null, d: qw.length >= 3 && qo.length >= 3 ? (sAvg(qw) - sAvg(qo)) / sp : null,
+      ddur: sAvg(w.map(n => n.dur)) - sAvg(wo.map(n => n.dur)), don: sAvg(w.map(n => n.b)) - sAvg(wo.map(n => n.b))};
+  }).filter(Boolean);
+  /* Kalender: späte Termine am Abend, frühe Starts am Morgen */
+  const calOf = n => { const e = addDays(n.d, -1), eo = startOfDay(e), its = dayItems(e).filter(o => isTimed(o) && o.kind !== 'deadline' && o.kind !== 'holiday');
+    const mo = dayItems(n.d).filter(o => isTimed(o) && o.kind !== 'deadline' && o.kind !== 'holiday');
+    return {late: its.some(o => (o.end - eo) / 60000 >= 21 * 60), early: mo.some(o => (o.start - startOfDay(n.d)) / 60000 < 9 * 60)}; };
+  const cal = base.map(n => ({n, ...calOf(n)}));
+  const cmp = (a, b, f) => a.length >= 3 && b.length >= 3 ? sAvg(a.map(f)) - sAvg(b.map(f)) : null;
+  const L = cal.filter(c => c.late).map(c => c.n), NL = cal.filter(c => !c.late).map(c => c.n), E = cal.filter(c => c.early).map(c => c.n), NE = cal.filter(c => !c.early).map(c => c.n);
+  out.calLate = cmp(L, NL, n => n.b) != null ? {n: L.length, don: cmp(L, NL, n => n.b), ddur: cmp(L, NL, n => n.dur)} : null;
+  out.calEarly = cmp(E, NE, n => n.dur) != null ? {n: E.length, ddur: cmp(E, NE, n => n.dur), dq: cmp(E.filter(n => n.q), NE.filter(n => n.q), n => n.q)} : null;
+  /* Serie: Nächte in Folge, in denen das Einschlafen höchstens 30 min vom üblichen abweicht */
+  const recent = all.filter(n => n.date >= since(14)), med = sMed(recent.map(n => n.b)); let streak = 0;
+  for (let i = all.length - 1; i >= 0; i--) { if (med != null && Math.abs(all[i].b - med) <= 30) streak++; else break; }
+  out.medOn = med; out.streak = streak; out.recent = recent;
+  out.catchUp = st.sdf != null && st.sdw != null ? st.sdf - st.sdw : null;
+  out.sjlsc = st.msf != null && st.msw != null && st.sdf != null && st.sdw != null ? Math.abs((st.msf - (st.sdf - st.sdw) / 2) - st.msw) : null;
+  /* Gesamtwert mit Effizienz */
+  const parts = st.parts.slice(); if (out.se != null) parts.push({k: 'se', l: 'Effizienz', w: 15, v: Math.max(0, Math.min(100, Math.round((out.se - 65) / 30 * 100)))});
+  const wt = parts.reduce((p, c) => p + c.w, 0); out.parts = parts; out.score = wt && st.N >= 3 ? Math.round(parts.reduce((p, c) => p + c.v * c.w, 0) / wt) : null;
+  return out;
+}
+/* ---------- kleine Bilder für die Muster ---------- */
+function vzBars(vals, need, lbls){
+  const W = 132, H = 40, n = vals.length, bw = W / n, mx = Math.max(need + 90, ...vals.filter(v => v != null)), Y = v => H - 10 - Math.max(0.04, (v - 240) / (mx - 240)) * (H - 12);
+  let g = vals.map((v, i) => v == null ? '' : `<rect x="${(i * bw + bw * .2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${(bw * .6).toFixed(1)}" height="${(H - 10 - Y(v)).toFixed(1)}" rx="2" class="${v < need - 45 ? 'lo' : 'ok'}"/>`).join('');
+  g += `<line x1="0" x2="${W}" y1="${Y(need).toFixed(1)}" y2="${Y(need).toFixed(1)}" class="nd"/>`;
+  if (lbls) g += lbls.map((l, i) => `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 1}" text-anchor="middle">${l}</text>`).join('');
+  return `<svg class="vz" viewBox="0 0 ${W} ${H}" aria-hidden="true">${g}</svg>`;
+}
+function vzDots(ons, med){
+  const W = 132, H = 40, lo = Math.min(...ons, med - 60), hi = Math.max(...ons, med + 60), X = v => 6 + (v - lo) / Math.max(1, hi - lo) * (W - 12);
+  let g = `<rect x="${X(med - 30).toFixed(1)}" y="8" width="${(X(med + 30) - X(med - 30)).toFixed(1)}" height="20" rx="6" class="band"/>`;
+  g += ons.map((v, i) => `<circle cx="${X(v).toFixed(1)}" cy="${(12 + (i % 3) * 6)}" r="3" class="${Math.abs(v - med) > 30 ? 'off' : 'in'}"/>`).join('');
+  g += `<text x="${X(med)}" y="${H - 1}" text-anchor="middle">${fmtClock(med)}</text>`;
+  return `<svg class="vz" viewBox="0 0 ${W} ${H}" aria-hidden="true">${g}</svg>`;
+}
+function vzJet(msw, msf){
+  const W = 132, H = 40, lo = Math.min(msw, msf) - 60, hi = Math.max(msw, msf) + 60, X = v => 8 + (v - lo) / (hi - lo) * (W - 16);
+  return `<svg class="vz" viewBox="0 0 ${W} ${H}" aria-hidden="true"><line x1="${X(msw)}" x2="${X(msf)}" y1="16" y2="16" class="jl"/><circle cx="${X(msw)}" cy="16" r="5" class="wd"/><circle cx="${X(msf)}" cy="16" r="5" class="fr"/><text x="${X(msw)}" y="${H - 2}" text-anchor="middle">Mo–Fr</text><text x="${X(msf)}" y="${H - 2}" text-anchor="middle">Sa–So</text></svg>`;
+}
+function vzPair(a, b, la, lb, unit){
+  const W = 132, H = 40, mx = Math.max(a, b, 0.01), w = v => Math.max(3, v / mx * (W - 60));
+  return `<svg class="vz" viewBox="0 0 ${W} ${H}" aria-hidden="true"><text x="0" y="13">${la}</text><rect x="36" y="5" width="${w(a)}" height="10" rx="3" class="hi"/><text x="0" y="31">${lb}</text><rect x="36" y="23" width="${w(b)}" height="10" rx="3" class="mu"/><text x="${40 + w(a)}" y="13">${String(a.toFixed(1)).replace('.', ',')}</text><text x="${40 + w(b)}" y="31">${String(b.toFixed(1)).replace('.', ',')}</text></svg>`;
+}
+function vzSweet(sw){
+  const W = 132, H = 40, bins = sw.bins, bw = W / bins.length;
+  return `<svg class="vz" viewBox="0 0 ${W} ${H}" aria-hidden="true">${bins.map((x, i) => `<rect x="${(i * bw + bw * .2).toFixed(1)}" y="${(H - 10 - (x.q - 1) / 4 * (H - 12)).toFixed(1)}" width="${(bw * .6).toFixed(1)}" height="${((x.q - 1) / 4 * (H - 12) + 0.5).toFixed(1)}" rx="2" class="${x.m === sw.m ? 'hi' : 'mu'}"/><text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 1}" text-anchor="middle">${Math.floor(x.m / 60)}${x.m % 60 ? ',5' : ''}</text>`).join('')}</svg>`;
+}
+/* ---------- Muster finden ---------- */
+function sleepPatterns(D){
+  const st = D.st, out = [], P = (lvl, icon, t, sub, viz = '', act = '') => out.push({lvl, icon, t, sub, viz, act});
+  if (st.N < 3) return out;
+  const short = D.need - st.durAvg, t0 = startOfDay(new Date());
+  const last7 = []; for (let k = 6; k >= 0; k--) { const n = D.all.find(x => x.date === ymd(addDays(t0, -k))); last7.push(n ? n.dur : null); }
+  const lbl7 = []; for (let k = 6; k >= 0; k--) lbl7.push(WD_SHORT[isoDow(addDays(t0, -k)) - 1][0]);
+  if (short > 30) P('warn', 'uhr', `Schlafschuld: ${fmtH(Math.max(0, st.debtNow))} in 7 Nächten`, `Im Schnitt ${fmtH(st.durAvg)} statt ${fmtH(D.need)}. Chronischer Mangel fällt einem selbst kaum auf, wirkt aber wie eine durchwachte Nacht. Abbauen am besten mit 15 bis 30 min früher ins Bett über mehrere Abende, nicht mit langem Ausschlafen.`, vzBars(last7, D.need, lbl7));
+  else if (st.durAvg < 7 * 60) P('warn', 'uhr', 'Unter 7 Stunden', `Du schläfst im Schnitt ${fmtH(st.durAvg)}. Für Erwachsene werden 7 bis 9 Stunden empfohlen; dein eingestellter Bedarf liegt vielleicht zu niedrig.`, vzBars(last7, D.need, lbl7));
+  else P('good', 'haken', 'Dauer passt', `Im Schnitt ${fmtH(st.durAvg)} bei ${fmtH(D.need)} Bedarf.`, vzBars(last7, D.need, lbl7));
+  if (st.sri != null || st.sdBed != null) {
+    const on = D.recent.map(n => n.b);
+    const ok = st.sri != null ? st.sri >= 75 : st.sdBed < 35;
+    P(ok ? 'good' : 'warn', 'wdh', ok ? `Regelmäßig${st.sri != null ? ` (SRI ${st.sri})` : ''}` : `Unregelmäßig${st.sri != null ? ` (SRI ${st.sri})` : ''}`,
+      ok ? `Du schläfst meist zur selben Zeit ein (±${Math.round(st.sdBed || 0)} min). Regelmäßigkeit ist einer der stärksten Faktoren für Erholung und Gesundheit.` : `Dein Einschlafen schwankt um ±${Math.round(st.sdBed || 0)} min, das Aufwachen um ±${Math.round(st.sdWake || 0)} min. Am meisten hilft eine feste Aufstehzeit, auch am Wochenende, und Tageslicht direkt danach.`,
+      on.length >= 3 && D.medOn != null ? vzDots(on, D.medOn) : '');
+  }
+  if (st.sjl != null && st.msw != null && st.msf != null) {
+    if (st.sjl > 60) P(st.sjl > 105 ? 'warn' : '', 'flugzeug', `Sozialer Jetlag ${fmtH(st.sjl)}`, `Schlafmitte unter der Woche ${fmtClock(st.msw)}, am Wochenende ${fmtClock(st.msf)}. Das wirkt jede Woche wie eine Zeitverschiebung${D.catchUp > 45 ? ` und am Wochenende holst du ${dur(Math.round(D.catchUp))} nach` : ''}. Am Wochenende höchstens 1 h später aufstehen.`, vzJet(st.msw, st.msf));
+    else P('good', 'flugzeug', 'Kaum sozialer Jetlag', `Unter der Woche und am Wochenende liegt deine Schlafmitte nur ${dur(Math.round(st.sjl))} auseinander.`, vzJet(st.msw, st.msf));
+  }
+  const wk = D.wk.filter(x => x.n >= 2);
+  if (wk.length >= 4) {
+    const lateD = wk.slice().sort((a, b) => b.on - a.on)[0], shortD = wk.slice().sort((a, b) => a.dur - b.dur)[0], onAvg = sAvg(wk.map(x => x.on));
+    const names = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+    if (lateD.on - onAvg > 40 || D.need - shortD.dur > 60) P('', 'kalender', D.need - shortD.dur > 60 ? `${names[shortD.dw - 1]}abends wird es kurz` : `${names[lateD.dw - 1]}abends spät`, `${names[lateD.dw - 1]}abends schläfst du im Schnitt um ${fmtClock(lateD.on)} ein${D.need - shortD.dur > 60 ? `, in der Nacht nach ${names[shortD.dw - 1]} nur ${fmtH(shortD.dur)}` : ''}.`, vzBars(D.wk.map(x => x.dur), D.need, ['M', 'D', 'M', 'D', 'F', 'S', 'S']));
+  }
+  if (D.trend) {
+    const t = D.trend, big = Math.abs(t.dur) >= 20 || Math.abs(t.on) >= 25 || Math.abs(t.q) >= 0.5;
+    if (big) P(t.dur < -20 || t.q < -0.5 ? 'warn' : t.dur > 20 || t.q > 0.5 ? 'good' : '', t.dur >= 0 ? 'hoch' : 'runter', 'Diese Woche gegenüber letzter', [Math.abs(t.dur) >= 20 ? `${fmtDelta(t.dur)} Schlaf pro Nacht` : '', Math.abs(t.on) >= 25 ? `${dur(Math.round(Math.abs(t.on)))} ${t.on > 0 ? 'später' : 'früher'} eingeschlafen` : '', Math.abs(t.q) >= 0.5 ? `Erholung ${t.q > 0 ? '+' : '−'}${Math.abs(t.q).toFixed(1).replace('.', ',')}` : ''].filter(Boolean).join(' · ') + '.');
+  }
+  if (D.sweet && D.sweet.m !== D.need) P('', 'stern', `Am erholtesten ab ${fmtH(D.sweet.m)}`, `Ab dieser Dauer steigt deine Erholung kaum noch. ${D.sweet.m > D.need ? `Das ist mehr als dein eingestellter Bedarf von ${fmtH(D.need)}.` : `Dein eingestellter Bedarf von ${fmtH(D.need)} ist großzügig.`}`, vzSweet(D.sweet), D.sweet.m >= 360 && D.sweet.m <= 600 ? `<button class="btn sm" data-act="sleepNeedSet" data-m="${D.sweet.m}">Bedarf auf ${fmtH(D.sweet.m)}</button>` : '');
+  if (D.needAlarmFree != null && Math.abs(D.needAlarmFree - D.need) >= 30) P('', 'sonne', `Ohne Wecker schläfst du ${fmtH(D.needAlarmFree)}`, `Aus ${D.noAlarmN} Nächten ohne Wecker. Das ist ein guter Hinweis auf deinen echten Bedarf, solange keine Schlafschuld nachgeholt wird.`, '', D.needAlarmFree >= 360 && D.needAlarmFree <= 600 ? `<button class="btn sm" data-act="sleepNeedSet" data-m="${Math.round(D.needAlarmFree / 30) * 30}">Bedarf übernehmen</button>` : '');
+  if (D.sol != null && D.sol > 30) P('warn', 'mond', `Einschlafen dauert ${dur(Math.round(D.sol))}`, 'Mehr als 30 min gilt als auffällig. Bewährt: erst ins Bett, wenn du müde bist; wenn du nach etwa 20 min noch wach bist, kurz aufstehen und etwas Ruhiges bei wenig Licht machen. Kein Koffein nach 14 Uhr.');
+  if (D.waso != null && D.waso > 30) P('warn', 'mond', `Nachts ${dur(Math.round(D.waso))} wach`, 'Mehr als 30 min nächtliches Wachsein ist auffällig. Häufige Auslöser: Alkohol, späte Mahlzeiten, Wärme, Stress. Bleibt es über Wochen so, lohnt ein Gespräch mit einer Ärztin oder einem Arzt.');
+  if (D.se != null) P(D.se >= 85 ? 'good' : 'warn', 'kreis', `Schlafeffizienz ${D.se} %`, D.se >= 85 ? 'Von der Zeit im Bett schläfst du den Großteil. Ziel sind mindestens 85 %.' : `Unter 85 %: Du liegst viel wach im Bett. Weniger Zeit im Bett (später hinlegen, feste Aufstehzeit) hebt die Effizienz meist schnell.`);
+  for (const f of D.fx.filter(f => !f.few && f.d != null).sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 3)) {
+    if (Math.abs(f.d) < 0.4 && Math.abs(f.ddur) < 20 && Math.abs(f.don) < 20) continue;
+    const bits = [f.dq != null && Math.abs(f.dq) >= 0.3 ? `Erholung ${f.dq > 0 ? '+' : '−'}${Math.abs(f.dq).toFixed(1).replace('.', ',')}` : '', Math.abs(f.ddur) >= 15 ? `${fmtDelta(f.ddur)} Schlaf` : '', Math.abs(f.don) >= 15 ? `${dur(Math.round(Math.abs(f.don)))} ${f.don > 0 ? 'später' : 'früher'} eingeschlafen` : ''].filter(Boolean);
+    const strong = Math.abs(f.d) >= 0.8 ? 'deutlich' : Math.abs(f.d) >= 0.5 ? 'spürbar' : 'leicht';
+    const worse = f.dq != null ? f.dq < 0 : f.ddur < 0;
+    P(worse ? 'warn' : 'good', worse ? 'glocke' : 'stern', `${f.l}: ${strong} ${worse ? 'schlechter' : 'besser'}`, `${bits.join(' · ')}. Aus ${f.n} Nächten mit, ${D.base.length - f.n} ohne.`, f.dq != null ? vzPair(Math.max(0.1, sAvg(D.base.filter(n => (n.tags || []).includes(f.k) && n.q).map(n => n.q))), sAvg(D.base.filter(n => !(n.tags || []).includes(f.k) && n.q).map(n => n.q)), 'mit', 'ohne') : '');
+  }
+  if (D.calLate && (D.calLate.don > 25 || D.calLate.ddur < -25)) P('', 'kalender', 'Späte Termine verschieben deine Nacht', `Nach Abenden mit Terminen bis nach 21 Uhr schläfst du ${dur(Math.round(Math.abs(D.calLate.don)))} ${D.calLate.don > 0 ? 'später' : 'früher'} ein${D.calLate.ddur < -15 ? ` und ${dur(Math.round(-D.calLate.ddur))} kürzer` : ''}. Plane nach späten Terminen 30 bis 60 min zum Runterkommen ein.`);
+  if (D.calEarly && D.calEarly.ddur < -30) P('warn', 'uhr', 'Frühe Starts kosten Schlaf', `Vor Tagen mit Terminen vor 9 Uhr schläfst du ${dur(Math.round(-D.calEarly.ddur))} kürzer. Der Plan legt die Bettzeit davor schon früher, die Erinnerung am Abend hilft, sie zu halten.`);
+  if (D.streak >= 4) P('good', 'haken', `${D.streak} Nächte in Folge im Rhythmus`, `Jedes Mal höchstens 30 min von deinem üblichen Einschlafen (${fmtClock(D.medOn)}) entfernt.`);
+  if (st.msfsc != null) { const h = ((st.msfsc + 720) % 1440) / 60; if (h >= 4.5) P('', 'sonne', `${chronoLabel(st.msfsc)}`, `Schlafmitte an freien Tagen ${fmtClock(st.msfsc)}. Wenn du früher müde werden willst: Tageslicht in der ersten Stunde nach dem Aufstehen und am Abend gedimmtes Licht verschieben die innere Uhr nach vorn.`); }
+  const PL = sleepPlan(), up = []; for (let k = 1; k <= 7; k++) { const x = PL[ymd(addDays(t0, k))]; if (x && x.short) up.push(`${dayLabel(addDays(t0, k - 1))} nur ${dur(x.sleepMin)}`); }
+  if (up.length) P('warn', 'mond', 'Kurze Nächte in Sicht', up.join(' · ') + '. Der Plan gleicht das in den Nächten danach aus.');
+  const rank = {warn: 0, '': 1, good: 2}; return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
+}
+function sleepWeekTile(D){
+  const names = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], has = D.wk.filter(x => x.n).length;
+  if (has < 3) return '';
+  const ons = D.wk.filter(x => x.on != null).map(x => x.on), lo = Math.min(...ons) - 20, hi = Math.max(...ons) + 20;
+  return `<div class="sl2-week">${D.wk.map((x, i) => `<div class="c${x.dw >= 6 ? ' we' : ''}"><span class="d">${names[i]}</span>
+    <span class="bar"><i style="height:${x.dur != null ? Math.max(6, Math.min(100, (x.dur - 300) / (D.need + 90 - 300) * 100)).toFixed(0) : 0}%" class="${x.dur != null && x.dur < D.need - 45 ? 'lo' : ''}"></i></span>
+    <b>${x.dur != null ? fmtH(x.dur).replace(' h ', ':').replace(' h', ':00') : '–'}</b><small>${x.on != null ? fmtClock(x.on) : ''}</small></div>`).join('')}</div>
+    <p class="sl2-note">Balken: Schlafdauer in der Nacht nach dem Abend. Darunter: übliches Einschlafen.</p>`;
+}
+function sleepChronoTile(st){
+  if (st.msfsc == null) return '';
+  const h = ((st.msfsc + 720) % 1440) / 60, pos = Math.max(0, Math.min(100, (h - 1) / 7 * 100));
+  return `<div class="sl2-chrono"><b>${esc(chronoLabel(st.msfsc))}</b><small>Schlafmitte an freien Tagen ${fmtClock(st.msfsc)}${st.msw != null ? `, werktags ${fmtClock(st.msw)}` : ''}</small>
+    <div class="scale"><i style="left:${pos.toFixed(1)}%"></i></div><div class="lbls"><span>sehr früh</span><span>Mitte</span><span>sehr spät</span></div>
+    ${st.sjl != null ? `<p class="sl2-jl"><span>Sozialer Jetlag</span><b class="${st.sjl > 90 ? 'bad' : ''}">${st.sjl < 15 ? 'kaum' : fmtH(st.sjl)}</b></p>` : ''}</div>`;
+}
+
 function chronoLabel(m){ const h = (m + 720) % 1440 / 60; return h < 2.5 ? 'Sehr früher Typ' : h < 3.5 ? 'Früher Typ' : h < 4.5 ? 'Mitteltyp, eher früh' : h < 5.5 ? 'Mitteltyp, eher spät' : h < 6.5 ? 'Später Typ' : 'Sehr später Typ'; }
 function sleepInsights(st){
   const out = [], add = (lvl, icon, t, sub) => out.push({lvl, icon, t, sub});
@@ -8867,6 +9201,7 @@ function sleepNightsChart(st){
     g += `<text x="4" y="${y + rowH / 2 + fs / 3}" font-size="${fs}">${m ? '' : WD_SHORT[(isoDow(addDays(d, -1)) - 1)] + '/'}${WD_SHORT[isoDow(d) - 1]} ${d.getDate()}.</text>`;
     if (p) { const pb = sleepNight({bed: hm(p.bed), wake: hm(p.wake)}); g += `<rect class="${fut ? 'fut' : 'plan'}" x="${X(toAbs(pb.b))}" y="${y + 5}" width="${Math.max(2, X(toAbs(pb.w)) - X(toAbs(pb.b)))}" height="${rowH - 10}" rx="4"/>`; }
     if (n) g += `<text x="${W - 2}" y="${y + rowH / 2 + fs / 3}" text-anchor="end" font-size="${fs}" class="${n.dur < st.need - 45 ? 'shortt' : ''}">${fmtH(n.dur).replace(' h ', ':').replace(' h', ':00')}</text>`;
+    if (n && n.ib != null && n.b - n.ib >= 3) g += `<rect class="lat" x="${X(toAbs(n.ib))}" y="${y + 6}" width="${Math.max(2, X(toAbs(n.b)) - X(toAbs(n.ib)) + 6)}" height="${rowH - 12}" rx="${(rowH - 12) / 2}"/>`;
     if (n) { g += `<rect class="act" x="${X(toAbs(n.b))}" y="${y + 6}" width="${Math.max(2, X(toAbs(n.w)) - X(toAbs(n.b)))}" height="${rowH - 12}" rx="${(rowH - 12) / 2}" opacity="${n.q ? 0.5 + n.q * 0.1 : 0.85}"><title>${n.bed}–${n.wake} · ${fmtH(n.dur)}${n.q ? ' · Erholung ' + n.q + '/5' : ''}</title></rect>`; }
   });
   /* Legende steht unter dem Diagramm im HTML */
