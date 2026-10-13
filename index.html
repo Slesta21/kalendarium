@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 32.1  ·  persönlicher Kalender für alles
+ KALENDARIUM 33  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -5290,7 +5290,29 @@ const Native = {
     if (!this.on() || !state) return 0;
     const now = Date.now(), list = Reminders.plan(now + 15000, now + 72 * 3600000).map(a => ({key: a.key, at: a.at, title: a.title, body: a.body, prio: a.prio || 4, vib: a.vib || 'doppelt'})).concat(this.lives(now));
     const js = JSON.stringify(list); if (!force && js === this.last) return list.length;
+    this.widget(force);
     this.last = js; try { return window.KalNative.schedule(js); } catch { return 0; }
+  },
+  /* Startbildschirm-Widget: die nächsten Termine mit Losgehzeit und Linie */
+  _w: '',
+  widget(force){
+    if (!this.has('widget')) return;
+    const now = Date.now(), t0 = startOfDay(new Date(now)), out = [], nm = o => o.kind === 'course' ? (o.ref.short || o.ref.title) : o.title;
+    for (const d of [t0, addDays(t0, 1), addDays(t0, 2), addDays(t0, 3)]) {
+      const P = planDay(d), legOf = {};
+      for (const l of P.legs.filter(x => x.kind === 'go')) legOf[l.before.key] = l;
+      for (const o of dayItems(d).filter(x => isTimed(x) && x.kind !== 'deadline' && layerOk(x))) {
+        if (+o.end <= now) continue;
+        const l = legOf[o.key], f = l && l.live && l.live.legs ? l.live.legs.find(g => !g.walk) : null;
+        const e = {title: nm(o), start: +o.start, end: +o.end, place: placeLabel(o) || ''};
+        if (l) { e.depart = +l.depart; e.arrive = +l.arrive; e.how = `${dur(l.mins)} bis ${l.to ? l.to.name : ''}`; }
+        if (f) { e.line = lineLabel(f); e.lineDep = +new Date(f.dep); e.from = f.from || ''; e.plat = f.plat || ''; e.delay = f.ddel > 0 ? f.ddel : 0; }
+        out.push(e);
+      }
+    }
+    out.sort((a, b) => (a.depart || a.start) - (b.depart || b.start));
+    const js = JSON.stringify(out.slice(0, 12)); if (!force && js === this._w) return;
+    this._w = js; try { window.KalNative.widget(js); } catch {}
   },
   status(){ try { return JSON.parse(window.KalNative.status()); } catch { return {}; } },
   has(f){ try { return String(window.KalNative.features ? window.KalNative.features() : '').split(',').includes(f); } catch { return false; } },
@@ -6253,7 +6275,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '32.1';
+const APP_VERSION = '33';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7034,6 +7056,7 @@ const VIEWS = {
         ${Native.on() ? `<div class="row"><div class="l"><b>Live-Banner</b><small>Dauerhaft oben im Handy: „Fertig machen“ mit Countdown bis zum Losgehen, dann „Unterwegs“ bis zur Ankunft</small></div>${sw('live.on', (s.live || {}).on, 'Live-Banner')}</div>
         ${(s.live || {}).on ? `<div class="row"><div class="l"><b>Banner zeigen ab</b></div><div class="remchips">${[30, 45, 60, 90, 120].map(m => `<label><input type="radio" name="live_lead" value="${m}" ${+(s.live || {}).lead === m ? 'checked' : ''}><span>${m < 60 ? m + ' min' : m / 60 + ' h'} vorher</span></label>`).join('')}</div></div>
         <div class="row"><div class="l"><b>Vorschau</b><small>So sieht das Banner aus</small></div><button class="btn sm" data-act="livePreview">Zeigen</button></div>` : ''}` : ''}
+        ${Native.on() ? `<div class="row"><div class="l"><b>Widget</b><small>${Native.has('widget') ? 'Auf dem Startbildschirm: wann du losmusst, mit Linie und Countdown' : 'Neue App-Version laden, dann gibt es ein Widget für den Startbildschirm'}</small></div>${Native.has('widget') ? '<button class="btn sm" data-act="widgetPin">Hinzufügen</button>' : '<button class="btn sm" data-act="apkGet">App laden</button>'}</div>` : ''}
         ${Native.on() ? '' : `<div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>`}
         ${STANDALONE && !Native.on() ? pushRows() : ''}
         <div class="row"><div class="l"><b>Kurse erinnern</b></div>${sw('courseReminders', s.courseReminders, 'Kurse erinnern')}</div>
@@ -8406,6 +8429,7 @@ const ACTIONS = {
   ltHere(el){ LiveTrip.calibrate(+el.dataset.k); },
   ltAll(){ LiveTrip._all = !LiveTrip._all; LiveTrip.render(); },
   depsRetry(el){ const b = el.closest('[data-deps]'); if (b) b.innerHTML = '<div class="deps-h"><b>Nächste Abfahrten</b><small>wird geladen …</small></div>'; depsLoadAll(); },
+  widgetPin(){ Native.widget(true); let ok = false; try { ok = window.KalNative.widgetPin(); } catch {} toast(ok ? 'Widget wird hinzugefügt' : 'Widget von Hand hinzufügen', ok ? 'Bestätige im Fenster des Handys.' : 'Startbildschirm lange drücken → Widgets → Kalendarium.'); },
   ltPick(){ LiveTrip.pick(); },
   ltCaught(el){ LiveTrip.caught(el.dataset.i); },
   overUndo(){ LiveTrip.undo(); },
