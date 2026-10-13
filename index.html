@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 25.1  ·  persönlicher Kalender für alles
+ KALENDARIUM 25.2  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1930,6 +1930,27 @@ details.sv summary::-webkit-details-marker{display:none}
 .lt-now b{font-size:16px}
 .lt-now small{color:var(--muted);font-size:13.5px}
 .lt-note{font-size:13px;color:var(--accent-ink)}
+details.sub{border-bottom:1px solid var(--line)}
+details.sub > summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0}
+details.sub > summary::-webkit-details-marker{display:none}
+details.sub > summary b{display:block;font-size:15px;font-weight:500}
+details.sub > summary small{display:block;color:var(--muted);font-size:13px}
+details.sub > summary svg{color:var(--faint);transition:transform var(--d2) var(--ease)}
+details.sub[open] > summary svg{transform:rotate(90deg)}
+.settings.acc{display:block;max-width:760px;border-top:1px solid var(--line)}
+details.sx{border-bottom:1px solid var(--line)}
+details.sx > summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:30px minmax(0,1fr) 18px;gap:12px;align-items:center;padding:15px 2px;-webkit-tap-highlight-color:transparent}
+details.sx > summary::-webkit-details-marker{display:none}
+details.sx > summary:hover .sx-t b{color:var(--accent-ink)}
+.sx-ic{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--sunk);color:var(--accent-ink)}
+.sx-t b{display:block;font-size:16.5px;font-weight:600;transition:color var(--d1)}
+.sx-t small{display:block;color:var(--muted);font-size:13px;margin-top:1px}
+.sx-chev{color:var(--faint);display:grid;place-items:center;transition:transform var(--d2) var(--ease)}
+details.sx[open] .sx-chev{transform:rotate(90deg)}
+details.sx[open] > summary .sx-t b{color:var(--accent-ink)}
+.sx-body{padding:0 2px 20px 42px;animation:memin var(--d2) var(--ease) both}
+.sx-tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin:0 0 10px}
+@media (max-width:560px){ .sx-body{padding-left:2px} }
 .vibchips{display:flex;flex-wrap:wrap;gap:6px}
 .vibchips label{display:inline-flex;position:relative}
 .vibchips input{position:absolute;opacity:0;pointer-events:none}
@@ -5710,7 +5731,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '25.1';
+const APP_VERSION = '25.2';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6399,7 +6420,7 @@ const VIEWS = {
     const numIn = (path, val, min, max, step=1, label='') => `<input type="number" data-set="${path}" value="${val}" min="${min}" max="${max}" step="${step}" aria-label="${label||path}">`;
     const remList = arr => (arr||[]).map(m => REMINDER_OPTS.find(r=>r[0]===m)?.[1] || m+' min').join(', ') || 'keine';
     const notif = !('Notification' in window) ? 'In dieser Ansicht nicht verfügbar' : Notification.permission === 'granted' ? 'Erlaubt' : Notification.permission === 'denied' ? 'Blockiert' : 'Noch nicht gefragt';
-    return `<div class="settings">
+    return settingsAcc(`<div class="settings">
       <section class="panel">
         <div class="panel-h"><h2>Darstellung</h2></div>
         <div class="row"><div class="l"><b>Name</b><small>Für die Begrüßung</small></div><input type="text" data-set="name" value="${esc(s.name)}" placeholder="Dein Name" aria-label="Name"></div>
@@ -6475,10 +6496,12 @@ const VIEWS = {
         <div class="row"><div class="l"><b>Ton</b></div>${sw('sound', s.sound, 'Ton')}</div>
         <div class="row"><div class="l"><b>Vibration</b><small>Wenn der Browser es erlaubt</small></div>${sw('vibrate', s.vibrate, 'Vibration')}</div>
         ${Native.on() ? `<div class="row"><div class="l"><b>Android-App</b><small>${Native.has('live') ? 'Erinnerungen als echte Wecker, vibriert auch lautlos' : 'Neue Version verfügbar: Vibrationsmuster und Live-Banner'}</small></div>${Native.has('live') ? '<button class="btn sm" data-act="vibHelp">Status</button>' : `<a class="btn sm primary" href="${APK_URL}">${ic('runter','s')}Aktualisieren</a>`}</div>` : Native.android() ? `<div class="row"><div class="l"><b>Zuverlässig vibrieren: Android-App</b><small>Kalendarium als echte App, vibriert wie WhatsApp, auch wenn alles zu ist</small></div><button class="btn sm primary" data-act="apkGet">${ic('runter','s')}Holen</button></div>` : ''}
+        <details class="sub"><summary><span><b>Vibrationsmuster</b><small>Losgehen: ${esc(vibOf((s.vib || {}).go || 'wecker')[1])} · Termine: ${esc(vibOf((s.vib || {}).event || 'doppelt')[1])} · Fristen: ${esc(vibOf((s.vib || {}).deadline || 'puls')[1])}</small></span>${ic('weiter','s')}</summary>
         <div class="f vibset"><span>Vibration beim Losgehen</span>${vibChips('vib_go', (s.vib || {}).go || 'wecker', false)}</div>
         <div class="f vibset"><span>Vibration bei Terminen</span>${vibChips('vib_event', (s.vib || {}).event || 'doppelt', false)}</div>
         <div class="f vibset"><span>Vibration bei Fristen</span>${vibChips('vib_deadline', (s.vib || {}).deadline || 'puls', false)}</div>
         <small class="muted" style="display:block;margin:-4px 0 10px">Antippen spielt das Muster ab. Für einzelne Termine stellst du es im Termin ein.</small>
+        </details>
         ${Native.on() ? `<div class="row"><div class="l"><b>Live-Banner</b><small>Dauerhaft oben im Handy: „Fertig machen“ mit Countdown bis zum Losgehen, dann „Unterwegs“ bis zur Ankunft</small></div>${sw('live.on', (s.live || {}).on, 'Live-Banner')}</div>
         ${(s.live || {}).on ? `<div class="row"><div class="l"><b>Banner zeigen ab</b></div><div class="remchips">${[30, 45, 60, 90, 120].map(m => `<label><input type="radio" name="live_lead" value="${m}" ${+(s.live || {}).lead === m ? 'checked' : ''}><span>${m < 60 ? m + ' min' : m / 60 + ' h'} vorher</span></label>`).join('')}</div></div>
         <div class="row"><div class="l"><b>Vorschau</b><small>So sieht das Banner aus</small></div><button class="btn sm" data-act="livePreview">Zeigen</button></div>` : ''}` : ''}
@@ -6520,7 +6543,7 @@ const VIEWS = {
         <div class="row"><div class="l"><b>Einrichtung</b><span>Name, Weg zur Uni und Schlafrhythmus in drei Schritten</span></div><button class="btn sm" data-act="onbStart">Starten</button></div>
         <div class="row"><div class="l"><b>Alles zurücksetzen</b></div><button class="btn sm danger" data-act="resetAll">Zurücksetzen</button></div>
       </section>
-    </div>`;
+    </div>`);
   },
 
   /* ---------- SUCHE ---------- */
@@ -7530,6 +7553,31 @@ async function saveFile(filename, data){
 }
 function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
+/* Einstellungen als ruhige Liste: jeder Bereich zugeklappt, nur einer offen */
+const SX = [
+  ['Erinnerungen', 'glocke', 'Vibration, Live-Banner, Zeiten'],
+  ['Orte und Wege', 'ort', 'Zuhause, Uni, Losgehen'],
+  ['Schlaf', 'mond', 'Schlafdauer und Aufstehen'],
+  ['Darstellung', 'stift', 'Name, Farbe, Hell oder Dunkel'],
+  ['Stil', 'stern', 'Schrift, Farbton, Dichte'],
+  ['Kategorien', 'kreis', 'Farben und Symbole'],
+  ['Wetter', 'wetter', 'Städte'],
+  ['Feiertage', 'feiertag', 'Region und besondere Tage'],
+  ['Vorlagen und Blöcke', 'block', 'Schnell eintragen'],
+  ['Geburtstage', 'geschenk', 'Mit Erinnerung'],
+  ['Export und Daten', 'runter', 'Übertragen, Sicherung, Abgleich']
+];
+function settingsAcc(html){
+  const secs = [];
+  const re = /<section class="panel">\s*<div class="panel-h"><h2>([\s\S]*?)<\/h2>([\s\S]*?)<\/div>([\s\S]*?)<\/section>/g;
+  let m; while ((m = re.exec(html))) secs.push({title: m[1], tools: m[2].trim(), body: m[3]});
+  if (!secs.length) return html;
+  const ord = t => { const i = SX.findIndex(x => x[0] === t); return i < 0 ? 99 : i; };
+  secs.sort((a, b) => ord(a.title) - ord(b.title));
+  return `<div class="settings acc">${secs.map(x => { const meta = SX.find(y => y[0] === x.title) || [x.title, 'weiter', ''];
+    return `<details class="sx" data-sx="${esc(x.title)}" ${ui._sxOpen === x.title ? 'open' : ''}><summary><span class="sx-ic">${ic(meta[1])}</span><span class="sx-t"><b>${x.title}</b><small>${meta[2]}</small></span><span class="sx-chev">${ic('weiter','s')}</span></summary>
+      <div class="sx-body">${x.tools ? `<div class="sx-tools">${x.tools}</div>` : ''}${x.body}</div></details>`; }).join('')}</div>`;
+}
 const ACTIONS = {
   async appUpdate(){
     try { const r = await navigator.serviceWorker.getRegistration(); if (r) { await r.update(); if (r.installing || r.waiting) { toast('Update gefunden', 'Die App lädt gleich neu.'); return; } } } catch {}
@@ -9461,6 +9509,11 @@ function bindEvents(){
     if (t.name === 'placeId') { const b = t.closest('form').querySelector('[data-newplace]'); if (b) { b.hidden = t.value !== '__new'; if (!b.hidden) b.querySelector('[name=np_name]').focus(); } }
     if (t.name === 'colorCustom') t.closest('form').querySelectorAll('[name=color]').forEach(r => r.checked = false);
   });
+  document.addEventListener('toggle', ev => {
+    const d = ev.target; if (!d || !d.matches || !d.matches('details.sx')) return;
+    if (d.open) { ui._sxOpen = d.dataset.sx; document.querySelectorAll('details.sx[open]').forEach(x => { if (x !== d) x.open = false; }); setTimeout(() => d.scrollIntoView({block: 'nearest', behavior: 'smooth'}), 60); }
+    else if (ui._sxOpen === d.dataset.sx) ui._sxOpen = null;
+  }, true);
   document.addEventListener('change', async ev => {
     const t = ev.target;
     if (t.dataset && t.dataset.remgo) { ACTIONS.remGo(t); return; }
