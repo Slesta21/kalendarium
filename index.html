@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 23.1  ·  persönlicher Kalender für alles
+ KALENDARIUM 23.2  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1926,6 +1926,18 @@ details.sv summary::-webkit-details-marker{display:none}
 .lt-now b{font-size:16px}
 .lt-now small{color:var(--muted);font-size:13.5px}
 .lt-note{font-size:13px;color:var(--accent-ink)}
+.vh-step{display:grid;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
+.vh-h{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.vh-n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--sunk);color:var(--muted)}
+.vh-step.ok .vh-n{background:color-mix(in oklab, var(--ok, #2e9e5b) 18%, transparent);color:var(--ok, #2e9e5b)}
+.vh-step.no .vh-n{background:color-mix(in oklab, var(--danger) 16%, transparent);color:var(--danger)}
+.vh-h b{display:block;font-size:15.5px}
+.vh-h small{color:var(--muted);font-size:13px;line-height:1.4}
+.vh-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-left:38px}
+.vh-q{display:inline-flex;gap:6px;align-items:center;margin-left:auto;font-size:13.5px;color:var(--muted)}
+.vh-fix{margin:0 0 0 38px;font-size:14px;line-height:1.5;color:var(--ink);animation:memin var(--d2) var(--ease) both}
+.vh-q2{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:0 0 12px 38px;font-size:14px}
+.vh-q2 span{width:100%;color:var(--muted)}
 .vh-list{display:grid;gap:0;border-top:1px solid var(--line)}
 .vh-row{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;padding:11px 0;border-bottom:1px solid var(--line)}
 .vh-row svg{margin-top:2px}
@@ -5614,7 +5626,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '23.1';
+const APP_VERSION = '23.2';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6375,7 +6387,7 @@ const VIEWS = {
       </section>
 
       <section class="panel">
-        <div class="panel-h"><h2>Erinnerungen</h2><button class="btn sm" data-act="testReminder">${ic('glocke','s')}Testen</button><button class="btn sm ghost" data-act="vibHelp">Vibriert nicht?</button></div>
+        <div class="panel-h"><h2>Erinnerungen</h2><button class="btn sm" data-act="testReminder">${ic('glocke','s')}Testen</button><button class="btn sm ghost" data-act="vibHelp">Vibration prüfen</button></div>
         <div class="row"><div class="l"><b>Ton</b></div>${sw('sound', s.sound, 'Ton')}</div>
         <div class="row"><div class="l"><b>Vibration</b><small>Wenn der Browser es erlaubt</small></div>${sw('vibrate', s.vibrate, 'Vibration')}</div>
         <div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>
@@ -7776,9 +7788,21 @@ const ACTIONS = {
     ui._diag = {vib, perm, push};
     toast('Test läuft', 'Hat es gerade vibriert? In 5 Sekunden kommt zusätzlich eine Benachrichtigung, du kannst das Handy jetzt sperren.');
     setTimeout(() => { Reminders.fire('Test-Erinnerung', 'So sieht eine Erinnerung aus.', 'glocke'); }, 5000);
-    setTimeout(() => { if (!sheet.el || sheet.el.hidden) vibHelp(); }, 9000);
+    setTimeout(() => { if (!sheet.el || sheet.el.hidden) { ui._vh = {}; vibHelp(); } }, 9000);
   },
-  vibHelp(){ vibHelp(); },
+  vibHelp(){ ui._vh = {}; vibHelp(); },
+  vhAns(el){ ui._vh = ui._vh || {}; ui._vh[el.dataset.k] = el.dataset.v; if (el.dataset.k === 'push' && el.dataset.v === 'ja') delete ui._vh.pushArr; vibHelp(); },
+  vhArr(el){ ui._vh.pushArr = el.dataset.v; vibHelp(); },
+  vhVib(){ let ok = false; try { ok = !!(navigator.vibrate && navigator.vibrate([400, 150, 400])); } catch {} if (!ok) { ui._vh.vib = 'nein'; vibHelp(); toast('Der Browser verweigert die Vibration', 'Meist wegen Lautlos-Modus oder weil der Browser es nicht kann.'); } },
+  async vhBan(){
+    let perm = 'Notification' in window ? Notification.permission : 'na';
+    if (perm === 'default') { try { perm = await Notification.requestPermission(); } catch {} }
+    if (perm !== 'granted') { ui._vh.ban = 'nein'; vibHelp(); toast('Benachrichtigungen sind blockiert', 'Erlaube sie in den Android-Einstellungen, siehe Weg 2.'); return; }
+    try { const r = await navigator.serviceWorker.ready; await r.showNotification('Test von Kalendarium', {body: 'Hat das Handy vibriert?', icon: 'icon-192.png', badge: 'icon-192.png', vibrate: [400, 150, 400], tag: 'kal-' + Date.now(), renotify: true, requireInteraction: true}); }
+    catch { try { new Notification('Test von Kalendarium', {body: 'Hat das Handy vibriert?'}); } catch {} }
+  },
+  vhPushOn(){ ACTIONS.pushOn(); setTimeout(() => vibHelp(), 200); },
+  async vhPush(){ try { await Push.send({title: 'Test von Kalendarium', body: 'Wenn das vibriert, klappen deine Losgeh-Erinnerungen.', prio: 5}); toast('Push gesendet', 'Kommt in ein paar Sekunden über ntfy.'); } catch { toast('Push ging nicht raus', navigator.onLine ? 'ntfy.sh ist gerade nicht erreichbar.' : 'Du bist offline.'); } },
   async copyIcs(){ const text = buildICS(); try { await navigator.clipboard.writeText(text); toast('Kopiert', 'In der Kalender-App oder einer .ics-Datei einfügen.'); } catch { EDITORS.icsText(text); } },
   async saveIcs(){ if (await saveFile('kalendarium-ics.txt', buildICS())) toast('Gesichert', 'Endung in .ics ändern und mit der Kalender-App öffnen.'); },
   async saveBackup(){ if (await saveFile(`kalendarium-sicherung-${ymd(new Date())}.json`, JSON.stringify(state, null, 2))) toast('Sicherung gespeichert', ''); },
@@ -8672,24 +8696,36 @@ const Push = {
   },
   async clear(){ if (!state.settings.ntfy || !state.settings.ntfy.topic) return; try { const k = await this.known(); for (const id in k) await fetch(this.url('/' + id), {method:'DELETE'}); } catch {} }
 };
-/* Hilfe, wenn das Handy nicht vibriert: zeigt, was geklappt hat und was zu tun ist */
-function vibHelp(){
-  const d = ui._diag || {}, isAndroid = /Android/i.test(navigator.userAgent);
-  const st = (ok, label, hint) => `<div class="vh-row ${ok ? 'ok' : 'no'}">${ic(ok ? 'haken' : 'x', 's')}<span><b>${label}</b>${hint ? `<small>${hint}</small>` : ''}</span></div>`;
-  const permOk = d.perm === 'granted';
-  openSheet(`<div class="detail vibhelp">${head('Hat es vibriert?')}
-    <div class="vh-list">
-      ${st(d.vib, 'Vibration bei offener App', d.vib ? 'Der Browser darf vibrieren.' : 'Der Browser hat die Vibration abgelehnt, meist weil das Handy auf lautlos steht oder „Bitte nicht stören“ an ist.')}
-      ${st(permOk, 'Benachrichtigungen erlaubt', permOk ? 'Banner kommen, solange Kalendarium offen oder im Hintergrund ist.' : d.perm === 'denied' ? 'Blockiert. Erlaube sie in den Einstellungen, siehe Schritt 2.' : 'Noch nicht erlaubt.')}
-      ${st(d.push === 'gesendet', 'Push bei geschlossener App (ntfy)', d.push === 'gesendet' ? 'Test-Push ist raus, er sollte gerade als Banner gekommen sein.' : d.push === 'fehler' ? 'ntfy.sh war gerade nicht erreichbar.' : 'Noch nicht eingerichtet. Ohne ntfy vibriert das Handy nicht, wenn Kalendarium geschlossen ist.')}
-    </div>
-    <ol class="vh-steps">
-      <li><b>Lautlos und „Bitte nicht stören“ aus.</b> Im Lautlos-Modus vibriert Android bei Benachrichtigungen oft gar nicht. Stell auf „Vibrieren“ oder „Klingeln“.</li>
-      ${isAndroid || true ? `<li><b>Benachrichtigungen mit Vibration.</b> Android-Einstellungen → Apps → ${STANDALONE ? 'Kalendarium (oder Chrome)' : 'Chrome'} → Benachrichtigungen: erlauben, und bei der Kategorie für Websites „Vibration“ und „Als Pop-up anzeigen“ einschalten.</li>` : ''}
-      <li><b>ntfy für geschlossene App.</b> ${Push.on() ? 'Android-Einstellungen → Apps → ntfy → Benachrichtigungen: bei den Kategorien für <b>hohe</b> und <b>höchste Priorität</b> „Vibration“ und „Als Pop-up anzeigen“ einschalten. In ntfy das Thema einmal antippen, damit es abonniert ist.' : 'Unter Einstellungen → Erinnerungen „Banner und Vibration auch bei geschlossener App“ einschalten und den drei Schritten folgen.'}</li>
-      <li><b>Akku-Optimierung.</b> Android-Einstellungen → Apps → ntfy → Akku → „Nicht eingeschränkt“. Sonst kommen Pushs manchmal zu spät.</li>
-    </ol>
-    <div class="sheet-foot"><button class="btn" data-act="go" data-v="einstellungen">Einstellungen</button><div class="r"><button class="btn primary" data-act="testReminder">${ic('glocke','s')}Nochmal testen</button></div></div></div>`);
+/* Vibrations-Check: drei Wege einzeln testen (Vibration, Banner, ntfy-Push), je mit Ja/Nein und Lösung */
+const VIB_FIX = {
+  vib: `<b>Chrome lässt Webseiten im Lautlos-Modus nicht vibrieren</b>, auch wenn WhatsApp es darf: WhatsApp ist eine echte App, Kalendarium läuft im Browser. Stell das Handy auf <b>„Vibrieren“</b> statt „Lautlos“, oder nutze Weg 3 (ntfy), der vibriert wie WhatsApp.`,
+  ban: `Android-Einstellungen → Apps → <b>${STANDALONE ? 'Kalendarium' : 'Chrome'}</b> → Benachrichtigungen. Benachrichtigungen erlauben, dann die Kategorie antippen (bei Chrome unter „Websites“: slesta21.github.io) und <b>„Vibration“</b> sowie <b>„Als Pop-up anzeigen“</b> einschalten.`,
+  pushNone: `Der Push kommt nicht an, also ist das Thema in ntfy nicht abonniert. Tippe unten auf <b>„In ntfy abonnieren“</b>. Öffnet sich ntfy nicht, kopiere das Thema und füge es in ntfy über <b>+</b> ein. Dann noch einmal testen.`,
+  pushVib: `Der Push kommt an, vibriert aber nicht: Android-Einstellungen → Apps → <b>ntfy</b> → Benachrichtigungen. Dort jede Kategorie mit „Priorität“ antippen, vor allem <b>„Höchste Priorität“</b>, und <b>„Vibration“</b> einschalten. Auf Samsung zusätzlich „Benachrichtigungstöne/Vibration bei Lautlos zulassen“ prüfen. In ntfy selbst: Thema antippen → drei Punkte → Benachrichtigungseinstellungen, dort nichts stummschalten.`
+};
+function vibHelp(step){
+  ui._vh = ui._vh || {};
+  const V = ui._vh, n = state.settings.ntfy || {}, ff = /Firefox/i.test(navigator.userAgent);
+  const row = (k, num, title, desc, act, ans) => {
+    const a = V[k];
+    return `<div class="vh-step ${a === 'ja' ? 'ok' : a === 'nein' ? 'no' : ''}">
+      <div class="vh-h"><span class="vh-n">${a === 'ja' ? ic('haken', 's') : num}</span><span><b>${title}</b><small>${desc}</small></span></div>
+      <div class="vh-a">${act}${ans ? `<span class="vh-q">Vibriert? <button class="btn sm${a === 'ja' ? ' primary' : ''}" data-act="vhAns" data-k="${k}" data-v="ja">Ja</button><button class="btn sm${a === 'nein' ? ' danger' : ''}" data-act="vhAns" data-k="${k}" data-v="nein">Nein</button></span>` : ''}</div>
+      ${a === 'nein' ? `<p class="vh-fix">${k === 'push' ? (V.pushArr === 'nein' ? VIB_FIX.pushNone : VIB_FIX.pushVib) : VIB_FIX[k]}</p>` : ''}
+    </div>`;
+  };
+  const sub = n.topic ? `ntfy://ntfy.sh/${encodeURIComponent(n.topic)}` : '';
+  const pushAct = !(n.on && n.topic)
+    ? `<button class="btn sm primary" data-act="vhPushOn">${ic('glocke','s')}ntfy einschalten</button>`
+    : `<button class="btn sm primary" data-act="vhPush">${ic('glocke','s')}Push senden</button><a class="btn sm" href="${sub}">In ntfy abonnieren</a><a class="btn sm ghost" href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">ntfy installieren</a>`;
+  openSheet(`<div class="detail vibhelp">${head('Vibration prüfen')}
+    <p class="muted" style="margin:0 0 var(--s2)">Drei Wege, einzeln getestet. Tipp jeweils auf den Knopf und sag, ob es vibriert hat.${ff ? ' <b>Firefox kann gar nicht vibrieren, öffne Kalendarium in Chrome.</b>' : ''}</p>
+    ${row('vib', 1, 'Vibration bei offener App', 'Kurze Vibration direkt beim Antippen.', `<button class="btn sm" data-act="vhVib">Jetzt vibrieren</button>`, true)}
+    ${row('ban', 2, 'Banner von Kalendarium', 'Benachrichtigung vom Handy-System, solange die App offen oder im Hintergrund ist.', `<button class="btn sm" data-act="vhBan">Banner senden</button>`, true)}
+    ${row('push', 3, 'Push bei geschlossener App', 'Über die App ntfy, vibriert wie WhatsApp, auch gesperrt und lautlos, wenn ntfy es darf.', pushAct, !!(n.on && n.topic))}
+    ${V.push === 'nein' ? `<div class="vh-q2"><span>Ist der Push überhaupt als Banner angekommen?</span><button class="btn sm${V.pushArr === 'ja' ? ' primary' : ''}" data-act="vhArr" data-v="ja">Ja, ohne Vibration</button><button class="btn sm${V.pushArr === 'nein' ? ' danger' : ''}" data-act="vhArr" data-v="nein">Nein, gar nicht</button></div>` : ''}
+    <p class="note" style="margin-top:var(--s2)">Für Losgeh-Erinnerungen reicht Weg 3. Er funktioniert auch, wenn Kalendarium geschlossen ist.</p>
+  </div>`, {vh: true});
 }
 function pushRows(){
   const n = state.settings.ntfy || {};
