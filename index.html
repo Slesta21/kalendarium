@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 20  ·  persönlicher Kalender für alles
+ KALENDARIUM 20.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1261,6 +1261,14 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 .leave .lv-l{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px}
 .leave small{color:var(--muted);font-size:12.5px;line-height:1.4}
 .tleg .tm .ca{color:var(--muted);font-size:11.5px;display:block}
+.ps{display:grid;gap:0;border-top:1px solid var(--line)}
+.ps-row{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ps-row[hidden]{display:none}
+.ps-h{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:28px}
+.ps-h b{font-size:15.5px}
+.ps-h .ps-name{all:unset;box-sizing:border-box;flex:1;min-width:0;font-size:15.5px;font-weight:600;border-bottom:1px dashed var(--line);padding:2px 0}
+.ps-h .ps-name::placeholder{color:var(--faint);font-weight:400}
+.onb .ps{margin-top:var(--s2)}
 .tw{display:grid;border-top:1px solid var(--line)}
 .tw-row{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
 .tw-k{font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
@@ -1774,7 +1782,7 @@ const Store = {
   saveLocal(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch {} },
   async connect(){
     try {
-      if (!window.claude || typeof window.claude.use !== 'function') { GistSync.load(); if (GistSync.on()) GistSync.start(); else maybeOnboard(); setSync(); return; }
+      if (!window.claude || typeof window.claude.use !== 'function') { GistSync.load(); if (GistSync.on()) GistSync.start(); else maybeOnboard(); setSync(); setTimeout(maybePlaces, 1200); return; }
       const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
       if (!db || !user) return;
       const id = await user.id(); if (!id) return;
@@ -1794,6 +1802,7 @@ const Store = {
       this.subscribe();
       setSync(); maybeOnboard();
     } catch { this.mode = 'local'; setSync(); maybeOnboard(); }
+    setTimeout(maybePlaces, 1200);
   },
   /* Live-Abgleich: Änderungen von einem anderen Gerät (PC ↔ Handy) kommen sofort an */
   subscribe(){
@@ -2218,7 +2227,7 @@ function routeTrip(place, arriveBy){
       const phase = ((+m[1] * 60 + +m[2]) % every + every) % every, base = startOfDay(latest), mins = Math.floor((latest - base) / 60000);
       dep = addMin(base, mins - (((mins - phase) % every) + every) % every);
     } else { dep = addMin(latest, -every); approx = true; exact = false; }
-    out.unshift({walk:false, line: g.line || 'Bahn', product: lineProduct(g.line), dir: g.dir || '', fromId: g.fromId || null, from: g.from || '', to: g.to || '', dep: +dep, pdep: null, ddel: null, arr: +addMin(dep, ride), parr: null, adel: null, plat: '', x: false, dist: null, notes: [], approx, every});
+    out.unshift({walk:false, line: g.line || 'Bahn', product: lineProduct(g.line), dir: g.dir || '', fromId: g.fromId || null, src: g.src || null, from: g.from || '', to: g.to || '', dep: +dep, pdep: null, ddel: null, arr: +addMin(dep, ride), parr: null, adel: null, plat: '', x: false, dist: null, notes: [], approx, every});
     t = addMin(dep, -TRANSFER_MIN);
   }
   const f = out[0], last = out[out.length - 1], wt = +R.walkTo || 0, wf = +R.walkFrom || 0;
@@ -2633,7 +2642,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '20';
+const APP_VERSION = '20.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -2828,7 +2837,7 @@ function routeFromJourney(j, all){
     const deps = [...new Set(same.map(x => +new Date(x.legs.filter(y => !y.walk)[i].pdep || x.legs.filter(y => !y.walk)[i].dep)))].sort((a, b) => a - b);
     let every = 0; for (let k = 1; k < deps.length; k++) { const d = Math.round((deps[k] - deps[k - 1]) / 60000); if (d >= 2 && (!every || d < every)) every = d; }
     if (!every) every = {suburban:10, subway:5, tram:10, bus:10, regional:60, express:60, ferry:60}[g.product] || 10;
-    return {line: g.line, from: g.from, to: g.to, ride: mm(g.pdep || g.dep, g.parr || g.arr) || 1, every, at: hm(new Date(g.pdep || g.dep)), dir: g.dir, fromId: g.fromId || null};
+    return {line: g.line, from: g.from, to: g.to, ride: mm(g.pdep || g.dep, g.parr || g.arr) || 1, every, at: hm(new Date(g.pdep || g.dep)), dir: g.dir, fromId: g.fromId || null, src: g.src || null};
   });
   return {walkTo: L.slice(0, i0).reduce((a, g) => a + mm(g.dep, g.arr), 0), walkFrom: L.slice(i1 + 1).reduce((a, g) => a + mm(g.dep, g.arr), 0), legs};
 }
@@ -2839,10 +2848,11 @@ function formPlace(f){
   const tw = f.querySelector('[data-trip]');
   if (tw) {
     const J = n => { try { const x = tw.querySelector(`[name="${n}"]`).value; return x ? JSON.parse(x) : null; } catch { return null; } }, trip = J('trip');
-    if (v === '__vbb') { const r = J('toVbb') || {}; return {id:'_tmp', name: (r.poi ? r.name : shortName(r.name)) || 'Ziel', mode:'oepnv', vbb: r, route: trip, minutes: trip ? routeBase(trip) : 30}; }
+    const est = +(tw.querySelector('[name="est"]') || {}).value || 0;
+    if (v === '__vbb') { const r = J('toVbb') || {}; return {id:'_tmp', name: (r.poi ? r.name : shortName(r.name)) || 'Ziel', mode:'oepnv', vbb: r, route: trip, minutes: trip ? routeBase(trip) : est || 30}; }
     let p = v ? placeById(v) : null;
     if (!v) { const cat = F.catId && state.categories.find(c => c.id === F.catId.value); p = cat && cat.placeId ? placeById(cat.placeId) : null; }
-    return p && !p.home && trip ? {...p, mode:'oepnv', route: trip} : p || null;
+    return p && !p.home && trip ? {...p, mode:'oepnv', route: trip} : p && !p.home && est && !routeOk(p.route) ? {...p, mode:'oepnv', minutes: est} : p || null;
   }
   if (v === '__new') {
     const mode = F.np_mode ? F.np_mode.value : 'oepnv';
@@ -2885,6 +2895,9 @@ function leaveUpdate(f){
 
 /* §11b VON / NACH als Adressen (App): Ziel suchen, die passende Verbindung
    wird automatisch gewählt (Fußwege, Linien, Umstiege, Fahrzeit). */
+/* Luftlinie und grobe Schätzung für ÖPNV in Berlin, wenn kein Fahrplan antwortet */
+function geoKm(a, b){ if (!a || !b || a.latitude == null || b.latitude == null) return null; const r = x => x * Math.PI / 180, dLa = r(b.latitude - a.latitude), dLo = r(b.longitude - a.longitude), h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.latitude)) * Math.cos(r(b.latitude)) * Math.sin(dLo / 2) ** 2; return 12742 * Math.asin(Math.sqrt(h)); }
+const estMin = km => Math.round(km < 1.2 ? km * 13 : 10 + km * 3.2);
 const shortName = n => String(n || '').split(',')[0].replace(/\s*\((Berlin|Bln)\)$/, '').trim();
 function tripWidget(o, opts = {}){
   const pid = o.placeId || '', fid = o.fromId || '', trip = o.route && routeOk(o.route) ? o.route : null;
@@ -2893,7 +2906,7 @@ function tripWidget(o, opts = {}){
   const toL = pid === 'home' ? 'Zuhause oder online' : pid === 'none' ? 'Ohne Weg' : pl ? esc(pl.name) : cp ? `${esc(cp.name)}<small>aus der Kategorie ${esc(cat.name)}</small>` : '';
   return `<div class="tw" data-trip>
     <input type="hidden" name="placeId" value="${esc(pid)}"><input type="hidden" name="fromId" value="${esc(fid)}"><input type="hidden" name="toVbb" value=""><input type="hidden" name="fromVbb" value="">
-    <input type="hidden" name="trip" value="${esc(trip ? JSON.stringify(trip) : '')}">
+    <input type="hidden" name="trip" value="${esc(trip ? JSON.stringify(trip) : '')}"><input type="hidden" name="est" value="">
     <div class="tw-row"><span class="tw-k">Von</span><button type="button" class="tw-v" data-act="twOpen" data-w="from">${fp ? esc(fp.name) : 'Zuhause<small>oder vom Termin davor</small>'}</button></div>
     <div class="tw-pick" data-w="from" hidden></div>
     <div class="tw-row"><span class="tw-k">Nach</span><button type="button" class="tw-v${toL ? '' : ' empty'}" data-act="twOpen" data-w="to">${toL || 'Ziel wählen'}</button></div>
@@ -2940,7 +2953,12 @@ async function twConn(f, keep){
     const sel = (cur && uniq.find(j => sigJ(j) === sigR(cur))) || inTime[0] || uniq[0];
     ui._twJs = js; tripIn.value = JSON.stringify(routeFromJourney(sel, js));
     box.innerHTML = `<span class="rlab">Verbindung · tipp an, wenn du lieber anders fährst</span><div class="chips">${uniq.slice(0, 4).map(j => `<button type="button" class="chip" data-act="twChoose" data-i="${js.indexOf(j)}" aria-pressed="${j === sel}">${j.legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ')} <span>${dur(Math.round((j.arrive - j.depart) / 60000))}</span></button>`).join('')}</div>`;
-  } catch { if (tok === _twTok) box.innerHTML = '<span class="muted" style="font-size:13.5px">Fahrplan gerade nicht erreichbar. Der Kalender schätzt den Weg und prüft später live.</span>'; }
+  } catch {
+    if (tok !== _twTok) return;
+    const km = geoKm(E.from, E.to), est = km != null ? estMin(km) : null;
+    E.tw.querySelector('[name="est"]').value = est || '';
+    box.innerHTML = `<span class="muted" style="font-size:13.5px">Der Fahrplan-Server antwortet gerade nicht.${est ? ` Geschätzt <b>${dur(est)}</b> für ${km.toFixed(1).replace('.', ',')} km.` : ''} Die echte Verbindung holt die App automatisch, sobald er wieder da ist.</span>`;
+  }
   leaveUpdate(f);
 }
 function twSet(f, w, id, label, vbb){
@@ -2957,7 +2975,7 @@ async function twSearch(inp){
   try {
     const res = await Transit.search(q); if (inp.value.trim() !== q) return; ui._twRes = res;
     box.innerHTML = res.length ? res.map((r, i) => `<button type="button" class="chip" data-act="twPick" data-w="${w}" data-i="${i}">${ic(r.type === 'stop' || r.type === 'station' ? 'zug' : 'ort','s')}${esc(r.name)}</button>`).join('') : '<span class="muted" style="font-size:13px">Nichts gefunden.</span>';
-  } catch { box.innerHTML = '<span class="muted" style="font-size:13px">Suche nicht möglich. Bist du online?</span>'; }
+  } catch { box.innerHTML = `<span class="muted" style="font-size:13px">${navigator.onLine === false ? 'Du bist offline.' : 'Die Adresssuche antwortet gerade nicht. Versuch es gleich noch einmal.'}</span>`; }
 }
 
 /* Neuer Ort direkt im Formular: "Wie lange brauchst du von zuhause?" – wird gespeichert und wiederverwendet */
@@ -2988,12 +3006,13 @@ function takeTrip(form){
   let trip = null; try { trip = v('trip') ? JSON.parse(v('trip')) : null; } catch {}
   const mk = s => { let r = null; try { r = JSON.parse(s); } catch {} if (!r) return '';
     const ex = state.places.find(p => p.vbb && ((r.id && p.vbb.id === r.id) || p.vbb.name === r.name)); if (ex) return ex.id;
-    const p = {id: uid(), name: (r.poi || r.type === 'stop' || r.type === 'station' ? r.name : shortName(r.name)) || 'Ort', vbb: r, mode:'oepnv', minutes: 30, home:false}; state.places.push(p); return p.id; };
+    const p = {id: uid(), name: (r.poi || r.type === 'stop' || r.type === 'station' ? r.name : shortName(r.name)) || 'Ort', vbb: r, mode:'oepnv', minutes: +v('est') || 30, home:false}; state.places.push(p); return p.id; };
   let pid = v('placeId'), fid = v('fromId');
   if (pid === '__vbb') pid = mk(v('toVbb'));
   if (fid === '__vbb') fid = mk(v('fromVbb'));
   if (fid === 'home') fid = '';
   const dest = pid && placeById(pid);
+  if (dest && !dest.home && !trip && +v('est') && !routeOk(dest.route) && !fid) dest.minutes = +v('est');
   if (dest && !dest.home && trip) { dest.mode = 'oepnv'; if (!fid) { dest.route = trip; dest.minutes = routeBase(trip); } else if (!dest.minutes) dest.minutes = routeBase(trip); }
   if (typeof Transit !== 'undefined') Transit.reset();
   return {placeId: pid, fromId: fid, route: trip};
@@ -3282,7 +3301,7 @@ const VIEWS = {
       </section>
 
       <section class="panel">
-        <div class="panel-h"><h2>Orte und Wege</h2><button class="btn sm" data-act="newPlace">${ic('plus','s')}Ort</button></div>
+        <div class="panel-h"><h2>Orte und Wege</h2>${STANDALONE ? `<button class="btn sm" data-act="placesSetup">${ic('ort','s')}Orte einrichten</button>` : `<button class="btn sm" data-act="newPlace">${ic('plus','s')}Ort</button>`}</div>
         <div>${state.places.map(p => `<div class="listrow" data-act="edit" data-kind="place" data-id="${esc(p.id)}"><span style="color:var(--accent-ink);display:flex">${ic(p.home?'haus':'ort','s')}</span><span class="grow">${esc(p.name)}<small>${p.home?`Startpunkt für alle Wege${p.vbb ? ' · ' + esc(p.vbb.name) : Transit.ok() ? ' · Haltestelle eintragen für Live-Verbindungen' : ''}`:`${p.vbb && Transit.ok() ? 'Live · ' : ''}${p.mode === 'oepnv' && routeOk(p.route) ? `${esc(routeLabel(p.route))} · ${dur(routeBase(p.route))}${routeLegs(p.route).every(g => g.at) ? ' · nach Fahrplan' : ''}` : `${dur(p.minutes)} · ${MODES[p.mode]} · mit Puffer ${dur(travelMinutes(p).total)}`}`}</small></span>${p.home?'':ic('weiter','s')}</div>`).join('')}</div>
         ${STANDALONE ? `<div class="row" style="margin-top:8px"><div class="l"><b>Erkennen, ob du zuhause bist</b><small>${esc(Loc.label())}</small></div>${sw('loc.on', s.loc && s.loc.on, 'Erkennen, ob du zuhause bist')}</div>` : ''}
         <div class="row"${STANDALONE ? '' : ' style="margin-top:8px"'}><div class="l"><b>Früher da sein</b><small>Ankunft vor Beginn</small></div><span>${numIn('travel.arriveEarly', T.arriveEarly, 0, 60, 1, 'Früher da sein')} min</span></div>
@@ -4217,6 +4236,7 @@ function upsert(listKey, id, obj, defaults = {}){
   state[listKey].push({id:uid(), ...defaults, ...obj}); return true;
 }
 const SAVE = {
+  places(form){ const any = savePlaces(form); closeSheet(); commit(); toast(any ? 'Orte gespeichert' : 'Später geht es unter Einstellungen → Orte und Wege', any ? 'Die Wege werden jetzt aus dem Fahrplan berechnet.' : ''); if (any) Transit.fillRoutes(true); },
   sleepEntry(form, fd){
     const date = fd.get('date'), bed = fd.get('bed'), wake = fd.get('wake');
     if (!/^\d\d:\d\d$/.test(bed) || !/^\d\d:\d\d$/.test(wake)) { toast('Uhrzeiten fehlen', ''); return; }
@@ -4226,7 +4246,8 @@ const SAVE = {
   onb(f, fd){
     const step = +f.dataset.step, s = state.settings;
     if (step === 1) s.name = String(fd.get('name') || '').trim().slice(0, 40);
-    if (step === 2) {
+    if (step === 2 && STANDALONE) savePlaces(f);
+    else if (step === 2) {
       const name = String(fd.get('uniName') || '').trim() || 'Uni', min = Math.max(1, Math.min(240, parseInt(fd.get('minutes'), 10) || 30)), mode = MODES[fd.get('mode')] ? fd.get('mode') : 'oepnv';
       let p = state.places.find(x => x.id === 'uni');
       if (!p) { p = {id:'uni'}; state.places.push(p); }
@@ -4414,6 +4435,20 @@ const ACTIONS = {
     sc.querySelector('[data-vres]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(r.name)}</span>`;
     if (sc.matches('[data-route]')) ACTIONS.routeAuto(sc.querySelector('[data-vres]'));
   },
+  psPick(el){
+    const row = el.closest('[data-psrow]'), r = row && row._res && row._res[+el.dataset.i]; if (!r) return;
+    row.querySelector('[data-psv]').value = JSON.stringify(r); row.querySelector('[data-psq]').value = r.name;
+    row.querySelector('[data-psres]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(r.name)}</span>`;
+    const nm = row.querySelector('[data-psname]'); if (nm && !nm.value.trim()) nm.value = r.poi || r.type === 'stop' ? r.name : shortName(r.name);
+    haptic();
+  },
+  psAdd(el){
+    const box = el.closest('[data-ps]').querySelector('[data-psmore]');
+    box.insertAdjacentHTML('beforeend', psRow('new' + Date.now(), '', null, true)); box.lastElementChild.querySelector('[data-psname]').focus();
+  },
+  psDel(el){ const row = el.closest('[data-psrow]'); if (row.dataset.id.startsWith('new')) row.remove(); else { row.querySelector('[data-psv]').value = ''; row.hidden = true; } },
+  psLater(){ state.settings.placesAsked = true; closeSheet(); commit(); toast('Später geht es unter Einstellungen → Orte und Wege', ''); },
+  placesSetup(){ placesSetup(); },
   twOpen(el){
     const f = el.closest('form'), w = el.dataset.w, pk = f.querySelector(`[data-trip] .tw-pick[data-w="${w}"]`);
     if (!pk.hidden && !el.dataset.q) { pk.hidden = true; pk.innerHTML = ''; return; }
@@ -5074,7 +5109,26 @@ const Loc = {
 };
 const LINE_COL = {suburban:'#3E8A3E', subway:'#1F5AA6', tram:'#C3282B', bus:'#8F2C8A', regional:'#B3242C', express:'#5B5B5B', ferry:'#2A7FB8'};
 const Transit = {
-  api:'https://v6.vbb.transport.rest', cache:{}, busy:false, alerted:{}, err:'',
+  /* transport.rest fällt zeitweise aus. Darum: drei gleichartige Server
+     nacheinander (VBB, BVG, DB), mit Zeitlimit; der zuletzt funktionierende
+     kommt zuerst. Adressen findet notfalls Photon (OpenStreetMap). */
+  bases:['https://v6.vbb.transport.rest', 'https://v6.bvg.transport.rest', 'https://v6.db.transport.rest'],
+  api: (() => { try { return localStorage.getItem('kal-tr-base') || 'https://v6.vbb.transport.rest'; } catch { return 'https://v6.vbb.transport.rest'; } })(),
+  cache:{}, busy:false, alerted:{}, err:'', down:false,
+  fam(b){ return /\.db\./.test(b || '') ? 'db' : 'vbb'; },
+  async get(build, timeout = 9000){
+    const order = [this.api, ...this.bases.filter(b => b !== this.api)]; let last = null;
+    for (const b of order) {
+      const path = build(b); if (path == null) continue;
+      try {
+        const ctl = typeof AbortController === 'function' ? new AbortController() : null, t = ctl && setTimeout(() => ctl.abort(), timeout);
+        const r = await fetch(b + path, ctl ? {signal: ctl.signal} : {}); if (t) clearTimeout(t);
+        if (r.ok) { const data = await r.json(); if (b !== this.api) { this.api = b; try { localStorage.setItem('kal-tr-base', b); } catch {} } this.down = false; return {data, base: b}; }
+        last = new Error('http ' + r.status);
+      } catch (e) { last = e; }
+    }
+    this.down = true; throw last || new Error('offline');
+  },
   ok(){ return STANDALONE && navigator.onLine !== false; },
   reset(){ this.cache = {}; invalidate(); },
   liveFor(key, arriveBy){ const c = this.cache[key]; return c && c.depart && Math.abs(c.arriveBy - arriveBy) < 60000 ? c : null; },
@@ -5084,14 +5138,32 @@ const Transit = {
     return miss.length ? `Für Live-Verbindungen trag bei ${miss.map(esc).join(' und ')} eine Haltestelle oder Adresse ein (Einstellungen → Orte und Wege).` : 'Die Live-Verbindung wird gerade geladen.';
   },
   async search(q){
-    const r = await fetch(`${this.api}/locations?query=${encodeURIComponent(q)}&results=7&language=de&pretty=false`); if (!r.ok) throw new Error('vbb');
-    return (await r.json()).map(x => ({type: x.type, id: x.id || null, name: x.name || x.address, address: x.address || null, poi: !!x.poi,
-      latitude: x.latitude ?? (x.location && x.location.latitude), longitude: x.longitude ?? (x.location && x.location.longitude)})).filter(x => x.name);
+    const norm = (x, b) => ({type: x.type, id: x.id || null, name: x.name || x.address, address: x.address || null, poi: !!x.poi, src: this.fam(b),
+      latitude: x.latitude ?? (x.location && x.location.latitude), longitude: x.longitude ?? (x.location && x.location.longitude)});
+    try {
+      const {data, base} = await this.get(() => `/locations?query=${encodeURIComponent(q)}&results=7&language=de&pretty=false`, 7000);
+      const out = (Array.isArray(data) ? data : []).map(x => norm(x, base)).filter(x => x.name && x.latitude != null);
+      if (out.length) return out;
+    } catch {}
+    return this.photon(q);
   },
-  params(prefix, L){
-    if ((L.type === 'stop' || L.type === 'station') && L.id) return {[prefix]: L.id};
-    if (L.poi && L.id) return {[prefix + '.id']: L.id, [prefix + '.name']: L.name, [prefix + '.latitude']: L.latitude, [prefix + '.longitude']: L.longitude};
+  async photon(q){
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lang=de&limit=7&lat=52.52&lon=13.405`); if (!r.ok) throw new Error('photon');
+    const d = await r.json();
+    return (d.features || []).map(f => { const p = f.properties || {}, [lon, lat] = (f.geometry && f.geometry.coordinates) || [];
+      const street = [p.street, p.housenumber].filter(Boolean).join(' '), place = [p.postcode, p.city || p.town || p.village].filter(Boolean).join(' ');
+      const name = [p.name && p.name !== street ? p.name : '', street, place].filter(Boolean).join(', ');
+      return {type:'location', id:null, name, address: name, poi:false, src:'osm', latitude: lat, longitude: lon}; }).filter(x => x.name && x.latitude != null);
+  },
+  params(prefix, L, base){
+    const same = !L.src || L.src === 'osm' ? !L.src : L.src === this.fam(base);
+    if ((L.type === 'stop' || L.type === 'station') && L.id && same) return {[prefix]: L.id};
+    if (L.poi && L.id && same) return {[prefix + '.id']: L.id, [prefix + '.name']: L.name, [prefix + '.latitude']: L.latitude, [prefix + '.longitude']: L.longitude};
+    if (L.latitude == null) return null;
     return {[prefix + '.address']: L.address || L.name, [prefix + '.latitude']: L.latitude, [prefix + '.longitude']: L.longitude};
+  },
+  jq(fromL, toL, extra){
+    return b => { const a = this.params('from', fromL, b), z = this.params('to', toL, b); if (!a || !z) return null; return '/journeys?' + new URLSearchParams({...a, ...z, ...extra, language:'de', pretty:'false'}); };
   },
   simplify(j){
     const legs = (j.legs || []).map(g => ({
@@ -5102,14 +5174,13 @@ const Transit = {
       plat: g.departurePlatform || g.plannedDeparturePlatform || '', x: !!g.cancelled, dist: g.distance || null,
       notes: (g.remarks || []).filter(r => r.type === 'warning' || r.type === 'status').map(r => r.summary || r.text).filter(Boolean).slice(0, 2)
     }));
-    const first = legs.find(g => !g.walk) || null;
+    const first = legs.find(g => !g.walk) || null, src = this.fam(this.api); legs.forEach(g => { g.src = src; });
     return {legs, depart: new Date(legs[0].dep), arrive: new Date(legs[legs.length - 1].arr), first: first ? first.line : 'zu Fuß',
       summary: first ? `${first.line} ${hm(new Date(first.dep))} ab ${first.from}` : 'zu Fuß', delay: first && first.ddel > 0 ? first.ddel : 0, cancelled: legs.some(g => g.x)};
   },
   async fetchLeg(l, arriveBy){
-    const q = new URLSearchParams({...this.params('from', l.from.vbb), ...this.params('to', l.to.vbb), arrival: arriveBy.toISOString(), results: '4', language: 'de', remarks: 'true', pretty: 'false'});
-    const r = await fetch(`${this.api}/journeys?${q}`); if (!r.ok) throw new Error('vbb ' + r.status);
-    const js = ((await r.json()).journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length);
+    const {data} = await this.get(this.jq(l.from.vbb, l.to.vbb, {arrival: arriveBy.toISOString(), results: '4', remarks: 'true'}));
+    const js = (data.journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length);
     const pref = routeLegs((l.before && l.before.ref && routeOk(l.before.ref.route)) ? l.before.ref.route : l.to.route).map(g => normLine(g.line)).filter(Boolean), hasPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line))) ? 1 : 0;
     const okJ = js.filter(j => !j.cancelled && j.arrive <= addMin(arriveBy, 1)).sort((a, b) => (hasPref(b) - hasPref(a)) || (b.depart - a.depart));
     const best = okJ[0] || js.find(j => !j.cancelled) || js[0];
@@ -5117,9 +5188,8 @@ const Transit = {
     return {...best, arriveBy: +arriveBy, fetchedAt: Date.now(), alts: js.filter(j => j !== best).slice(0, 3)};
   },
   async options(fromL, toL, when, by = 'arrival'){
-    const q = new URLSearchParams({...this.params('from', fromL), ...this.params('to', toL), [by]: when.toISOString(), results: '6', language: 'de', pretty: 'false'});
-    const r = await fetch(`${this.api}/journeys?${q}`); if (!r.ok) throw new Error('vbb ' + r.status);
-    return ((await r.json()).journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length && !j.cancelled && j.legs.some(g => !g.walk));
+    const {data} = await this.get(this.jq(fromL, toL, {[by]: when.toISOString(), results: '6'}));
+    return (data.journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length && !j.cancelled && j.legs.some(g => !g.walk));
   },
   async refresh(force){
     if (!this.ok() || this.busy || !state) return; this.busy = true;
@@ -5143,6 +5213,26 @@ const Transit = {
       if (await this.checkHome(force)) changed = true;
     } finally { this.busy = false; }
     if (changed) { invalidate(); renderSoft(); if (typeof Push !== 'undefined') Push.queue(); }
+    this.fillRoutes();
+  },
+  /* Für Orte mit Adresse die Strecke ab Zuhause einmal aus dem Fahrplan holen */
+  _filled: {},
+  async fillRoutes(force){
+    const home = placeById('home'); if (!this.ok() || !home || !home.vbb || this._fillBusy) return 0;
+    this._fillBusy = true; let n = 0; const done = [];
+    try {
+      for (const p of state.places) {
+        if (p.home || !p.vbb || p.mode !== 'oepnv' || (routeOk(p.route) && !force) || this._filled[p.id]) continue;
+        this._filled[p.id] = 1;
+        let arr = addDays(startOfDay(new Date()), 1); while (isoDow(arr) > 5) arr = addDays(arr, 1); arr.setHours(9, 0, 0, 0);
+        try {
+          const js = await this.options(home.vbb, p.vbb, arr), ok = js.filter(j => j.arrive <= addMin(arr, 1)).sort((a, b) => b.depart - a.depart), best = ok[0] || js[0];
+          if (best) { p.route = routeFromJourney(best, js); p.minutes = routeBase(p.route); n++; done.push(`${p.name} ${dur(p.minutes)}`); }
+        } catch { delete this._filled[p.id]; }
+      }
+    } finally { this._fillBusy = false; }
+    if (n) { Store.schedule(); invalidate(); renderSoft(); if (force) toast('Wege berechnet', done.join(' · ')); }
+    return n;
   },
   /* Unterwegs und bald ein Termin zuhause (oder online): rechtzeitig heim? */
   homeNeed: null, _homeAt: 0,
@@ -5160,9 +5250,9 @@ const Transit = {
       this.homeNeed = best ? {o, lv: best} : null; return true;
     } catch { return false; }
   },
-  async departures(id){
-    const r = await fetch(`${this.api}/stops/${encodeURIComponent(id)}/departures?duration=60&results=14&remarks=false&language=de&pretty=false`); if (!r.ok) throw new Error('vbb ' + r.status);
-    let d = await r.json(); if (!Array.isArray(d)) d = d.departures || [];
+  async departures(id, src){
+    const {data} = await this.get(b => !src || src === this.fam(b) ? `/stops/${encodeURIComponent(id)}/departures?duration=60&results=14&remarks=false&language=de&pretty=false` : null);
+    let d = data; if (!Array.isArray(d)) d = d.departures || [];
     return d.map(x => ({line: x.line ? x.line.name : '', product: x.line ? x.line.product : '', dir: x.direction || '', when: x.when || x.plannedWhen, planned: x.plannedWhen, delay: x.delay != null ? Math.round(x.delay / 60) : null, plat: x.platform || x.plannedPlatform || '', x: !!x.cancelled})).filter(x => x.when);
   },
   alert(o, lv){
@@ -5178,13 +5268,13 @@ const Transit = {
 };
 function depsSlot(lv){
   const g = lv && lv.legs && lv.legs.find(x => !x.walk && x.fromId);
-  return g && Transit.ok() ? `<div class="deps" data-deps data-stop="${esc(g.fromId)}" data-line="${esc(g.line)}" data-dir="${esc(g.dir || '')}" data-name="${esc(g.from || '')}"></div>` : '';
+  return g && Transit.ok() ? `<div class="deps" data-deps data-stop="${esc(g.fromId)}" data-src="${esc(g.src || '')}" data-line="${esc(g.line)}" data-dir="${esc(g.dir || '')}" data-name="${esc(g.from || '')}"></div>` : '';
 }
 async function depsLoadAll(){
   const els = [...document.querySelectorAll('[data-deps]')]; if (!els.length) return;
   for (const el of els) {
     try {
-      const all = await Transit.departures(el.dataset.stop), ln = normLine(el.dataset.line), dir = el.dataset.dir;
+      const all = await Transit.departures(el.dataset.stop, el.dataset.src || ''), ln = normLine(el.dataset.line), dir = el.dataset.dir;
       let list = all.filter(x => normLine(x.line) === ln); if (dir && list.some(x => x.dir === dir)) list = list.filter(x => x.dir === dir);
       if (!list.length) list = all;
       const now = Date.now();
@@ -5700,6 +5790,66 @@ function cmdMark(){
 }
 function cmdRun(i){ const it = ui._cmd[i]; if (!it) return; closeSheet(); it.run(); }
 
+/* ---------- Deine Orte: Zuhause, Uni, weitere (App) ---------- */
+function psRow(id, label, p, editable){
+  const v = p && p.vbb;
+  return `<div class="ps-row" data-psrow data-id="${esc(id)}">
+    <div class="ps-h">${editable ? `<input class="ps-name" data-psname value="${esc(label)}" placeholder="Name, z. B. Arbeit oder Fitnessstudio" aria-label="Name des Ortes">` : `<b>${esc(label)}</b>`}${id !== 'home' && id !== 'uni' ? `<button type="button" class="iconbtn" data-act="psDel" aria-label="Ort entfernen">${ic('x','s')}</button>` : ''}</div>
+    <div class="rfind-r"><input data-psq placeholder="${id === 'home' ? 'Deine Adresse, z. B. Musterstraße 5' : 'Adresse oder Haltestelle suchen'}" value="${esc(v ? v.name : '')}" autocomplete="off" aria-label="Adresse für ${esc(label)}"></div>
+    <div class="chips" data-psres>${v ? `<span class="tag accent">${ic('haken','s')} ${esc(v.name)}</span>` : ''}</div>
+    <input type="hidden" data-psv value="${esc(v ? JSON.stringify(v) : '')}">
+  </div>`;
+}
+function placesSetupBody(){
+  const home = placeById('home'), uni = placeById('uni');
+  const others = state.places.filter(p => !p.home && p.id !== 'uni' && !p.ex);
+  return `<div class="ps" data-ps>
+    ${psRow('home', 'Zuhause', home, false)}
+    ${psRow('uni', uni && !uni.ex ? uni.name : 'Uni', uni && !uni.ex ? uni : null, true)}
+    ${others.map(p => psRow(p.id, p.name, p, true)).join('')}
+    <div data-psmore></div>
+    <button type="button" class="btn sm ghost" style="justify-self:start" data-act="psAdd">${ic('plus','s')}Weiterer Ort</button>
+  </div>`;
+}
+function placesSetup(){
+  openSheet(`${head('Deine Orte')}<form class="form" data-form="places">
+    <p class="lead" style="margin:0">Trag einmal ein, wo du wohnst und wo du oft hinmusst. Danach rechnet der Kalender Fußwege, Bahnen und Losgehzeiten selbst aus.</p>
+    ${placesSetupBody()}
+    <div class="sheet-foot"><button class="btn ghost" type="button" data-act="psLater">Später</button><div class="r"><button class="btn primary" type="submit">Fertig</button></div></div></form>`, {kind:'places'});
+}
+function savePlaces(form){
+  const home = placeById('home'); let any = false;
+  for (const row of form.querySelectorAll('[data-psrow]')) {
+    let v = null; try { v = JSON.parse(row.querySelector('[data-psv]').value || 'null'); } catch {}
+    const id = row.dataset.id, nmEl = row.querySelector('[data-psname]'), nm = nmEl ? nmEl.value.trim() : '';
+    if (!v) continue; any = true;
+    if (id === 'home') { home.vbb = v; continue; }
+    let p = id.startsWith('new') ? null : placeById(id);
+    if (!p) { p = {id: id === 'uni' ? 'uni' : uid(), minutes: 30, home: false}; state.places.push(p); }
+    if (p.vbb && p.vbb.name !== v.name) delete p.route;
+    Object.assign(p, {name: nm || p.name || (v.poi ? v.name : shortName(v.name)), vbb: v, mode: 'oepnv'}); delete p.ex;
+    if (p.id === 'uni') { const c = state.categories.find(x => x.id === 'uni'); if (c) c.placeId = 'uni'; }
+  }
+  state.settings.placesAsked = true;
+  Transit._filled = {}; Transit.reset();
+  return any;
+}
+function maybePlaces(){
+  const home = placeById('home');
+  if (!STANDALONE || !state || !state.settings.onboarded || state.settings.placesAsked || (home && home.vbb) || !sheet.el || !sheet.el.hidden) return;
+  placesSetup();
+}
+let _psT = 0;
+async function psSearch(inp){
+  const row = inp.closest('[data-psrow]'), box = row.querySelector('[data-psres]'), q = inp.value.trim();
+  if (q.length < 3) { box.innerHTML = ''; return; }
+  box.innerHTML = '<span class="muted" style="font-size:13px">Suche …</span>';
+  try {
+    const res = await Transit.search(q); if (inp.value.trim() !== q) return; row._res = res;
+    box.innerHTML = res.length ? res.map((r, i) => `<button type="button" class="chip" data-act="psPick" data-i="${i}">${ic(r.type === 'stop' || r.type === 'station' ? 'zug' : 'ort','s')}${esc(r.name)}</button>`).join('') : '<span class="muted" style="font-size:13px">Nichts gefunden. Versuch Straße und Hausnummer.</span>';
+  } catch { box.innerHTML = `<span class="muted" style="font-size:13px">${navigator.onLine === false ? 'Du bist offline.' : 'Die Adresssuche antwortet gerade nicht. Versuch es gleich noch einmal.'}</span>`; }
+}
+
 /* ---------- Einrichtung beim ersten Start ---------- */
 function onbHtml(step){
   const s = state.settings, up = state.places.find(x => x.id === 'uni') || {};
@@ -5708,7 +5858,10 @@ function onbHtml(step){
   if (step === 1) body = `<div class="art">${ic('sonne')}</div><span class="eyebrow">Willkommen bei Kalendarium</span><h2>Wie heißt du?</h2>
       <p class="lead">Drei kurze Fragen, dann plant der Kalender Wege, Puffer und Schlaf für dich.</p>
       <label class="f"><span>Vorname</span><input name="name" class="title" value="${esc(s.name || '')}" autocomplete="given-name" placeholder="Dein Name"></label>`;
-  if (step === 2) body = `<div class="art">${ic('weg')}</div><span class="eyebrow">Schritt 2 von 3</span><h2>Dein Weg zur Uni</h2>
+  if (step === 2 && STANDALONE) body = `<div class="art">${ic('weg')}</div><span class="eyebrow">Schritt 2 von 3</span><h2>Deine Orte</h2>
+      <p class="lead">Wo wohnst du, und wo musst du oft hin? Danach rechnet der Kalender Fußwege, Bahnen und Losgehzeiten selbst aus.</p>
+      ${placesSetupBody()}`;
+  else if (step === 2) body = `<div class="art">${ic('weg')}</div><span class="eyebrow">Schritt 2 von 3</span><h2>Dein Weg zur Uni</h2>
       <p class="lead">Einmal eintragen. Danach rechnet der Kalender Losgehzeit, Puffer und Heimweg selbst aus, hin und zurück gleich.</p>
       <label class="f"><span>Ort</span><input name="uniName" value="${esc(up.name || 'TU Berlin')}" placeholder="z. B. TU Berlin"></label>
       <div class="frow"><label class="f"><span>Minuten von zuhause</span><input name="minutes" type="number" min="1" max="240" inputmode="numeric" value="${+up.minutes || 30}"></label>
@@ -5757,6 +5910,7 @@ function bindEvents(){
       { const mq = p.kind !== 'deadline' && titleMemory(p.title); if (mq) prev.insertAdjacentHTML('beforeend', `<span class="mem-hint">wie beim letzten Mal: ${esc(memSummary(mq))}</span>`); }
     }
     if (t.name === 'allDay') t.closest('form').querySelectorAll('[data-time]').forEach(r => r.hidden = t.checked);
+    if (t.matches && t.matches('[data-psq]')) { clearTimeout(_psT); _psT = setTimeout(() => psSearch(t), 350); return; }
     if (t.matches && t.matches('[data-tq]')) { clearTimeout(_twST); _twST = setTimeout(() => twSearch(t), 350); return; }
     if (t.form && t.form.querySelector('[data-trip]') && ['date','start','day','catId','allDay'].includes(t.name)) twConnSchedule(t.form);
     if ((t.name === 'mode' || t.name === 'np_mode') && t.form) { const sc = t.closest('[data-newplace]') || t.form, r = sc.querySelector('[data-route]'), m = sc.querySelector('[data-onlymin]'); if (r) r.hidden = t.value !== 'oepnv'; if (m) m.hidden = t.value === 'oepnv'; }
