@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 26.1  ·  persönlicher Kalender für alles
+ KALENDARIUM 27  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1977,6 +1977,10 @@ details.sx[open] > summary .sx-t b{color:var(--accent-ink)}
 .st-credit{display:block;color:var(--faint);font-size:11px;margin-top:10px;text-align:center}
 .st-credit:empty{display:none}
 .tmap .leaflet-container,.tmap{cursor:default}
+.trip-tol{display:flex;gap:8px;align-items:flex-start;color:var(--muted);font-size:13px;margin:2px 0 10px}
+.trip-tol svg{flex:none;margin-top:2px;color:var(--accent-ink)}
+.dl-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0 2px;font-size:13px;color:var(--muted)}
+.dl-list span{display:inline-flex;gap:6px;align-items:center}
 .vibchips{display:flex;flex-wrap:wrap;gap:6px}
 .vibchips label{display:inline-flex;position:relative}
 .vibchips input{position:absolute;opacity:0;pointer-events:none}
@@ -5312,12 +5316,88 @@ const repOf = (gr, by) => gr.js.filter(j => !j.cancelled && (!by || j.arrive <= 
 const groupBadges = gr => gr.lines.map((ls, i) => lnBadge(ls.join('/'), gr.prod[i])).join(' ');
 const routeLabel = R => routeLegs(R).map(lineLabel).join(' → ');
 const lnBadge = (line, product) => `<span class="lnb" style="--lc:${LINE_COL[product || lineProduct(line)] || 'var(--ink)'}">${esc(line || 'Bahn')}</span>`;
+/* Verspätungen lernen: Jede eigene Fahrt und jede Abfahrt, die man gerade live
+   sieht, liefert eine Stichprobe je Linie und Halt (Ankunft und Abfahrt getrennt).
+   Daraus wird ein Puffer: so viel, wie die Linie dort in 4 von 5 Fällen später ist.
+   Ohne genug Daten gelten Erfahrungswerte je Verkehrsmittel. */
+const Delay = {
+  PRIOR: {subway: 1, tram: 2, bus: 3, suburban: 2, regional: 3, express: 5, ferry: 2},
+  db: (() => { try { return JSON.parse(localStorage.getItem('kal-delay') || '{}') || {}; } catch { return {}; } })(),
+  save(){ clearTimeout(this._t); this._t = setTimeout(() => { try { localStorage.setItem('kal-delay', JSON.stringify(this.db)); } catch {} }, 400); },
+  mode(){ const m = state && state.settings.travel.delayMode; return m == null ? 'auto' : String(m); },
+  add(k, m, t = Date.now()){
+    if (m == null || isNaN(m)) return; m = Math.max(-5, Math.min(60, Math.round(m)));
+    const a = this.db[k] || (this.db[k] = []); a.push([Math.round(t / 60000), m]); if (a.length > 40) a.splice(0, a.length - 40);
+    const keys = Object.keys(this.db); if (keys.length > 400) { keys.sort((x, y) => (this.db[x].at(-1)[0]) - (this.db[y].at(-1)[0])); keys.slice(0, keys.length - 400).forEach(x => delete this.db[x]); }
+    this.save();
+  },
+  // eine Abfahrt nur einmal zählen
+  _seen: new Set(),
+  sample(kind, line, stop, planned, delay){
+    if (delay == null || !line || !stop) return; const id = kind + normLine(line) + stopKey(stop) + planned; if (this._seen.has(id)) return; this._seen.add(id);
+    this.add(kind + ':' + normLine(line) + '|' + stopKey(stop), delay); this.add('L:' + normLine(line), delay);
+  },
+  /* eigene Fahrten: letzte bekannte Werte merken, nach der Ankunft zählen */
+  pend: (() => { try { return JSON.parse(localStorage.getItem('kal-delay-p') || '{}') || {}; } catch { return {}; } })(),
+  observe(lv){
+    if (!lv || lv.plan || !lv.legs) return; const now = Date.now();
+    for (const g of lv.legs) { if (g.walk || !g.line || !g.pdep) continue;
+      const id = normLine(g.line) + '|' + stopKey(g.from) + '|' + (+new Date(g.pdep)), p = this.pend[id] || (this.pend[id] = {line: g.line, from: g.from, to: g.to, pdep: +new Date(g.pdep), parr: +new Date(g.parr || g.arr)});
+      if (g.ddel != null && now <= p.pdep + 3 * 60000) p.ddel = g.ddel;
+      if (g.adel != null) p.adel = g.adel; }
+    this.commit();
+  },
+  commit(){
+    const now = Date.now(); let ch = false;
+    for (const [id, p] of Object.entries(this.pend)) {
+      if (now < p.parr + 60000 + Math.max(0, p.adel || 0) * 60000) continue;
+      if (now < p.parr + 6 * 3600000) { if (p.ddel != null) this.sample('D', p.line, p.from, p.pdep, p.ddel); if (p.adel != null) this.sample('A', p.line, p.to, p.parr, p.adel); }
+      delete this.pend[id]; ch = true;
+    }
+    if (ch || Object.keys(this.pend).length) try { localStorage.setItem('kal-delay-p', JSON.stringify(this.pend)); } catch {}
+  },
+  q(a, p){ const v = a.map(x => x[1]).sort((x, y) => x - y); return v[Math.min(v.length - 1, Math.floor(p * v.length))]; },
+  stat(kind, line, stop){
+    const s = this.db[kind + ':' + normLine(line) + '|' + stopKey(stop)], l = this.db['L:' + normLine(line)];
+    const src = s && s.length >= 4 ? s : l && l.length >= 4 ? l : null;
+    return src ? {n: src.length, p80: Math.max(0, this.q(src, .8)), med: this.q(src, .5), where: src === s ? 'stop' : 'line'} : null;
+  },
+  /* Puffer in Minuten für die Ankunft eines Abschnitts */
+  tol(g){
+    const m = this.mode(); if (m === 'off') return 0; if (m !== 'auto') return +m || 0;
+    if (!g || g.walk) return 0; const st = this.stat('A', g.line, g.to);
+    return Math.min(10, st ? st.p80 : (this.PRIOR[g.product || lineProduct(g.line)] ?? 2));
+  },
+  /* wie viel davon die Live-Daten schon zeigen */
+  extra(g){ return Math.max(0, this.tol(g) - Math.max(0, g.adel || 0)); },
+  /* passt die Fahrt auch, wenn die Bahnen so spät sind wie üblich? */
+  safe(j, by){
+    const tl = j.legs.filter(g => !g.walk); if (!tl.length) return true;
+    for (let i = 0; i < tl.length - 1; i++) { const a = tl[i], b = tl[i + 1], walk = j.legs.slice(j.legs.indexOf(a) + 1, j.legs.indexOf(b)).reduce((x, w) => x + (w.mins || Math.round((new Date(w.arr) - new Date(w.dep)) / 60000) || 0), 0);
+      const slack = (new Date(b.dep) - new Date(a.arr)) / 60000 - walk; if (slack < this.extra(a) - 1) return false; }
+    return +j.arrive + this.extra(tl[tl.length - 1]) * 60000 <= +by + 60000;
+  },
+  why(j){
+    const tl = (j.legs || []).filter(g => !g.walk); if (!tl.length || this.mode() === 'off') return '';
+    const g = tl[tl.length - 1], t = this.tol(g); if (!t) return '';
+    if (this.mode() !== 'auto') return `${t} min Puffer für Verspätungen eingeplant.`;
+    const st = this.stat('A', g.line, g.to);
+    return st ? `${t} min Puffer: ${lineLabel(g)} ${st.where === 'stop' ? 'bis ' + g.to : ''} war bei dir zuletzt in 4 von 5 Fällen höchstens ${st.p80} min später.`.replace('  ', ' ')
+      : `${t} min Puffer für ${lineLabel(g)}, bis die App genug eigene Fahrten kennt.`;
+  },
+  summary(){
+    const L = Object.entries(this.db).filter(([k, a]) => k.startsWith('L:') && a.length >= 4).map(([k, a]) => [k.slice(2), this.q(a, .5), this.q(a, .8), a.length]).sort((a, b) => b[3] - a[3]).slice(0, 4);
+    const n = Object.entries(this.db).filter(([k]) => k.startsWith('L:')).reduce((x, [, a]) => x + a.length, 0);
+    return {n, L};
+  },
+  reset(){ this.db = {}; this.pend = {}; this._seen.clear(); try { localStorage.removeItem('kal-delay'); localStorage.removeItem('kal-delay-p'); } catch {} }
+};
 function routeTrip(place, arriveBy){
   const R = place && place.route, L = routeLegs(R); if (!L.length || !arriveBy) return null;
   let t = addMin(arriveBy, -(+R.walkFrom||0)), exact = true;
   const out = [];
   for (let i = L.length - 1; i >= 0; i--) {
-    const g = L[i], ride = Math.round(+g.ride), every = Math.max(1, Math.round(+g.every || 10)), latest = addMin(t, -ride);
+    const g = L[i], ride = Math.round(+g.ride), every = Math.max(1, Math.round(+g.every || 10)), latest = addMin(t, -(ride + Delay.tol({line: g.line, to: g.to, product: lineProduct(g.line)})));
     const m = /^(\d{1,2}):(\d{2})$/.exec(g.at || '');
     let dep, approx = false;
     if (m) {
@@ -5757,7 +5837,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '26.1';
+const APP_VERSION = '27';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6484,6 +6564,9 @@ const VIEWS = {
         <div>${state.places.map(p => `<div class="listrow" data-act="edit" data-kind="place" data-id="${esc(p.id)}"><span style="color:var(--accent-ink);display:flex">${ic(p.home?'haus':'ort','s')}</span><span class="grow">${esc(p.name)}<small>${p.home?`Startpunkt für alle Wege${p.vbb ? ' · ' + esc(p.vbb.name) : Transit.ok() ? ' · Haltestelle eintragen für Live-Verbindungen' : ''}`:`${p.vbb && Transit.ok() ? 'Live · ' : ''}${p.mode === 'oepnv' && routeOk(p.route) ? `${esc(routeLabel(p.route))} · ${dur(routeBase(p.route))}${routeLegs(p.route).every(g => g.at) ? ' · nach Fahrplan' : ''}` : `${dur(p.minutes)} · ${MODES[p.mode]} · mit Puffer ${dur(travelMinutes(p).total)}`}`}</small></span>${p.home?'':ic('weiter','s')}</div>`).join('')}</div>
         ${STANDALONE ? `<div class="row" style="margin-top:8px"><div class="l"><b>Erkennen, ob du zuhause bist</b><small>${esc(Loc.label())}</small></div>${sw('loc.on', s.loc && s.loc.on, 'Erkennen, ob du zuhause bist')}</div>` : ''}
         <div class="row"${STANDALONE ? '' : ' style="margin-top:8px"'}><div class="l"><b>Früher da sein</b><small>Ankunft vor Beginn</small></div><span>${numIn('travel.arriveEarly', T.arriveEarly, 0, 60, 1, 'Früher da sein')} min</span></div>
+        ${(() => { const m = Delay.mode(), sm = Delay.summary(); return `<div class="row"><div class="l"><b>Puffer für Verspätungen</b><small>${m === 'auto' ? (sm.n ? `Gelernt aus ${sm.n} Abfahrten. Plant so, dass es auch bei üblicher Verspätung reicht.` : 'Lernt aus deinen Fahrten, wie spät deine Linien sind, und plant das ein.') : m === 'off' ? 'Nur der Fahrplan zählt' : 'Fester Puffer pro Fahrt'}</small></div>
+          <select data-set="travel.delayMode" aria-label="Puffer für Verspätungen">${[['auto', 'Lernt mit'], ['2', '2 min'], ['5', '5 min'], ['off', 'Aus']].map(([v, t]) => `<option value="${v}"${m === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+          ${m === 'auto' && sm.L.length ? `<div class="dl-list">${sm.L.map(([l, med, p]) => `<span>${lnBadge(l)} meist ${med > 0 ? '+' + med : 'pünktlich'}${p > med ? `, bis +${p}` : ''}</span>`).join('')}<button class="btn ghost sm" data-act="delayReset">Vergessen</button></div>` : ''}`; })()}
         <details class="sx-more"><summary>Puffer für Wege ohne Fahrplan</summary>
         <div class="row"><div class="l"><b>Puffer</b><small>Aufschlag auf geschätzte Wegzeiten</small></div><span>${numIn('travel.bufferPct', T.bufferPct, 0, 100, 1, 'Puffer in Prozent')} %</span></div>
         <div class="row"><div class="l"><b>Mindestpuffer</b></div><span>${numIn('travel.minBuffer', T.minBuffer, 0, 60, 1, 'Mindestpuffer')} min</span></div>
@@ -7761,6 +7844,7 @@ const ACTIONS = {
     sc.querySelector('[data-rauto]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(routeLabel(R))} übernommen</span>`;
     haptic(); leaveUpdate(f);
   },
+  delayReset(){ Delay.reset(); toast('Gelernte Verspätungen gelöscht', 'Die App fängt mit Erfahrungswerten neu an.'); invalidate(); render(); },
   async transitNow(){ Transit.reset(); await Transit.refresh(true); render(); },
   pushOn(){
     const rnd = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijkmnopqrstuvwxyz23456789'[b % 33]).join('');
@@ -8618,8 +8702,10 @@ const Transit = {
     const R0 = l.before && l.before.ref && routeOk(l.before.ref.route) ? l.before.ref.route : l.to.route;
     const rKey = routeOk(R0) ? routeLegs(R0).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|') : '';
     const score = j => (rKey && segKey(j) === rKey ? 2 : 0) + hasPref(j);
-    const okJ = js.filter(inTime).sort((a, b) => (score(b) - score(a)) || (b.depart - a.depart));
-    const best = this.pinned(pinKey, js, inTime) || okJ[0] || js.find(j => !j.cancelled) || js[0];
+    const early = +state.settings.travel.arriveEarly || 0, keep = j => !j.cancelled && j.arrive <= addMin(arriveBy, Math.max(1, Math.min(early - 1, 3)));
+    const safeJ = js.filter(j => inTime(j) && Delay.safe(j, arriveBy)).sort((a, b) => (score(b) - score(a)) || (b.depart - a.depart));
+    const okJ = (safeJ.length ? safeJ : js.filter(inTime)).sort((a, b) => (score(b) - score(a)) || (b.depart - a.depart));
+    const best = this.pinned(pinKey, js, keep) || okJ[0] || js.find(j => !j.cancelled) || js[0];
     this.pin(pinKey, best);
     if (!best) return null;
     const alts = groupJourneys(js.filter(j => segKey(j) !== segKey(best))).map(gr => repOf(gr, arriveBy)).slice(0, 3);
@@ -8629,7 +8715,7 @@ const Transit = {
       if (hasPref(best) && other && other.depart - best.depart >= 3 * 60000) better = {label: lineSeq(other), gain: Math.round((other.depart - best.depart) / 60000), kind: 'später los'};
       if (!hasPref(best)) switched = true;
     }
-    return {...best, arriveBy: +arriveBy, fetchedAt: Date.now(), alts, better, switched, pref: pref.join('/')};
+    return {...best, arriveBy: +arriveBy, fetchedAt: Date.now(), alts, better, switched, pref: pref.join('/'), why: Delay.why(best), risky: !Delay.safe(best, arriveBy)};
   },
   async options(fromL, toL, when, by = 'arrival', extra = {}){
     const {data} = await this.get(this.jq(fromL, toL, {[by]: when.toISOString(), results: '6', ...extra}));
@@ -8655,7 +8741,7 @@ const Transit = {
           const c = this.cache[o.key], soon = +arriveBy - now < 3 * 3600000, maxAge = this.hot(c, +l0.depart, +arriveBy, now) ? 45000 : soon ? 90000 : 20 * 60000;
           if (c && +arriveBy < now && c.arriveBy === +arriveBy && now - c.fetchedAt < 45000) continue;
           if (!force && c && c.arriveBy === +arriveBy && now - c.fetchedAt < maxAge) continue;
-          try { const lv = await this.fetchLeg(l, arriveBy); if (lv) { if (here) { lv.fromHere = true; lv.fromVbb = here; } this.cache[o.key] = lv; changed = true; this.alert(o, lv); } this.err = ''; }
+          try { const lv = await this.fetchLeg(l, arriveBy); if (lv) { if (here) { lv.fromHere = true; lv.fromVbb = here; } this.cache[o.key] = lv; changed = true; if (this.hot(lv, +lv.depart, +lv.arrive, now)) Delay.observe(lv); this.alert(o, lv); } this.err = ''; }
           catch { this.err = 'Live-Verbindungen gerade nicht erreichbar.'; }
         }
       }
@@ -8673,11 +8759,13 @@ const Transit = {
           if (best) {
             const quicker = js.filter(j => j !== best && !j.cancelled).sort((a, b) => a.arrive - b.arrive)[0];
             const better = isPref(best) && quicker && best.arrive - quicker.arrive >= 3 * 60000 ? {label: lineSeq(quicker), gain: Math.round((best.arrive - quicker.arrive) / 60000), kind: 'früher zuhause'} : null;
+            if (this.hot(best, +best.depart, +best.arrive, now)) Delay.observe(best);
             this.cache[key] = {...best, after: +at0, fetchedAt: now, alts: groupJourneys(js.filter(j => segKey(j) !== segKey(best))).map(gr => gr.js[0]).slice(0, 3), better, switched: !!pref.length && !isPref(best), pref: pref.join('/')}; changed = true;
           }
         } catch {}
       }
       if (await this.checkHome(force)) changed = true;
+      Delay.commit();
     } finally { this.busy = false; }
     if (changed) { invalidate(); renderSoft(); this.liveSheet(); if (typeof Push !== 'undefined') Push.queue(); }
     this.fillRoutes();
@@ -8731,7 +8819,8 @@ const Transit = {
   },
   alert(o, lv){
     if (lv.depart - Date.now() > 3 * 3600000) return;
-    const lvl = lv.cancelled ? 'x' : lv.delay >= 5 ? 'd' + Math.floor(lv.delay / 5) : ''; if (!lvl) return;
+    const f = lv.legs && lv.legs.find(g => !g.walk), tolD = f ? Math.max(2, Delay.tol({...f, to: f.from, adel: 0})) : 2;
+    const lvl = lv.cancelled ? 'x' : lv.delay >= 5 && lv.delay > tolD ? 'd' + Math.floor(lv.delay / 5) : ''; if (!lvl) return;
     const k = o.key + ':' + lvl; if (this.alerted[k]) return; this.alerted[k] = 1;
     const nm = o.kind === 'course' ? o.ref.title : o.title, title = lv.cancelled ? `${lv.first} fällt aus` : `${lv.first} +${lv.delay} min`;
     const body = lv.cancelled ? `Für ${nm}: neue Verbindung im Kalender ansehen.` : `Für ${nm}: Losgehen jetzt ${hm(lv.depart)}.`;
@@ -8752,6 +8841,7 @@ async function depsLoadAll(){
       let list = all.filter(x => lns.includes(normLine(x.line))); if (lns.length === 1 && dir && list.some(x => x.dir === dir)) list = list.filter(x => x.dir === dir);
       if (!list.length) list = all;
       const now = Date.now();
+      for (const x of all) if (!x.x && x.planned && x.delay != null && Math.abs(new Date(x.when) - now) < 90000) Delay.sample('D', x.line, el.dataset.name, +new Date(x.planned), x.delay);
       el.innerHTML = `<div class="deps-h"><b>Nächste Abfahrten</b><small>${esc(el.dataset.name || 'Haltestelle')} · live</small></div>` + list.slice(0, +el.dataset.n || 5).map(x => { const t = new Date(x.when), m = Math.round((t - now) / 60000);
         return `<div class="dep${x.x ? ' x' : ''}"><span class="dep-in">${m <= 0 ? 'jetzt' : 'in ' + m + ' min'}</span>${lnBadge(x.line, x.product)}<span class="dep-d">${esc(x.dir)}</span><span class="dep-t">${hm(t)}${x.delay > 0 ? ` <span class="late">+${x.delay}</span>` : ''}${x.x ? ' fällt aus' : ''}</span></div>`; }).join('');
     } catch { el.innerHTML = `<div class="deps-h"><b>Nächste Abfahrten</b><small>gerade nicht abrufbar</small></div>`; }
@@ -8782,7 +8872,8 @@ function transitHtml(lv, opt = {}){
   if (lv.plan) return `<div class="trip" style="${lw}"><div class="trip-h"><b>Deine Verbindung</b><small>${lv.exact ? 'nach Fahrplan' : 'ungefähr'}</small></div>${sum}${L.map(leg).join('')}
     ${lv.exact ? '' : '<p class="note" style="margin-top:10px">Ungefähr gerechnet. Kurz vorher holt die App die echte Verbindung.</p>'}</div>`;
   const ago = Math.max(0, Math.round((Date.now() - lv.fetchedAt) / 60000));
-  return `<div class="trip" style="${lw}"><div class="trip-h"><b>Verbindung live</b><small data-ago="${lv.fetchedAt}">${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'}</small></div>${sum}${rec}${L.map(leg).join('')}
+  const tolNote = lv.why ? `<div class="trip-tol">${ic('uhr','s')}<span>${esc(lv.why)}${lv.risky ? ' Mit üblicher Verspätung wird es knapp, eine frühere Fahrt ist sicherer.' : ''}</span></div>` : '';
+  return `<div class="trip" style="${lw}"><div class="trip-h"><b>Verbindung live</b><small data-ago="${lv.fetchedAt}">${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'}</small></div>${sum}${rec}${tolNote}${L.map(leg).join('')}
     ${lv.alts && lv.alts.length ? `<div class="trip-alt"><span class="muted" style="font-size:13px;width:100%">Andere Verbindungen</span>${lv.alts.map(a => `<span class="tag">${esc(lineSeq(a))} ${hm(a.depart)} → ${hm(a.arrive)}${a.cancelled ? ' · fällt aus' : a.delay ? ` · +${a.delay}` : ''}</span>`).join('')}</div>` : ''}
     ${opt.noRefresh ? '' : `<div class="trip-alt"><button class="btn sm" data-act="transitNow">${ic('wdh','s')}Aktualisieren</button></div>`}</div>`;
 }
@@ -9621,6 +9712,7 @@ function bindEvents(){
       if (t.type === 'text') v = v.trim();
       setPath(t.dataset.set, v);
       if (t.dataset.set === 'accent') applyTheme();
+      if (t.dataset.set === 'travel.delayMode') { invalidate(); if (typeof Transit !== 'undefined' && Transit.ok()) { Transit.reset(); Transit.refresh(true); } }
       commit(); return;
     }
     if (t.id === 'occNote' && t.dataset.key) { const v = t.value.trim(); if (v === (state.notes[t.dataset.key] || '')) return; if (v) state.notes[t.dataset.key] = v; else delete state.notes[t.dataset.key]; Store.schedule(); toast('Notiz gespeichert', ''); return; }
