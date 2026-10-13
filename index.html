@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 28  ·  persönlicher Kalender für alles
+ KALENDARIUM 29  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1935,6 +1935,29 @@ details.sv summary::-webkit-details-marker{display:none}
 .lt-now b{font-size:16px}
 .lt-now small{color:var(--muted);font-size:13.5px}
 .lt-note{font-size:13px;color:var(--accent-ink)}
+.privbtn.on{color:var(--accent-ink);background:color-mix(in oklab, var(--accent) 14%, transparent)}
+.lpath{padding:12px 0 6px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.lp-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.lp-h small{color:var(--faint);font-size:12px}
+.lp{position:relative;display:grid;grid-template-columns:44px 18px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;padding:7px 2px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:10px;transition:background var(--d1)}
+.lp:hover{background:var(--sunk)}
+.lp-t{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lp-d{position:relative;justify-self:center;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);z-index:1}
+.lp-d::before{content:"";position:absolute;left:50%;top:-22px;bottom:-22px;width:2px;margin-left:-1px;background:var(--accent);opacity:.35;z-index:-1}
+.lp:first-of-type .lp-d::before{top:50%}.lp.end .lp-d::before{bottom:50%}
+.lp.past{color:var(--faint)}.lp.past .lp-d{border-color:var(--faint);background:var(--faint)}
+.lp.here .lp-d{width:14px;height:14px;background:var(--accent);box-shadow:0 0 0 5px color-mix(in oklab, var(--accent) 22%, transparent);animation:lppulse 2s ease-in-out infinite}
+@keyframes lppulse{50%{box-shadow:0 0 0 9px color-mix(in oklab, var(--accent) 6%, transparent)}}
+.lp.here .lp-n{font-weight:700}
+.lp-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-me{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--accent-ink);white-space:nowrap}
+.lp-me svg{animation:lpnudge 1.4s ease-in-out infinite}
+@keyframes lpnudge{50%{transform:translateX(3px)}}
+.lp-mid{display:grid;grid-template-columns:44px 18px minmax(0,1fr);gap:8px;padding:2px 2px}
+.lp-mid::before{content:"";grid-column:2;justify-self:center;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklab, var(--accent) 20%, transparent);animation:lppulse 2s ease-in-out infinite}
+.lp-mid .lp-me{grid-column:3}
+.lp-more{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;padding:4px 0 4px 54px;cursor:pointer;text-align:left}
+.lp-more:hover{color:var(--accent-ink)}
 .lt-k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--muted)}
 .lt-pace{font-size:13.5px;font-weight:600;margin-top:4px}
 .lt-pace.ok{color:var(--ok, #2e8b57)}.lt-pace.late{color:var(--danger)}.lt-pace.early{color:var(--accent-ink)}
@@ -4526,6 +4549,9 @@ const UI = {
   mehr:'<circle cx="6" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="18" cy="12" r="1.4" fill="currentColor"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   suche:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+  auge:'<path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  augezu:'<path d="M3.5 3.5l17 17"/><path d="M10.4 5.6c.5-.1 1-.1 1.6-.1 6 0 9.5 6.5 9.5 6.5s-1 1.9-2.9 3.7M6.6 6.9C4 8.6 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.7 0 3.2-.5 4.4-1.2"/><path d="M9.9 10a2.8 2.8 0 0 0 4 4"/>',
+  pfeil:'<path d="M4 12h14M13 6.5l5.5 5.5-5.5 5.5"/>',
   zurueck:'<path d="M15 6l-6 6 6 6"/>',
   weiter:'<path d="M9 6l6 6-6 6"/>',
   x:'<path d="M6 6l12 12M18 6L6 18"/>',
@@ -5210,6 +5236,24 @@ function expandCourse(c, from, to, out){
     out.push({kind:'course', id:c.id, title:c.short || c.title, start:s, end:e, allDay:false, cat:catById(c.catId), ref:c, key:`c:${c.id}:${ymd(d)}`, placeId:resolvePlace(c, true), autoPlace:!c.placeId, bb:15, ba:15});
   }
 }
+/* Privatmodus (nur auf diesem Gerät): statt genauer Namen nur die Kategorie,
+   z. B. „Uni“ oder „Turnier“. Gilt für Kalender, Faden, Listen, Erinnerungen.
+   Beim Öffnen zum Bearbeiten stehen die echten Namen da. */
+const Priv = {
+  on(){ try { return localStorage.getItem('kal-privat') === '1'; } catch { return false; } },
+  set(v){ try { localStorage.setItem('kal-privat', v ? '1' : '0'); } catch {} invalidate(); },
+  dl(cat){ const n = this.name(cat, 'Frist'); return /frist|abgabe/i.test(n) ? n : 'Frist · ' + n; },
+  name(cat, fb = 'Termin'){ return (cat && cat.name) || fb; },
+  t(text, cat, fb){ return this.on() ? this.name(cat, fb) : text; },
+  MASK: new Set(['title', 'short', 'location', 'room', 'lecturer', 'notes', 'note', 'text', 'name', 'link', 'desc']),
+  mask(o){
+    if (!['event', 'course', 'deadline', 'birthday'].includes(o.kind)) return o;
+    const nm = o.kind === 'birthday' ? 'Geburtstag' : o.kind === 'deadline' ? this.dl(o.cat) : this.name(o.cat);
+    const M = this.MASK, ref = new Proxy(o.ref, {get: (t, k) => M.has(k) && typeof t[k] === 'string' ? (k === 'title' || k === 'short' || k === 'name' ? nm : '') : t[k]});
+    return {...o, title: nm, ref};
+  }
+};
+const PV = (text, cat, fb) => Priv.t(text, cat, fb);
 let _occCache = new Map(), _planCache = new Map(), _sleepCache = null;
 function invalidate(){ _occCache = new Map(); _planCache = new Map(); _sleepCache = null; _workCache = null; }
 let _workCache = null;
@@ -5238,6 +5282,7 @@ function occurrences(from, to, opts = {}){
       }
     }
   }
+  if (Priv.on()) for (let i = 0; i < out.length; i++) out[i] = Priv.mask(out[i]);
   out.sort((a,b) => (b.allDay - a.allDay) || a.start - b.start);
   _occCache.set(ck, out);
   return out;
@@ -5849,7 +5894,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '28';
+const APP_VERSION = '29';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -5893,6 +5938,7 @@ function renderTop(){
     ${modes}
     ${pager ? `<div class="pager"><button class="iconbtn" data-act="prev" aria-label="Zurück">${ic('zurueck')}</button><button class="btn sm${isShowingToday() ? ' here' : ''}" data-act="today" aria-label="Zu heute">Heute</button><button class="iconbtn" data-act="next" aria-label="Weiter">${ic('weiter')}</button></div>` : ''}
     <div class="grow"></div>
+    <button class="iconbtn privbtn${Priv.on() ? ' on' : ''}" data-act="privToggle" aria-pressed="${Priv.on()}" aria-label="Privatmodus" title="${Priv.on() ? 'Privatmodus an: nur Kategorien sichtbar' : 'Privatmodus: genaue Namen ausblenden'}">${ic(Priv.on() ? 'augezu' : 'auge')}</button>
     ${isNarrow() && !ui.search ? `<button class="iconbtn topsearch" data-act="cmd" aria-label="Suchen oder eintragen">${ic('suche')}</button>` : ''}
     ${ui.search ? `<label class="search">${ic('suche')}<input id="searchInput" type="search" placeholder="Suchen" value="${esc(ui.search)}" aria-label="Suchen"></label>` : ''}
     ${isNarrow() ? '' : `<button class="topcmd" data-act="cmd" aria-label="Befehlsleiste öffnen">${ic('suche')}<span>Suchen oder eintragen</span><kbd>${/Mac|iP/.test(navigator.platform || '') ? '⌘' : 'Strg'} K</kbd></button>`}
@@ -5963,7 +6009,7 @@ function deadlineRow(d, now){
   return `<div class="row-item${d.done?' done':''}">
     <button class="check${d.done?' on':''}" data-act="toggleDone" data-id="${d.id}" aria-label="${d.done?'Als offen markieren':'Als erledigt markieren'}">${d.done?ic('haken'):''}</button>
     <div class="main" data-act="detail" data-kind="deadline" data-id="${d.id}">
-      <div class="ti"><span style="color:${cat.color};display:flex">${sy(cat.symbol)}</span><span>${esc(d.title)}</span></div>
+      <div class="ti"><span style="color:${cat.color};display:flex">${sy(cat.symbol)}</span><span>${esc(PV(d.title, cat, 'Frist'))}</span></div>
       <div class="sm"><span class="num">${dayLabel(due,now)} · ${hm(due)}</span>${course?`<span>${esc(course.short||course.title)}</span>`:''}<span class="prio" data-p="${d.priority||1}" title="Priorität ${d.priority||1}"><i></i><i></i><i></i></span>${subs.length?`<span><span class="progress"><i style="width:${Math.round(ds/subs.length*100)}%"></i></span> <span class="num">${ds}/${subs.length}</span></span>`:''}</div>
     </div>
     <span class="cd ${cls}">${d.done ? 'erledigt' : relTime(due, now)}</span></div>`;
@@ -5972,7 +6018,7 @@ function todoRow(t){
   const cat = catById(t.catId);
   return `<div class="row-item${t.done?' done':''}">
     <button class="check${t.done?' on':''}" data-act="toggleTodo" data-id="${t.id}" aria-label="${t.done?'Als offen markieren':'Erledigt'}">${t.done?ic('haken'):''}</button>
-    <div class="main" data-act="edit" data-kind="todo" data-id="${t.id}"><div class="ti">${t.catId?`<span style="color:${cat.color};display:flex">${sy(cat.symbol)}</span>`:''}<span>${esc(t.text)}</span></div>${t.date?`<div class="sm"><span class="num">${dayLabel(parseYMD(t.date))}</span></div>`:''}</div>
+    <div class="main" data-act="edit" data-kind="todo" data-id="${t.id}"><div class="ti">${t.catId?`<span style="color:${cat.color};display:flex">${sy(cat.symbol)}</span>`:''}<span>${esc(PV(t.text, t.catId ? cat : null, 'Aufgabe'))}</span></div>${t.date?`<div class="sm"><span class="num">${dayLabel(parseYMD(t.date))}</span></div>`:''}</div>
     <span></span></div>`;
 }
 function catOptions(sel){ return state.categories.map(c => `<option value="${esc(c.id)}" ${c.id===sel?'selected':''}>${esc(c.name)}</option>`).join('') + `<option value="" ${!sel?'selected':''}>Ohne Kategorie</option>`; }
@@ -6496,7 +6542,7 @@ const VIEWS = {
     return `<section class="panel" style="margin-bottom:18px"><div class="sem"><div><div class="eyebrow">Semester</div><div class="big">${esc(sem.name || 'Noch nicht festgelegt')}</div></div>${prog || '<span class="muted">Beginn und Ende festlegen, damit Kurse nur in der Vorlesungszeit erscheinen.</span>'}<button class="btn sm" data-act="editSemester">${ic('stift','s')}Bearbeiten</button></div></section>
       ${state.courses.length ? `<div class="scroller" style="margin-bottom:22px">${ttGrid(days)}</div>` : ''}
       <div class="toolbar"><h2 class="h2">Kurse</h2><div class="chips"><button class="btn sm" data-act="importIcsPrompt">${ic('hoch','s')}ICS importieren</button><button class="btn primary sm" data-act="newCourse">${ic('plus','s')}Kurs</button></div></div>
-      ${courses.length ? `<div class="cards">${courses.map(c => { const cat = catById(c.catId); return `<button class="card" style="--c:${cat.color}" data-act="edit" data-kind="course" data-id="${c.id}"><span class="sym">${sy(cat.symbol)}</span><span style="min-width:0"><b>${esc(c.title)}</b><small>${WD_SHORT[c.day-1]} <span class="num">${esc(c.start)}–${esc(c.end)}</span> · ${COURSE_TYPES[c.type]||c.type}${c.weeks!=='all'?` · ${c.weeks==='odd'?'ungerade':'gerade'} KW`:''}${c.room?` · ${esc(c.room)}`:''}</small></span></button>`; }).join('')}</div>`
+      ${courses.length ? `<div class="cards">${courses.map(c => { const cat = catById(c.catId); return `<button class="card" style="--c:${cat.color}" data-act="edit" data-kind="course" data-id="${c.id}"><span class="sym">${sy(cat.symbol)}</span><span style="min-width:0"><b>${esc(PV(c.title, cat))}</b><small>${WD_SHORT[c.day-1]} <span class="num">${esc(c.start)}–${esc(c.end)}</span> · ${COURSE_TYPES[c.type]||c.type}${c.weeks!=='all'?` · ${c.weeks==='odd'?'ungerade':'gerade'} KW`:''}${c.room?` · ${esc(PV(c.room, null, ''))}`:''}</small></span></button>`; }).join('')}</div>`
         : emptyArt('buch', 'Noch keine Kurse.', 'Tippe auf einen freien Block oder importiere den Stundenplan als ICS aus MOSES.')}
       <p class="note" style="margin-top:16px">Jeder Block dauert 2 Stunden: 90 min Lehrveranstaltung mit je 15 min Puffer. Freie Blöcke antippen, um dort einen Kurs anzulegen. Kurse fallen an Feiertagen und in vorlesungsfreien Zeiten automatisch aus.</p>`;
   },
@@ -6863,7 +6909,7 @@ function workPlan(){
   res._short = short;
   return (_workCache = res);
 }
-const workFor = d => state.settings.layers.work ? (workPlan()[ymd(d)] || []) : [];
+const workFor = d => { const w = state.settings.layers.work ? (workPlan()[ymd(d)] || []) : []; return Priv.on() ? w.map(x => ({...x, ref: new Proxy(x.ref, {get: (t, k) => k === 'title' ? Priv.dl(catById(t.catId)) : Priv.MASK.has(k) && typeof t[k] === 'string' ? '' : t[k]})})) : w; };
 const layerOk = o => !(o.kind === 'course' && !state.settings.layers.courses);
 /* Nächste freie Zeit für einen Termin (für Konflikte) */
 function nextFree(durMin, from, ignoreId){
@@ -7040,7 +7086,7 @@ function ttGrid(days){
       const span = Math.max(...list.map(c => Math.max(1, Math.ceil((minutesOf(c.end) - (8*60 + i*120)) / 120))));
       const sp = Math.min(span, UNI_SLOTS.length - i);
       for (let k = 0; k < sp; k++) taken.add(+i + k);
-      html += `<div class="tt-cell" style="grid-row:${+i+2} / span ${sp};grid-column:${d+1}">${list.map(c => { const cat = catById(c.catId); return `<button class="tt-block" style="--c:${cat.color}" data-act="edit" data-kind="course" data-id="${c.id}"><span class="ty">${esc(COURSE_TYPES[c.type]||c.type)}${c.weeks!=='all'?(c.weeks==='odd'?' · ungerade KW':' · gerade KW'):''}</span><b>${esc(c.short||c.title)}</b><small>${esc(c.start)}–${esc(c.end)}${c.room?' · '+esc(c.room):''}</small><span class="wm" aria-hidden="true">${sy(cat.symbol)}</span></button>`; }).join('')}</div>`;
+      html += `<div class="tt-cell" style="grid-row:${+i+2} / span ${sp};grid-column:${d+1}">${list.map(c => { const cat = catById(c.catId); return `<button class="tt-block" style="--c:${cat.color}" data-act="edit" data-kind="course" data-id="${c.id}"><span class="ty">${esc(COURSE_TYPES[c.type]||c.type)}${c.weeks!=='all'?(c.weeks==='odd'?' · ungerade KW':' · gerade KW'):''}</span><b>${esc(PV(c.short||c.title, cat))}</b><small>${esc(c.start)}–${esc(c.end)}${c.room?' · '+esc(c.room):''}</small><span class="wm" aria-hidden="true">${sy(cat.symbol)}</span></button>`; }).join('')}</div>`;
     }
     for (let i = 0; i < UNI_SLOTS.length; i++) if (!taken.has(i)) html += `<button class="tt-cell free" style="grid-row:${i+2};grid-column:${d+1}" data-act="newCourseAt" data-day="${d}" data-slot="${i}" aria-label="Kurs am ${WD_LONG[d-1]} im ${i+1}. Block anlegen">${ic('plus','s')}</button>`;
   }
@@ -7994,6 +8040,9 @@ const ACTIONS = {
   wxDay(el){ DETAIL.wxDay(el.dataset.date); },
   travelInfo(el){ DETAIL.travel(el.dataset.date, el.dataset.i); afterTripSheet(); },
   sheetBack(){ const b = ui._back; if (!b) return; if (b.home) ACTIONS.homeRoute(); else { DETAIL.travel(b.date, b.i); afterTripSheet(); } },
+  privToggle(){ const v = !Priv.on(); Priv.set(v); haptic(); render(); toast(v ? 'Privatmodus an' : 'Privatmodus aus', v ? 'Statt Namen siehst du nur Kategorien wie Uni. Nur auf diesem Gerät.' : 'Alle Namen sind wieder sichtbar.', {ttl: 2600}); try { Native.sync(true); } catch {} if (typeof Push !== 'undefined') Push.queue(); },
+  ltHere(el){ LiveTrip.calibrate(+el.dataset.k); },
+  ltAll(){ LiveTrip._all = !LiveTrip._all; LiveTrip.render(); },
   ltPick(){ LiveTrip.pick(); },
   ltCaught(el){ LiveTrip.caught(el.dataset.i); },
   overUndo(){ LiveTrip.undo(); },
@@ -9050,6 +9099,28 @@ function tripPace(lv, pos, now = Date.now()){
   const m = now < best.t0 ? (now - best.t0) / 60000 : now > best.t1 ? (now - best.t1) / 60000 : 0;
   return Math.round(m);
 }
+/* Halte und Orte der Fahrt als Liste, gleiche Namen hintereinander zusammengefasst */
+function tripPoints(lv){
+  const out = [];
+  for (const p of tripTimeline(lv)) { const nm = p.name || 'Start', last = out[out.length - 1];
+    if (last && stopKey(last.name) === stopKey(nm)) { last.t1 = Math.max(last.t1, p.t1); last.t0 = Math.min(last.t0, p.t0); continue; }
+    out.push({...p, name: nm}); }
+  if (out.length) { out[out.length - 1].last = true; if (lv.legs[lv.legs.length - 1].walk) out[out.length - 1].name = lv.legs[lv.legs.length - 1].to || out[out.length - 1].name; }
+  return out;
+}
+/* Wo ist man gerade? Standort, sonst eigene Angabe, sonst Plan. pos = Index, frac = Anteil bis zum nächsten */
+function tripWhere(lv, pts, now = Date.now(), cal = null, noGps = false){
+  if (!noGps && Loc.pos && (!cal || now - cal.at > 4 * 60000)) {
+    const me = [Loc.pos.lat, Loc.pos.lon]; let best = null;
+    pts.forEach((p, i) => { const d = distM(me, p.ll); if (!best || d < best.d) best = {d, i, frac: 0}; const q = pts[i + 1]; if (!q) return;
+      for (const k of [.25, .5, .75]) { const dd = distM(me, [p.ll[0] + (q.ll[0] - p.ll[0]) * k, p.ll[1] + (q.ll[1] - p.ll[1]) * k]); if (dd < best.d) best = {d: dd, i, frac: k}; } });
+    if (best && best.d < 450) return {i: best.i, frac: best.d < 120 && !best.frac ? 0 : best.frac, src: 'gps'};
+  }
+  if (cal && now - cal.at < 20 * 60000) { const t = now - (cal.off ?? cal.pace * 60000); const w = tripWhere(lv, pts, t, null, true); return {...w, src: 'du'}; }
+  if (now <= pts[0].t0) return {i: 0, frac: 0, src: 'plan'};
+  for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[i + 1]; if (now <= p.t1 + 45000) return {i, frac: 0, src: 'plan'}; if (q && now < q.t0 - 30000) return {i, frac: (now - p.t1) / Math.max(1, q.t0 - p.t1), src: 'plan'}; }
+  return {i: pts.length - 1, frac: 0, src: 'plan'};
+}
 function distToTrip(lv, p){
   let best = Infinity;
   for (const g of lv.legs) for (const q of [...(g.poly || []), g.fromLL, g.toLL, ...(g.stops || []).map(v => v.ll)]) if (q) best = Math.min(best, distM(p, q));
@@ -9058,13 +9129,43 @@ function distToTrip(lv, p){
 const LiveTrip = {
   src: null, lv: null, timer: null, rerouted: false, drawn: false,
   async open(src){
-    this.src = src; this.lv = null; this.rerouted = false; this.drawn = false;
+    this.src = src; this.lv = null; this.rerouted = false; this.drawn = false; this.cal = null; this._all = false;
     if (!Loc.on()) { state.settings.loc.on = true; commit(); }
     Loc.sync(true);
-    openSheet(`<div class="detail live">${backBtn()}${head('Unterwegs')}<div class="lt-eta" data-lteta><span class="muted">Live-Daten werden geladen …</span></div><div class="lt-now" data-ltnow hidden></div><div class="lt-pick" data-ltpick hidden></div><div class="tmap big" data-livemap></div><div data-ltsteps></div></div>`, {live: true});
+    openSheet(`<div class="detail live">${backBtn()}${head('Unterwegs')}<div class="lt-eta" data-lteta><span class="muted">Live-Daten werden geladen …</span></div><div class="lt-now" data-ltnow hidden></div><div class="lt-pick" data-ltpick hidden></div><div data-ltpath></div><div class="tmap big" data-livemap></div><div data-ltsteps></div></div>`, {live: true});
     await this.load();
     clearInterval(this.timer); let n = 0;
     this.timer = setInterval(() => { if (!document.querySelector('[data-livemap]')) { clearInterval(this.timer); return; } if (document.hidden) return; if (++n % 4 === 0) this.load(); else this.render(); }, 15000);
+  },
+  /* Antippen eines Halts: „hier bin ich jetzt“. Passt eine andere Fahrt derselben
+     Linie besser (früher oder später), wird sie übernommen, sonst wird die Zeit verschoben. */
+  async calibrate(k){
+    const lv = this.lv; if (!lv) return; const pts = tripPoints(lv), p = pts[k]; if (!p) return;
+    const now = Date.now(), pace = Math.round((now < p.t0 ? now - p.t0 : now > p.t1 ? now - p.t1 : 0) / 60000);
+    haptic();
+    const g = lv.legs.find(x => !x.walk && (x.stops || []).some(v => stopKey(v.name) === stopKey(p.name)));
+    if (g && Math.abs(pace) >= 2 && g.fromId) {
+      try {
+        const dest = this.destL(), {st, list} = await Transit.caughtOptions({...g, arr: new Date(now + 3600000).toISOString()}, dest);
+        const fit = list.map(x => { const f = x.j.legs.find(y => !y.walk), v = f && (f.stops || []).find(y => stopKey(y.name) === stopKey(p.name)); return v ? {x, d: Math.abs(+new Date(v.arr || v.dep) - now)} : null; }).filter(Boolean).sort((a, b) => a.d - b.d)[0];
+        if (fit && fit.d < 4 * 60000) { this._pick = {st, list}; this.cal = null; return this.caught(list.indexOf(fit.x)); }
+      } catch {}
+    }
+    this.cal = Math.abs(pace) <= 1 ? null : {k, at: now, pace, off: now - (now < p.t0 ? p.t0 : now > p.t1 ? p.t1 : now)};
+    this.render();
+    toast(`Du bist bei ${p.name}`, Math.abs(pace) <= 1 ? 'Genau im Plan.' : pace > 0 ? `${pace} min hinter dem Plan. Ich rechne damit weiter.` : `${-pace} min vor dem Plan. Ich rechne damit weiter.`, {ttl: 3200});
+  },
+  pathHtml(lv, now){
+    const pts = tripPoints(lv); if (pts.length < 2) return '';
+    const w = tripWhere(lv, pts, now, this.cal), cur = w.i + (w.frac > .5 ? 1 : 0);
+    const lo = this._all ? 0 : Math.max(0, cur - 2), hi = this._all ? pts.length - 1 : Math.min(pts.length - 1, cur + 3);
+    const row = (p, i) => `<button type="button" class="lp${i < w.i || (i === w.i && w.frac > 0) ? ' past' : ''}${i === w.i && !w.frac ? ' here' : ''}${p.last ? ' end' : ''}" data-act="ltHere" data-k="${i}"><span class="lp-t">${hm(new Date(p.t0))}</span><span class="lp-d"></span><span class="lp-n">${esc(p.name)}</span>${i === w.i && !w.frac ? `<span class="lp-me">${ic('pfeil','s')}${w.src === 'gps' ? 'Du bist hier' : w.src === 'du' ? 'Laut dir' : 'Laut Plan'}</span>` : ''}</button>`;
+    let h = '';
+    if (lo > 0) h += `<button type="button" class="lp-more" data-act="ltAll">${lo} frühere anzeigen</button>`;
+    for (let i = lo; i <= hi; i++) { h += row(pts[i], i); if (i === w.i && w.frac > 0 && i < hi) h += `<div class="lp-mid" style="--f:${w.frac}"><span class="lp-me">${ic('pfeil','s')}${w.src === 'gps' ? 'Du bist hier' : w.src === 'du' ? 'Laut dir' : 'Laut Plan'} · unterwegs</span></div>`; }
+    if (hi < pts.length - 1) h += `<button type="button" class="lp-more" data-act="ltAll">${pts.length - 1 - hi} weitere anzeigen</button>`;
+    else if (this._all && lo === 0 && pts.length > 6) h += `<button type="button" class="lp-more" data-act="ltAll">Weniger</button>`;
+    return `<div class="lpath"><div class="lp-h"><b>Wo bist du?</b><small>Tipp auf den Halt, an dem du gerade bist</small></div>${h}</div>`;
   },
   key(){ const s = this.src; if (!s || s.home) return null; const l = planDay(parseYMD(s.date)).legs[+s.i]; return !l ? null : l.kind === 'go' ? l.before.key : l.after ? 'back:' + l.after.key : null; },
   /* Abschnitt, für den „andere Bahn erwischt“ gilt: der, auf den man wartet oder in dem man sitzt */
@@ -9085,7 +9186,7 @@ const LiveTrip = {
     const key = this.key(), ov = {from: this._pick.st, line: x.f.line, pdep: x.pd, j: x.j};
     const lv = {...x.j, fetchedAt: Date.now(), alts: [], over: true, why: Delay.why(x.j)};
     if (key) { Transit.setOver(key, ov); const old = Transit.cache[key]; Transit.cache[key] = {...lv, arriveBy: old && old.arriveBy, after: old && old.after}; invalidate(); if (typeof Push !== 'undefined') Push.queue(); }
-    this.lv = lv; this._localOver = !key; ui._overKey = key;
+    this.lv = lv; this._localOver = !key; ui._overKey = key; this.cal = null;
     document.querySelector('[data-ltpick]').hidden = true; this.render(true); renderNav();
     toast(`${x.f.line} um ${hm(new Date(x.f.dep))} übernommen`, `Ankunft jetzt ${hm(x.j.arrive)}. Der Rest ist neu berechnet.`, {sym: 'zug', action: {act: 'overUndo', label: 'Rückgängig'}, ttl: 8000});
   },
@@ -9132,11 +9233,12 @@ const LiveTrip = {
     if (!lv) { box.innerHTML = `<span class="muted">${navigator.onLine === false ? 'Du bist offline.' : 'Gerade keine Live-Daten. Neuer Versuch in einer Minute.'}</span>`; return; }
     const left = Math.max(0, Math.round((+new Date(lv.arrive) - now) / 60000)), f = lv.legs.find(g => !g.walk), st = tripStatus(lv, now);
     box.innerHTML = `<span class="lt-sub">Ankunft</span><span class="lt-big">${hm(new Date(lv.arrive))}</span><span class="lt-sub">${left ? `noch ${dur(left)}` : 'gleich da'}${f && f.ddel > 0 ? ` · ${esc(f.line)} +${f.ddel} min` : ''}${Loc.pos ? '' : ' · ohne Standort'}</span>${this.rerouted ? '<span class="lt-note">Neu berechnet ab deinem Standort</span>' : ''}`;
-    const pace = Loc.pos ? tripPace(lv, [Loc.pos.lat, Loc.pos.lon], now) : null, pk = this.pickLeg(), started = now >= +new Date(lv.depart) - 10 * 60000;
+    const pace0 = Loc.pos ? tripPace(lv, [Loc.pos.lat, Loc.pos.lon], now) : null, pace = this.cal && now - this.cal.at < 20 * 60000 && (pace0 == null || now - this.cal.at < 4 * 60000) ? this.cal.pace : pace0, pk = this.pickLeg(), started = now >= +new Date(lv.depart) - 10 * 60000;
     const paceT = pace == null ? '' : Math.abs(pace) <= 1 ? '<span class="lt-pace ok">Du bist im Plan</span>' : pace > 0 ? `<span class="lt-pace late">Du bist ca. ${pace} min hinter dem Plan</span>` : `<span class="lt-pace early">Du bist ca. ${-pace} min vor dem Plan</span>`;
     const nb = document.querySelector('[data-ltnow]'); nb.hidden = false;
     nb.innerHTML = `<span class="lt-k">Jetzt laut Plan</span><b>${esc(st.head)}</b>${st.sub ? `<small>${esc(st.sub)}</small>` : ''}${paceT}
       <div class="lt-acts">${pk && started && st.head !== 'Angekommen' ? `<button type="button" class="btn sm" data-act="ltPick">${ic('zug','s')}Frühere Bahn erwischt</button>` : ''}${lv.over ? `<button type="button" class="btn ghost sm" data-act="overUndo">${ic('zurueck','s')}Rückgängig</button>` : ''}</div>`;
+    const pb = document.querySelector('[data-ltpath]'); if (pb) pb.innerHTML = this.pathHtml(lv, now);
     const el0 = document.querySelector('[data-livemap]');
     if (!redraw && el0 && el0._map) { const o = el0._map, sp = tripSoll(lv, now); if (sp && !sp.done) { if (o.sollM) o.sollM.setLatLng(sp.ll); else o.sollM = o.L.circleMarker(sp.ll, sollStyle).bindTooltip('Hier laut Plan').addTo(o.m); } else if (o.sollM) { o.sollM.remove(); o.sollM = null; } }
     if (redraw) {
