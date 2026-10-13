@@ -99,5 +99,5 @@ public class MainActivity extends Activity {
 
     @Override
     @SuppressWarnings("deprecation")
-    public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
+    public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else moveTaskToBack(true); }
 }
