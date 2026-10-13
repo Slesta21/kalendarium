@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 20.1  ·  persönlicher Kalender für alles
+ KALENDARIUM 20.2  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1296,7 +1296,7 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 .trip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 0 6px}
 .trip-h b{font-size:15px}
 .trip-h small{color:var(--muted);font-size:12.5px}
-.tleg{display:grid;grid-template-columns:52px 40px minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line)}
+.tleg{display:grid;grid-template-columns:52px var(--lw, 40px) minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line)}
 .tleg .tm{font-variant-numeric:tabular-nums;font-size:14px;line-height:1.3}
 .tleg .tm s{color:var(--faint);font-size:12px;display:block}
 .tleg .tm .late{color:var(--danger);font-size:12px;display:block;font-weight:600}
@@ -2213,7 +2213,30 @@ function routeBase(R){
   const L = routeLegs(R); if (!L.length) return 0;
   return Math.round((+R.walkTo||0) + (+R.walkFrom||0) + L.reduce((a, g) => a + (+g.ride||0), 0) + (L.length - 1) * TRANSFER_MIN + STOP_SPARE);
 }
-const routeLabel = R => routeLegs(R).map(g => g.line || 'Bahn').join(' → ');
+/* Linien, die auf einem Teilstück dieselben Halte verbinden (z. B. M1 und M2
+   zwischen zwei Haltestellen), gelten als eine Verbindung: „M1/M2 · U1 · U6“. */
+const stopKey = n => String(n || '').toLowerCase().replace(/\((berlin|bln)\)/g, '').replace(/^(s\+u|s|u)\s+/, '').replace(/[^a-z0-9äöüß]+/g, '');
+const segKey = j => j.legs.filter(g => !g.walk).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|');
+const lineLabel = g => [g.line || 'Bahn', ...(g.alt || [])].join('/');
+function groupJourneys(js){
+  const m = new Map();
+  for (const j of js) {
+    const k = segKey(j), tl = j.legs.filter(g => !g.walk);
+    if (!m.has(k)) m.set(k, {key: k, js: [], lines: tl.map(() => []), prod: tl.map(g => g.product)});
+    const gr = m.get(k); gr.js.push(j);
+    tl.forEach((g, i) => { if (g.line && !gr.lines[i].includes(g.line)) gr.lines[i].push(g.line); });
+  }
+  return [...m.values()];
+}
+function withAlts(j, all){
+  const gr = groupJourneys(all).find(x => x.key === segKey(j)); if (!gr) return j;
+  let i = 0; const legs = j.legs.map(g => { if (g.walk) return g; const alt = gr.lines[i++].filter(l => l !== g.line); return alt.length ? {...g, alt} : g; });
+  const f = legs.find(g => !g.walk);
+  return {...j, legs, first: f ? lineLabel(f) : j.first, summary: f ? `${lineLabel(f)} ${hm(new Date(f.dep))} ab ${f.from}` : j.summary};
+}
+const repOf = (gr, by) => gr.js.filter(j => !j.cancelled && (!by || j.arrive <= addMin(by, 1))).sort((a, b) => b.depart - a.depart)[0] || gr.js[0];
+const groupBadges = gr => gr.lines.map((ls, i) => lnBadge(ls.join('/'), gr.prod[i])).join(' ');
+const routeLabel = R => routeLegs(R).map(lineLabel).join(' → ');
 const lnBadge = (line, product) => `<span class="lnb" style="--lc:${LINE_COL[product || lineProduct(line)] || 'var(--ink)'}">${esc(line || 'Bahn')}</span>`;
 function routeTrip(place, arriveBy){
   const R = place && place.route, L = routeLegs(R); if (!L.length || !arriveBy) return null;
@@ -2227,7 +2250,7 @@ function routeTrip(place, arriveBy){
       const phase = ((+m[1] * 60 + +m[2]) % every + every) % every, base = startOfDay(latest), mins = Math.floor((latest - base) / 60000);
       dep = addMin(base, mins - (((mins - phase) % every) + every) % every);
     } else { dep = addMin(latest, -every); approx = true; exact = false; }
-    out.unshift({walk:false, line: g.line || 'Bahn', product: lineProduct(g.line), dir: g.dir || '', fromId: g.fromId || null, src: g.src || null, from: g.from || '', to: g.to || '', dep: +dep, pdep: null, ddel: null, arr: +addMin(dep, ride), parr: null, adel: null, plat: '', x: false, dist: null, notes: [], approx, every});
+    out.unshift({walk:false, line: g.line || 'Bahn', product: lineProduct(g.line), alt: g.alt || [], dir: g.dir || '', fromId: g.fromId || null, src: g.src || null, from: g.from || '', to: g.to || '', dep: +dep, pdep: null, ddel: null, arr: +addMin(dep, ride), parr: null, adel: null, plat: '', x: false, dist: null, notes: [], approx, every});
     t = addMin(dep, -TRANSFER_MIN);
   }
   const f = out[0], last = out[out.length - 1], wt = +R.walkTo || 0, wf = +R.walkFrom || 0;
@@ -2236,8 +2259,8 @@ function routeTrip(place, arriveBy){
   if (wt) legs.push({walk:true, dep: +leave, arr: +addMin(leave, wt), to: f.from || 'Haltestelle', mins: wt, notes: []});
   legs.push(...out);
   if (wf) legs.push({walk:true, dep: last.arr, arr: +arrive, to: place.name, mins: wf, notes: []});
-  return {legs, depart: leave, arrive, first: f.line, plan: true, exact, delay: 0, cancelled: false, alts: [], arriveBy: +arriveBy,
-    summary: `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.from ? ' ab ' + f.from : ''}`};
+  return {legs, depart: leave, arrive, first: lineLabel(f), plan: true, exact, delay: 0, cancelled: false, alts: [], arriveBy: +arriveBy,
+    summary: `${lineLabel(f)}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.from ? ' ab ' + f.from : ''}`};
 }
 function travelMinutes(place, when){
   if (!place || place.home) return {total:0, base:0, rainy:false};
@@ -2642,7 +2665,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '20.1';
+const APP_VERSION = '20.2';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -2832,12 +2855,13 @@ function saveHostRoute(f){
 function routeFromJourney(j, all){
   const mm = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 60000));
   const L = j.legs, tl = L.filter(g => !g.walk), i0 = L.indexOf(tl[0]), i1 = L.indexOf(tl[tl.length - 1]);
-  const sig = x => x.legs.filter(g => !g.walk).map(g => g.line).join('>'), same = all.filter(x => sig(x) === sig(j));
+  const same = all.filter(x => segKey(x) === segKey(j)), gr = groupJourneys(same)[0];
   const legs = tl.map((g, i) => {
     const deps = [...new Set(same.map(x => +new Date(x.legs.filter(y => !y.walk)[i].pdep || x.legs.filter(y => !y.walk)[i].dep)))].sort((a, b) => a - b);
     let every = 0; for (let k = 1; k < deps.length; k++) { const d = Math.round((deps[k] - deps[k - 1]) / 60000); if (d >= 2 && (!every || d < every)) every = d; }
     if (!every) every = {suburban:10, subway:5, tram:10, bus:10, regional:60, express:60, ferry:60}[g.product] || 10;
-    return {line: g.line, from: g.from, to: g.to, ride: mm(g.pdep || g.dep, g.parr || g.arr) || 1, every, at: hm(new Date(g.pdep || g.dep)), dir: g.dir, fromId: g.fromId || null, src: g.src || null};
+    const alt = gr ? gr.lines[i].filter(l => l !== g.line) : [];
+    return {line: g.line, alt, from: g.from, to: g.to, ride: mm(g.pdep || g.dep, g.parr || g.arr) || 1, every, at: hm(new Date(g.pdep || g.dep)), dir: g.dir, fromId: g.fromId || null, src: g.src || null};
   });
   return {walkTo: L.slice(0, i0).reduce((a, g) => a + mm(g.dep, g.arr), 0), walkFrom: L.slice(i1 + 1).reduce((a, g) => a + mm(g.dep, g.arr), 0), legs};
 }
@@ -2883,7 +2907,7 @@ function leaveUpdate(f){
     const T = state.settings.travel, arriveBy = addMin(st, -(+T.arriveEarly || 0)), tr = pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null;
     if (tr) {
       const tl = tr.legs.filter(g => !g.walk), g0 = tl[0];
-      h = `<div class="lv-top"><b>Losgehen ${hm(tr.depart)}</b>${btn}</div><span class="lv-l">${tl.map(g => lnBadge(g.line, g.product)).join('')}<span>${g0.approx ? '' : hm(new Date(g0.dep)) + ' '}${g0.from ? 'ab ' + esc(g0.from) + ' ' : ''}· da um ${hm(tr.arrive)}</span></span>
+      h = `<div class="lv-top"><b>Losgehen ${hm(tr.depart)}</b>${btn}</div><span class="lv-l">${tl.map(g => lnBadge(lineLabel(g), g.product)).join('')}<span>${g0.approx ? '' : hm(new Date(g0.dep)) + ' '}${g0.from ? 'ab ' + esc(g0.from) + ' ' : ''}· da um ${hm(tr.arrive)}</span></span>
         <small>${f.querySelector('[data-trip]') ? `Fußwege und Umstiege eingerechnet, ${T.arriveEarly} min vor Beginn da. Kurz vorher prüft die App live auf Verspätungen.` : tr.exact ? `Nach Fahrplan, ${T.arriveEarly} min vor Beginn da.` : 'Ungefähr. Mit einer Abfahrtszeit wird es minutengenau.'}</small>`;
     } else {
       const t = travelMinutes(pl, arriveBy);
@@ -2946,13 +2970,14 @@ async function twConn(f, keep){
   box.innerHTML = '<span class="muted" style="font-size:13.5px">Suche Verbindungen …</span>';
   try {
     const js = await Transit.options(E.from, E.to, arr); if (tok !== _twTok) return;
-    const sigJ = j => j.legs.filter(g => !g.walk).map(g => normLine(g.line)).join('>'), seen = new Set(), uniq = js.filter(j => { const k = sigJ(j); if (seen.has(k)) return false; seen.add(k); return true; });
-    if (!uniq.length) { box.innerHTML = '<span class="muted" style="font-size:13.5px">Keine Verbindung gefunden. Der Kalender schätzt den Weg.</span>'; leaveUpdate(f); return; }
+    const groups = groupJourneys(js);
+    if (!groups.length) { box.innerHTML = '<span class="muted" style="font-size:13.5px">Keine Verbindung gefunden. Der Kalender schätzt den Weg.</span>'; leaveUpdate(f); return; }
     let cur = null; try { cur = keep && tripIn.value ? JSON.parse(tripIn.value) : null; } catch {}
-    const sigR = R => routeLegs(R).map(g => normLine(g.line)).join('>'), inTime = uniq.filter(j => j.arrive <= addMin(arr, 1)).sort((a, b) => b.depart - a.depart);
-    const sel = (cur && uniq.find(j => sigJ(j) === sigR(cur))) || inTime[0] || uniq[0];
-    ui._twJs = js; tripIn.value = JSON.stringify(routeFromJourney(sel, js));
-    box.innerHTML = `<span class="rlab">Verbindung · tipp an, wenn du lieber anders fährst</span><div class="chips">${uniq.slice(0, 4).map(j => `<button type="button" class="chip" data-act="twChoose" data-i="${js.indexOf(j)}" aria-pressed="${j === sel}">${j.legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ')} <span>${dur(Math.round((j.arrive - j.depart) / 60000))}</span></button>`).join('')}</div>`;
+    const reps = groups.map(gr => repOf(gr, arr)), curKey = cur ? routeLegs(cur).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|') : '';
+    const best = reps.filter(j => j.arrive <= addMin(arr, 1)).sort((a, b) => b.depart - a.depart)[0] || reps[0];
+    const shown = groups.slice(0, 4), selG = (curKey && shown.find(g => g.key === curKey)) || shown[reps.indexOf(best)] || shown[0];
+    ui._twJs = js; ui._twGs = reps; tripIn.value = JSON.stringify(routeFromJourney(reps[groups.indexOf(selG)], js));
+    box.innerHTML = `<span class="rlab">Verbindung · tipp an, wenn du lieber anders fährst</span><div class="chips">${shown.map((gr, gi) => `<button type="button" class="chip" data-act="twChoose" data-g="${gi}" aria-pressed="${gr === selG}">${groupBadges(gr)} <span>${dur(Math.round((reps[gi].arrive - reps[gi].depart) / 60000))}</span></button>`).join('')}</div>`;
   } catch {
     if (tok !== _twTok) return;
     const km = geoKm(E.from, E.to), est = km != null ? estMin(km) : null;
@@ -4472,7 +4497,7 @@ const ACTIONS = {
     else twSet(f, w, '__vbb', esc(nm) + (nm !== r.name ? `<small>${esc(r.name)}</small>` : ''), r);
   },
   twChoose(el){
-    const j = ui._twJs && ui._twJs[+el.dataset.i], f = el.closest('form'); if (!j) return;
+    const j = el.dataset.g != null ? ui._twGs && ui._twGs[+el.dataset.g] : ui._twJs && ui._twJs[+el.dataset.i], f = el.closest('form'); if (!j) return;
     f.querySelector('[data-trip] [name="trip"]').value = JSON.stringify(routeFromJourney(j, ui._twJs));
     el.parentElement.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === el)); haptic(); leaveUpdate(f);
   },
@@ -4484,8 +4509,8 @@ const ACTIONS = {
     try {
       const js = (await Transit.options(here, home.vbb, new Date(), 'departure')).filter(j => j.depart > Date.now() - 60000).sort((a, b) => a.depart - b.depart), best = js[0];
       if (!best) throw new Error('none');
-      const lv = {...best, fetchedAt: Date.now(), alts: js.slice(1, 4)};
-      openSheet(`<div class="detail">${head('Nach Hause')}<div class="facts">${fact('haus', `Los ${relTime(best.depart)} · zuhause um ${hm(best.arrive)}`, `${dur(Math.round((best.arrive - best.depart) / 60000))} ab deinem Standort${best.delay ? `, ${best.first} +${best.delay} min` : ''}`)}</div>${transitHtml(lv, {noRefresh: true})}${depsSlot(lv)}</div>`);
+      const lv = {...withAlts(best, js), fetchedAt: Date.now(), alts: groupJourneys(js.filter(j => segKey(j) !== segKey(best))).map(gr => withAlts(gr.js[0], js)).slice(0, 3)};
+      openSheet(`<div class="detail">${head('Nach Hause')}<div class="facts">${fact('haus', `Los ${relTime(best.depart)} · zuhause um ${hm(best.arrive)}`, `${dur(Math.round((best.arrive - best.depart) / 60000))} ab deinem Standort${best.delay ? `, ${lv.first} +${best.delay} min` : ''}`)}</div>${transitHtml(lv, {noRefresh: true})}${depsSlot(lv)}</div>`);
       depsLoadAll();
     } catch { openSheet(`<div class="detail">${head('Nach Hause')}<p>Gerade keine Verbindung abrufbar. Bist du online?</p></div>`); }
   },
@@ -4513,8 +4538,8 @@ const ACTIONS = {
     box.innerHTML = '<span class="muted" style="font-size:13px">Suche Verbindungen …</span>';
     try {
       const js = await Transit.options(home.vbb, to, arr); ui._rOpts = js;
-      const seen = new Set(), uniq = js.filter(j => { const k = j.legs.filter(g => !g.walk).map(g => g.line).join('>'); if (seen.has(k)) return false; seen.add(k); return true; });
-      box.innerHTML = uniq.length ? `<span class="muted" style="font-size:13px;width:100%">Welche nimmst du?</span>` + uniq.slice(0, 4).map(j => `<button type="button" class="chip" data-act="routePick" data-i="${js.indexOf(j)}">${j.legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ')} <span>${dur(Math.round((j.arrive - j.depart) / 60000))}</span></button>`).join('') : '<span class="muted" style="font-size:13px">Keine Verbindung gefunden. Trag sie unten selbst ein.</span>';
+      const groups = groupJourneys(js).slice(0, 4), reps = groups.map(gr => repOf(gr, arr));
+      box.innerHTML = groups.length ? `<span class="muted" style="font-size:13px;width:100%">Welche nimmst du?</span>` + groups.map((gr, gi) => `<button type="button" class="chip" data-act="routePick" data-i="${js.indexOf(reps[gi])}">${groupBadges(gr)} <span>${dur(Math.round((reps[gi].arrive - reps[gi].depart) / 60000))}</span></button>`).join('') : '<span class="muted" style="font-size:13px">Keine Verbindung gefunden. Trag sie unten selbst ein.</span>';
     } catch { box.innerHTML = '<span class="muted" style="font-size:13px">Verbindungen gerade nicht erreichbar. Trag sie unten selbst ein.</span>'; }
   },
   routePick(el){
@@ -5181,11 +5206,12 @@ const Transit = {
   async fetchLeg(l, arriveBy){
     const {data} = await this.get(this.jq(l.from.vbb, l.to.vbb, {arrival: arriveBy.toISOString(), results: '4', remarks: 'true'}));
     const js = (data.journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length);
-    const pref = routeLegs((l.before && l.before.ref && routeOk(l.before.ref.route)) ? l.before.ref.route : l.to.route).map(g => normLine(g.line)).filter(Boolean), hasPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line))) ? 1 : 0;
+    const pref = routeLegs((l.before && l.before.ref && routeOk(l.before.ref.route)) ? l.before.ref.route : l.to.route).flatMap(g => [g.line, ...(g.alt || [])]).map(normLine).filter(Boolean), hasPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line))) ? 1 : 0;
     const okJ = js.filter(j => !j.cancelled && j.arrive <= addMin(arriveBy, 1)).sort((a, b) => (hasPref(b) - hasPref(a)) || (b.depart - a.depart));
     const best = okJ[0] || js.find(j => !j.cancelled) || js[0];
     if (!best) return null;
-    return {...best, arriveBy: +arriveBy, fetchedAt: Date.now(), alts: js.filter(j => j !== best).slice(0, 3)};
+    const alts = groupJourneys(js.filter(j => segKey(j) !== segKey(best))).map(gr => withAlts(repOf(gr, arriveBy), js)).slice(0, 3);
+    return {...withAlts(best, js), arriveBy: +arriveBy, fetchedAt: Date.now(), alts};
   },
   async options(fromL, toL, when, by = 'arrival'){
     const {data} = await this.get(this.jq(fromL, toL, {[by]: when.toISOString(), results: '6'}));
@@ -5268,14 +5294,14 @@ const Transit = {
 };
 function depsSlot(lv){
   const g = lv && lv.legs && lv.legs.find(x => !x.walk && x.fromId);
-  return g && Transit.ok() ? `<div class="deps" data-deps data-stop="${esc(g.fromId)}" data-src="${esc(g.src || '')}" data-line="${esc(g.line)}" data-dir="${esc(g.dir || '')}" data-name="${esc(g.from || '')}"></div>` : '';
+  return g && Transit.ok() ? `<div class="deps" data-deps data-stop="${esc(g.fromId)}" data-src="${esc(g.src || '')}" data-line="${esc(lineLabel(g))}" data-dir="${esc(g.dir || '')}" data-name="${esc(g.from || '')}"></div>` : '';
 }
 async function depsLoadAll(){
   const els = [...document.querySelectorAll('[data-deps]')]; if (!els.length) return;
   for (const el of els) {
     try {
-      const all = await Transit.departures(el.dataset.stop, el.dataset.src || ''), ln = normLine(el.dataset.line), dir = el.dataset.dir;
-      let list = all.filter(x => normLine(x.line) === ln); if (dir && list.some(x => x.dir === dir)) list = list.filter(x => x.dir === dir);
+      const all = await Transit.departures(el.dataset.stop, el.dataset.src || ''), lns = el.dataset.line.split('/').map(normLine), dir = el.dataset.dir;
+      let list = all.filter(x => lns.includes(normLine(x.line))); if (lns.length === 1 && dir && list.some(x => x.dir === dir)) list = list.filter(x => x.dir === dir);
       if (!list.length) list = all;
       const now = Date.now();
       el.innerHTML = `<div class="deps-h"><b>Nächste Abfahrten</b><small>${esc(el.dataset.name || 'Haltestelle')} · live</small></div>` + list.slice(0, 5).map(x => { const t = new Date(x.when), m = Math.round((t - now) / 60000);
@@ -5288,12 +5314,13 @@ function transitHtml(lv, opt = {}){
   const tm = (t, p, d, ap) => `<span class="tm">${ap ? '<span class="ca">ca.</span>' : ''}${hm(new Date(t))}${d > 0 ? `<span class="late">+${d}</span>` : ''}${d > 0 && p ? `<s>${hm(new Date(p))}</s>` : ''}</span>`;
   const leg = g => g.walk
     ? `<div class="tleg">${tm(g.dep)}<span class="ln walk">${ic('laeufer','s')}</span><span class="tx">Zu Fuß${g.mins ? ` · ${g.mins} min` : g.dist ? ` · ${g.dist} m` : ''}<small>bis ${esc(g.to)}</small></span></div>`
-    : `<div class="tleg${g.x ? ' x' : ''}">${tm(g.dep, g.pdep, g.ddel, g.approx)}<span class="ln" style="--lc:${LINE_COL[g.product] || 'var(--ink)'}">${esc(g.line)}</span><span class="tx">${esc(g.from)}${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}<small>${g.dir ? `Richtung ${esc(g.dir)} · ` : ''}${g.approx ? `alle ${g.every} min · ` : ''}an ${g.to ? esc(g.to) + ' ' : ''}${g.approx ? 'ca. ' : ''}${hm(new Date(g.arr))}${g.adel > 0 ? ` (+${g.adel})` : ''}</small>${g.x ? '<small style="color:var(--danger)">Fällt aus</small>' : ''}${g.notes.map(n => `<small>${esc(n)}</small>`).join('')}</span></div>`;
-  if (lv.plan) return `<div class="trip"><div class="trip-h"><b>Deine Verbindung</b><small>${lv.exact ? 'nach deinem Fahrplan' : 'ungefähr'}</small></div>${lv.legs.map(leg).join('')}
+    : `<div class="tleg${g.x ? ' x' : ''}">${tm(g.dep, g.pdep, g.ddel, g.approx)}<span class="ln" style="--lc:${LINE_COL[g.product] || 'var(--ink)'}">${esc(lineLabel(g))}</span><span class="tx">${esc(g.from)}${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}<small>${g.dir && !(g.alt && g.alt.length) ? `Richtung ${esc(g.dir)} · ` : ''}${g.approx ? `alle ${g.every} min · ` : ''}an ${g.to ? esc(g.to) + ' ' : ''}${g.approx ? 'ca. ' : ''}${hm(new Date(g.arr))}${g.adel > 0 ? ` (+${g.adel})` : ''}</small>${g.x ? '<small style="color:var(--danger)">Fällt aus</small>' : ''}${g.notes.map(n => `<small>${esc(n)}</small>`).join('')}</span></div>`;
+  const lw = `--lw:${Math.max(40, Math.max(0, ...lv.legs.filter(g => !g.walk).map(g => lineLabel(g).length)) * 8.6 + 16)}px`;
+  if (lv.plan) return `<div class="trip" style="${lw}"><div class="trip-h"><b>Deine Verbindung</b><small>${lv.exact ? 'nach deinem Fahrplan' : 'ungefähr'}</small></div>${lv.legs.map(leg).join('')}
     ${lv.exact ? '' : '<p class="note" style="margin-top:10px">Trag beim Ort eine Abfahrtszeit deiner Linie ein, dann rechnet der Kalender minutengenau. Bis dahin ist eine volle Taktlänge Wartezeit eingeplant.</p>'}</div>`;
   const ago = Math.max(0, Math.round((Date.now() - lv.fetchedAt) / 60000));
-  return `<div class="trip"><div class="trip-h"><b>Verbindung live</b><small>${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'} · VBB</small></div>${lv.legs.map(leg).join('')}
-    ${lv.alts && lv.alts.length ? `<div class="trip-alt"><span class="muted" style="font-size:13px;width:100%">Andere Verbindungen</span>${lv.alts.map(a => `<span class="tag">${esc(a.first)} ${hm(a.depart)} → ${hm(a.arrive)}${a.cancelled ? ' · fällt aus' : a.delay ? ` · +${a.delay}` : ''}</span>`).join('')}</div>` : ''}
+  return `<div class="trip" style="${lw}"><div class="trip-h"><b>Verbindung live</b><small>${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'} · VBB</small></div>${lv.legs.map(leg).join('')}
+    ${lv.alts && lv.alts.length ? `<div class="trip-alt"><span class="muted" style="font-size:13px;width:100%">Andere Verbindungen</span>${lv.alts.map(a => `<span class="tag">${esc(a.legs.filter(g => !g.walk).map(lineLabel).join(' · '))} ${hm(a.depart)} → ${hm(a.arrive)}${a.cancelled ? ' · fällt aus' : a.delay ? ` · +${a.delay}` : ''}</span>`).join('')}</div>` : ''}
     ${opt.noRefresh ? '' : `<div class="trip-alt"><button class="btn sm" data-act="transitNow">${ic('wdh','s')}Aktualisieren</button></div>`}</div>`;
 }
 
