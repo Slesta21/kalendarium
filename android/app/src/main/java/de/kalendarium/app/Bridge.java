@@ -19,7 +19,12 @@ public class Bridge {
     }
 
     /* Was diese App-Version kann, damit die Web-App passend reagiert */
-    @JavascriptInterface public String features() { return "vib,live"; }
+    @JavascriptInterface public String features() { return "vib,live,widget"; }
+
+    /* Startbildschirm-Widget mit den nächsten Terminen füttern */
+    @JavascriptInterface public void widget(String json) { Widget.save(ctx, json); }
+    @JavascriptInterface public boolean widgetPin() { return Widget.pin(ctx); }
+    @JavascriptInterface public boolean widgetOn() { return Widget.any(ctx); }
 
     @JavascriptInterface public void vibrateNamed(String id) { Notify.vibrate(ctx, Notify.pattern(id)); }
 
