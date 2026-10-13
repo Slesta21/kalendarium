@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 33  ·  persönlicher Kalender für alles
+ KALENDARIUM 34  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -5304,17 +5304,27 @@ const Native = {
       for (const o of dayItems(d).filter(x => isTimed(x) && x.kind !== 'deadline' && layerOk(x))) {
         if (+o.end <= now) continue;
         const l = legOf[o.key], f = l && l.live && l.live.legs ? l.live.legs.find(g => !g.walk) : null;
-        const e = {title: nm(o), start: +o.start, end: +o.end, place: placeLabel(o) || ''};
-        if (l) { e.depart = +l.depart; e.arrive = +l.arrive; e.how = `${dur(l.mins)} bis ${l.to ? l.to.name : ''}`; }
-        if (f) { e.line = lineLabel(f); e.lineDep = +new Date(f.dep); e.from = f.from || ''; e.plat = f.plat || ''; e.delay = f.ddel > 0 ? f.ddel : 0; }
+        const e = {title: nm(o), start: +o.start, end: +o.end, place: placeLabel(o) || '', color: (o.cat && o.cat.color) || ''};
+        if (l) {
+          e.depart = +l.depart; e.arrive = +l.arrive; e.how = `${dur(l.mins)} bis ${l.to ? l.to.name : ''}`; e.dest = l.to ? l.to.name : '';
+          const fv = l.from && l.from.vbb, tv = l.to && l.to.vbb; if (fv && fv.latitude != null) e.fromLL = [fv.latitude, fv.longitude]; if (tv && tv.latitude != null) e.toLL = [tv.latitude, tv.longitude];
+          if (l.live && l.live.legs && !l.live.plan) { try { e.pts = tripTimeline(l.live).filter(p => p.ll).map(p => [+p.ll[0].toFixed(5), +p.ll[1].toFixed(5), p.t0, p.name || '']).slice(0, 80); } catch {} }
+        }
+        if (f) {
+          const last = l.live.legs.filter(g => !g.walk).at(-1), n = l.live.legs.filter(g => !g.walk).length;
+          e.line = lineLabel(f); e.lineColor = LINE_COL[f.product] || '#5B5B5B'; e.lineDep = +new Date(f.dep); e.from = f.from || ''; e.plat = f.plat || ''; e.delay = f.ddel > 0 ? f.ddel : 0;
+          e.exit = last ? last.to : ''; e.changes = Math.max(0, n - 1);
+        }
         out.push(e);
       }
     }
     out.sort((a, b) => (a.depart || a.start) - (b.depart || b.start));
-    const js = JSON.stringify(out.slice(0, 12)); if (!force && js === this._w) return;
+    const W = state.settings.widget || {}, pos = Loc.pos && Date.now() - Loc.at < 10 * 60000 ? {lat: +Loc.pos.lat.toFixed(5), lon: +Loc.pos.lon.toFixed(5), acc: Math.round(Loc.pos.acc || 0), at: Loc.at} : null;
+    const js = JSON.stringify({items: out.slice(0, 12), style: W.style || 'dunkel', loc: W.loc !== false, pos}); if (!force && js === this._w) return;
     this._w = js; try { window.KalNative.widget(js); } catch {}
   },
   status(){ try { return JSON.parse(window.KalNative.status()); } catch { return {}; } },
+  bgLoc(){ try { return !!(window.KalNative.bgLocationOk && window.KalNative.bgLocationOk()); } catch { return false; } },
   has(f){ try { return String(window.KalNative.features ? window.KalNative.features() : '').split(',').includes(f); } catch { return false; } },
   /* Live-Banner: „Fertig machen“ bis zum Losgehen, dann „Unterwegs“ bis zur Ankunft;
      ohne Weg „Gleich“ bis zum Beginn. Countdown läuft im Banner selbst weiter. */
@@ -6275,7 +6285,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '33';
+const APP_VERSION = '34';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7056,7 +7066,9 @@ const VIEWS = {
         ${Native.on() ? `<div class="row"><div class="l"><b>Live-Banner</b><small>Dauerhaft oben im Handy: „Fertig machen“ mit Countdown bis zum Losgehen, dann „Unterwegs“ bis zur Ankunft</small></div>${sw('live.on', (s.live || {}).on, 'Live-Banner')}</div>
         ${(s.live || {}).on ? `<div class="row"><div class="l"><b>Banner zeigen ab</b></div><div class="remchips">${[30, 45, 60, 90, 120].map(m => `<label><input type="radio" name="live_lead" value="${m}" ${+(s.live || {}).lead === m ? 'checked' : ''}><span>${m < 60 ? m + ' min' : m / 60 + ' h'} vorher</span></label>`).join('')}</div></div>
         <div class="row"><div class="l"><b>Vorschau</b><small>So sieht das Banner aus</small></div><button class="btn sm" data-act="livePreview">Zeigen</button></div>` : ''}` : ''}
-        ${Native.on() ? `<div class="row"><div class="l"><b>Widget</b><small>${Native.has('widget') ? 'Auf dem Startbildschirm: wann du losmusst, mit Linie und Countdown' : 'Neue App-Version laden, dann gibt es ein Widget für den Startbildschirm'}</small></div>${Native.has('widget') ? '<button class="btn sm" data-act="widgetPin">Hinzufügen</button>' : '<button class="btn sm" data-act="apkGet">App laden</button>'}</div>` : ''}
+        ${Native.on() ? `<div class="row"><div class="l"><b>Widget</b><small>${Native.has('widget') ? 'Auf dem Startbildschirm: wann du losmusst, mit Linie und Countdown' : 'Neue App-Version laden, dann gibt es ein Widget für den Startbildschirm'}</small></div>${Native.has('widget') ? '<button class="btn sm" data-act="widgetPin">Hinzufügen</button>' : '<button class="btn sm" data-act="apkGet">App laden</button>'}</div>
+        ${Native.has('widget2') ? `<div class="row"><div class="l"><b>Widget-Hintergrund</b></div><div class="remchips">${[['dunkel', 'Dunkel durchsichtig'], ['hell', 'Hell durchsichtig'], ['farbe', 'Kobalt']].map(([v, t]) => `<label><input type="radio" name="widget_style" value="${v}" ${((s.widget || {}).style || 'dunkel') === v ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>
+        <div class="row"><div class="l"><b>Standort im Widget</b><small>${Native.bgLoc() ? 'Erkennt, ob du schon los bist, wo du bist und wann du ankommst' : 'Damit das auch bei geschlossener App klappt: Standort auf „Immer erlauben“ stellen'}</small></div>${Native.bgLoc() ? sw('widget.loc', (s.widget || {}).loc !== false, 'Standort im Widget') : '<button class="btn sm" data-act="widgetLoc">Erlauben</button>'}</div>` : ''}` : ''}
         ${Native.on() ? '' : `<div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>`}
         ${STANDALONE && !Native.on() ? pushRows() : ''}
         <div class="row"><div class="l"><b>Kurse erinnern</b></div>${sw('courseReminders', s.courseReminders, 'Kurse erinnern')}</div>
@@ -8120,7 +8132,7 @@ async function saveFile(filename, data){
   try { const dl = window.claude && await claude.use('downloads'); if (!dl) { toast('Speichern nicht möglich', 'In dieser Ansicht können keine Dateien gespeichert werden.'); return false; } await dl.save({filename, data}); return true; }
   catch (e) { if (e && e.code !== 'declined') toast('Speichern nicht möglich', e.message || 'Bitte später erneut versuchen.'); return false; }
 }
-function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
+function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) { const k = ks.shift(); o = o[k] || (o[k] = {}); } o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 /* Einstellungen als ruhige Liste: jeder Bereich zugeklappt, nur einer offen */
 const SX = [
@@ -8429,6 +8441,7 @@ const ACTIONS = {
   ltHere(el){ LiveTrip.calibrate(+el.dataset.k); },
   ltAll(){ LiveTrip._all = !LiveTrip._all; LiveTrip.render(); },
   depsRetry(el){ const b = el.closest('[data-deps]'); if (b) b.innerHTML = '<div class="deps-h"><b>Nächste Abfahrten</b><small>wird geladen …</small></div>'; depsLoadAll(); },
+  widgetLoc(){ try { window.KalNative.bgLocation(); } catch {} toast('Standort: „Immer erlauben“', 'In den App-Einstellungen unter Berechtigungen → Standort.'); },
   widgetPin(){ Native.widget(true); let ok = false; try { ok = window.KalNative.widgetPin(); } catch {} toast(ok ? 'Widget wird hinzugefügt' : 'Widget von Hand hinzufügen', ok ? 'Bestätige im Fenster des Handys.' : 'Startbildschirm lange drücken → Widgets → Kalendarium.'); },
   ltPick(){ LiveTrip.pick(); },
   ltCaught(el){ LiveTrip.caught(el.dataset.i); },
@@ -10346,6 +10359,7 @@ function bindEvents(){
     if (t.dataset && t.dataset.remgo) { ACTIONS.remGo(t); return; }
     if (t.name && /^vib_(go|event|deadline)$/.test(t.name)) { state.settings.vib = {...(state.settings.vib || {}), [t.name.slice(4)]: t.value}; vibPlay(t.value); Store.schedule(); Native.queue(); if (STANDALONE) Push.queue(); return; }
     if (t.name === 'vib' && t.form && t.value) { vibPlay(t.value); return; }
+    if (t.name === 'widget_style') { state.settings.widget = {...(state.settings.widget || {}), style: t.value}; Store.schedule(); Native.widget(true); return; }
     if (t.name === 'live_lead') { state.settings.live = {...(state.settings.live || {}), lead: +t.value}; Store.schedule(); Native.queue(); return; }
     if (t.dataset && t.dataset.set) {
       let v = t.type === 'number' ? parseFloat(t.value) : t.value;
