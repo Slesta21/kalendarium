@@ -19,12 +19,18 @@ public class Bridge {
     }
 
     /* Was diese App-Version kann, damit die Web-App passend reagiert */
-    @JavascriptInterface public String features() { return "vib,live,widget"; }
+    @JavascriptInterface public String features() { return "vib,live,widget,widget2"; }
 
     /* Startbildschirm-Widget mit den nächsten Terminen füttern */
     @JavascriptInterface public void widget(String json) { Widget.save(ctx, json); }
     @JavascriptInterface public boolean widgetPin() { return Widget.pin(ctx); }
     @JavascriptInterface public boolean widgetOn() { return Widget.any(ctx); }
+    @JavascriptInterface public boolean bgLocationOk() { return Widget.bgOk(ctx); }
+    /* Standort „Immer erlauben“: Android lässt das nur über die App-Einstellungen zu */
+    @JavascriptInterface public void bgLocation() {
+        Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + ctx.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try { ctx.startActivity(i); } catch (Exception ignored) { }
+    }
 
     @JavascriptInterface public void vibrateNamed(String id) { Notify.vibrate(ctx, Notify.pattern(id)); }
 
