@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 32  ·  persönlicher Kalender für alles
+ KALENDARIUM 32.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2503,6 +2503,36 @@ main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
 @media (prefers-reduced-motion: reduce){ main.enter > *{animation:none} }
 /* In Fenstern und Kacheln heben sich Knöpfe und Chips eine Stufe ab */
 .sheet .btn:not(.primary):not(.ghost),.sheet .chip:not([aria-pressed="true"]),.panel .btn:not(.primary):not(.ghost),.panel .chip:not([aria-pressed="true"]),.w-right .btn:not(.primary):not(.ghost){background:var(--tile-2)}
+/* --- Flüssige Übergänge (v32.1): Kopfblock wandert als eigene Ebene,
+   Inhalt gleitet in Tab-Richtung, Tag/Woche/Monat/Jahr zoomen leicht --- */
+:root[data-motion="on"] .top{view-transition-name:topblock}
+::view-transition-group(*){animation-duration:.44s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.3s}
+::view-transition-old(topblock),::view-transition-new(topblock){height:100%;animation-duration:.4s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-old(main){animation:.2s cubic-bezier(.4,0,1,1) both vt-fade-out}
+::view-transition-new(main){animation:.44s cubic-bezier(.22,1,.36,1) both vt-rise}
+:root[data-dir="tab-next"]::view-transition-old(main){animation:.22s cubic-bezier(.4,0,1,1) both vt2-out-l}
+:root[data-dir="tab-next"]::view-transition-new(main){animation:.48s cubic-bezier(.22,1,.36,1) .04s both vt2-in-r}
+:root[data-dir="tab-prev"]::view-transition-old(main){animation:.22s cubic-bezier(.4,0,1,1) both vt2-out-r}
+:root[data-dir="tab-prev"]::view-transition-new(main){animation:.48s cubic-bezier(.22,1,.36,1) .04s both vt2-in-l}
+:root[data-dir="next"]::view-transition-old(main){animation:.24s cubic-bezier(.4,0,1,1) both vt2-out-l}
+:root[data-dir="next"]::view-transition-new(main){animation:.44s cubic-bezier(.22,1,.36,1) both vt2-in-r}
+:root[data-dir="prev"]::view-transition-old(main){animation:.24s cubic-bezier(.4,0,1,1) both vt2-out-r}
+:root[data-dir="prev"]::view-transition-new(main){animation:.44s cubic-bezier(.22,1,.36,1) both vt2-in-l}
+:root[data-dir="out"]::view-transition-old(main){animation:.22s cubic-bezier(.4,0,1,1) both vt2-zo-old}
+:root[data-dir="out"]::view-transition-new(main){animation:.46s cubic-bezier(.22,1,.36,1) .03s both vt2-zo-new}
+:root[data-dir="in"]::view-transition-old(main){animation:.22s cubic-bezier(.4,0,1,1) both vt2-zi-old}
+:root[data-dir="in"]::view-transition-new(main){animation:.46s cubic-bezier(.22,1,.36,1) .03s both vt2-zi-new}
+@keyframes vt2-out-l{to{opacity:0;transform:translateX(-28px)}}
+@keyframes vt2-out-r{to{opacity:0;transform:translateX(28px)}}
+@keyframes vt2-in-r{from{opacity:0;transform:translateX(36px)}}
+@keyframes vt2-in-l{from{opacity:0;transform:translateX(-36px)}}
+@keyframes vt2-zo-old{to{opacity:0;transform:scale(.985)}}
+@keyframes vt2-zo-new{from{opacity:0;transform:scale(1.015)}}
+@keyframes vt2-zi-old{to{opacity:0;transform:scale(1.015)}}
+@keyframes vt2-zi-new{from{opacity:0;transform:scale(.985)}}
+::view-transition-old(segpill),::view-transition-new(segpill),::view-transition-old(navpill),::view-transition-new(navpill),::view-transition-old(tabpill),::view-transition-new(tabpill){animation-duration:.4s}
+@media (prefers-reduced-motion: reduce){ ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important} }
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6223,7 +6253,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '32';
+const APP_VERSION = '32.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6274,6 +6304,7 @@ function renderTop(){
     ${fadenHtml()}`;
 }
 let _scrollToNow = false;
+function toTop(){ if (ui._toTop) { ui._toTop = false; window.scrollTo(0, 0); } }
 const MODE_ORDER = {tag:0, woche:1, monat:2, jahr:3};
 function render(){
   if (!state) return;
@@ -6282,12 +6313,13 @@ function render(){
   const motion = state.settings.style.motion !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (prev && prev !== sig && motion && !ui._sf && !prev.startsWith('suche') && v !== 'suche' && typeof document.startViewTransition === 'function' && !document.hidden) {
     const [pv, pm, pd] = prev.split('|'), [nv, nm, nd] = sig.split('|');
-    ui._dir = pv !== nv ? 'swap' : pm !== nm ? (MODE_ORDER[nm] > MODE_ORDER[pm] ? 'out' : 'in') : (nd > pd ? 'next' : 'prev');
+    const ix = id => NAV_IDS.indexOf(id === 'suche' ? 'kalender' : id);
+    ui._dir = pv !== nv ? (ix(nv) >= ix(pv) ? 'tab-next' : 'tab-prev') : pm !== nm ? (MODE_ORDER[nm] > MODE_ORDER[pm] ? 'out' : 'in') : (nd > pd ? 'next' : 'prev');
     const root = document.documentElement; root.dataset.dir = ui._dir;
-    try { const t = document.startViewTransition(() => renderNow()); t.finished.finally(() => { if (root.dataset.dir === ui._dir) delete root.dataset.dir; }); return; }
+    try { const t = document.startViewTransition(() => { renderNow(); toTop(); }); t.finished.finally(() => { if (root.dataset.dir === ui._dir) delete root.dataset.dir; }); return; }
     catch { delete root.dataset.dir; }
   }
-  ui._dir = ''; renderNow();
+  ui._dir = ''; renderNow(); toTop();
 }
 function renderNow(){
   if (!state) return;
@@ -6305,7 +6337,7 @@ function renderNow(){
   if (motion && !changed) main.querySelectorAll('[data-key]').forEach(el => { const b = before[el.dataset.key]; if (!b) return; const a = el.getBoundingClientRect(), dx = b.left - a.left, dy = b.top - a.top; if (Math.abs(dx) > 1 || Math.abs(dy) > 1) try { el.animate([{transform:`translate(${dx}px,${dy}px)`}, {transform:'none'}], {duration:260, easing:'cubic-bezier(.2,.8,.2,1)'}); } catch {} });
   if (motion && changed) main.querySelectorAll('[data-count]').forEach(countUp);
   main.classList.remove('enter');
-  if (changed && state.settings.style.motion && (!ui._dir || ui._dir === 'swap')) { void main.offsetWidth; main.classList.add('enter'); }
+  if (changed && state.settings.style.motion && !ui._dir) { void main.offsetWidth; main.classList.add('enter'); }
   const si = document.getElementById('searchInput');
   if (si && ui._sf) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
   const cb = document.getElementById('chatBox'); if (cb) cb.scrollTop = cb.scrollHeight;
@@ -8299,7 +8331,7 @@ const ACTIONS = {
   cmdRun(el){ cmdRun(+el.dataset.i); },
   peekDay(el){
     const d = parseYMD(el.dataset.date); ui.peek = el.dataset.date;
-    if (!isWide()) { ui.cursor = d; ui.mode = 'tag'; ui.view = 'kalender'; render(); window.scrollTo({top:0}); return; }
+    if (!isWide()) { ui.cursor = d; ui.mode = 'tag'; ui.view = 'kalender'; ui._toTop = true; render(); return; }
     if (el.dataset.jump) { ui.cursor = d; ui.miniOff = 0; }
     render();
   },
@@ -8307,15 +8339,15 @@ const ACTIONS = {
   onbStart(){ closeSheet(); onboard(1); },
   onbSkip(){ state.settings.onboarded = true; closeSheet(); commit(); },
   onbBack(el){ onboard(Math.max(1, +el.dataset.step - 1)); },
-  go(el){ closeSheet(); let v = el.dataset.v; if (LEGACY[v]) { ui.mode = LEGACY[v]; v = 'kalender'; } else if (v === 'kalender') ui.mode = 'woche'; ui.view = v; ui.search = ''; ui.cursor = startOfDay(new Date()); render(); window.scrollTo({top:0}); },
-  mode(el){ ui.mode = el.dataset.v; render(); window.scrollTo({top:0}); },
+  go(el){ closeSheet(); let v = el.dataset.v; if (LEGACY[v]) { ui.mode = LEGACY[v]; v = 'kalender'; } else if (v === 'kalender') ui.mode = 'woche'; ui.view = v; ui.search = ''; ui.cursor = startOfDay(new Date()); ui._toTop = true; render(); },
+  mode(el){ ui.mode = el.dataset.v; ui._toTop = true; render(); },
   pickDay(el){ ui.cursor = parseYMD(el.dataset.date); render(); },
   moreMenu(){ EDITORS.more(); },
   prev(){ const c = ui.cursor, m = ui.mode; ui.cursor = m === 'monat' ? new Date(c.getFullYear(), c.getMonth()-1, 1) : m === 'jahr' ? new Date(c.getFullYear()-1, 0, 1) : addDays(c, m === 'tag' ? -1 : -7); render(); },
   next(){ const c = ui.cursor, m = ui.mode; ui.cursor = m === 'monat' ? new Date(c.getFullYear(), c.getMonth()+1, 1) : m === 'jahr' ? new Date(c.getFullYear()+1, 0, 1) : addDays(c, m === 'tag' ? 1 : 7); render(); },
   today(){ ui.cursor = startOfDay(new Date()); render(); },
-  openDay(el){ closeSheet(); ui.cursor = parseYMD(el.dataset.date); ui.view = 'kalender'; ui.mode = 'tag'; ui.search = ''; render(); window.scrollTo({top:0}); },
-  openMonth(el){ ui.cursor = new Date(ui.cursor.getFullYear(), +el.dataset.m, 1); ui.view = 'kalender'; ui.mode = 'monat'; render(); window.scrollTo({top:0}); },
+  openDay(el){ closeSheet(); ui.cursor = parseYMD(el.dataset.date); ui.view = 'kalender'; ui.mode = 'tag'; ui.search = ''; ui._toTop = true; render(); },
+  openMonth(el){ ui.cursor = new Date(ui.cursor.getFullYear(), +el.dataset.m, 1); ui.view = 'kalender'; ui.mode = 'monat'; ui._toTop = true; render(); },
   gridAdd(el, ev){
     if (ev.target !== el) return;
     const r = el.getBoundingClientRect(), mins = Math.round((+el.dataset.h0*60 + (ev.clientY - r.top)/(+el.dataset.px)*60)/15)*15;
@@ -10109,7 +10141,7 @@ function cmdItems(q){
     for (const t of state.todos) if (has(t.text) && lim()) add('To-dos', t.text, t.done ? 'erledigt' : t.date ? dayLabel(parseYMD(t.date)) : 'offen', 'haken', () => { ui.view = 'aufgaben'; ui.search = ''; render(); });
     for (const l of state.links) if (has(l.title, l.url) && lim()) add('Links', l.title || l.url, l.url, 'extern', () => window.open(l.url, '_blank', 'noopener'));
   }
-  const view = (id, mode) => () => { ui.view = id; ui.search = ''; if (mode) { ui.mode = mode; } if (mode === 'tag') ui.cursor = startOfDay(new Date()); render(); window.scrollTo({top:0}); };
+  const view = (id, mode) => () => { ui.view = id; ui.search = ''; if (mode) { ui.mode = mode; } if (mode === 'tag') ui.cursor = startOfDay(new Date()); ui._toTop = true; render(); };
   const acts = [
     ['Neu anlegen', 'Termin, Frist oder To-do', 'plus', () => ACTIONS.add()],
     ['Heute', 'Tagesansicht von heute', 'heute', view('kalender', 'tag')],
