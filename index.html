@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 23.2  ·  persönlicher Kalender für alles
+ KALENDARIUM 24  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1926,6 +1926,10 @@ details.sv summary::-webkit-details-marker{display:none}
 .lt-now b{font-size:16px}
 .lt-now small{color:var(--muted);font-size:13.5px}
 .lt-note{font-size:13px;color:var(--accent-ink)}
+.apk-box{display:grid;gap:6px;padding:14px 0 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:var(--s2)}
+.apk-box b{font-size:16px}
+.apk-box span{color:var(--muted);font-size:13.5px}
+.apk-box .btn{justify-self:start;margin-top:4px}
 .vh-step{display:grid;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
 .vh-h{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
 .vh-n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--sunk);color:var(--muted)}
@@ -4788,7 +4792,26 @@ const Store = {
   }
 };
 function setSync(msg){ const el = document.getElementById('syncState'); if (el) el.textContent = msg || (STANDALONE ? GistSync.label() : Store.mode === 'cloud' ? 'In deinem Konto gespeichert' : 'Nur auf diesem Gerät gespeichert'); }
-function commit(){ Store.schedule(); invalidate(); render(); if (STANDALONE) Push.queue(); }
+function commit(){ Store.schedule(); invalidate(); render(); if (STANDALONE) Push.queue(); Native.queue(); }
+/* §16m ANDROID-APP: Läuft Kalendarium in der eigenen Android-App (window.KalNative),
+   plant die App alle Erinnerungen der nächsten 3 Tage als echte Android-Wecker.
+   Die vibrieren zuverlässig wie WhatsApp, auch bei geschlossener App und lautlos. */
+const APK_URL = 'https://github.com/Slesta21/kalendarium/releases/download/android-app/kalendarium.apk';
+const Native = {
+  last: '', timer: null,
+  on(){ return !!(window.KalNative && typeof window.KalNative.schedule === 'function'); },
+  android(){ return /Android/i.test(navigator.userAgent); },
+  queue(){ if (!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 1500); },
+  sync(force){
+    if (!this.on() || !state) return 0;
+    const now = Date.now(), list = Reminders.plan(now + 15000, now + 72 * 3600000).map(a => ({key: a.key, at: a.at, title: a.title, body: a.body, prio: a.prio || 4}));
+    const js = JSON.stringify(list); if (!force && js === this.last) return list.length;
+    this.last = js; try { return window.KalNative.schedule(js); } catch { return 0; }
+  },
+  status(){ try { return JSON.parse(window.KalNative.status()); } catch { return {}; } },
+  vibrate(p){ try { window.KalNative.vibrate((Array.isArray(p) ? [0, ...p] : [0, p]).join(',')); return true; } catch { return false; } }
+};
+if (Native.on()) { try { navigator.vibrate = p => Native.vibrate(p); } catch {} }
 
 /* ================================================================
    §8 FEIERTAGE  (berechnet, keine Internetverbindung nötig)
@@ -5432,6 +5455,7 @@ const Reminders = {
   },
   fire(title, body, symbol){
     toast(title, body, {rem:true, sym:symbol, ttl:0});
+    if (Native.on()) return;
     if (state.settings.sound) this.chime();
     if (Push.on() && document.hidden) return;
     if (state.settings.vibrate) { try { navigator.vibrate && navigator.vibrate([180,90,180,90,320]); } catch {} }
@@ -5626,7 +5650,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '23.2';
+const APP_VERSION = '24';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6390,6 +6414,7 @@ const VIEWS = {
         <div class="panel-h"><h2>Erinnerungen</h2><button class="btn sm" data-act="testReminder">${ic('glocke','s')}Testen</button><button class="btn sm ghost" data-act="vibHelp">Vibration prüfen</button></div>
         <div class="row"><div class="l"><b>Ton</b></div>${sw('sound', s.sound, 'Ton')}</div>
         <div class="row"><div class="l"><b>Vibration</b><small>Wenn der Browser es erlaubt</small></div>${sw('vibrate', s.vibrate, 'Vibration')}</div>
+        ${Native.on() ? `<div class="row"><div class="l"><b>Android-App</b><small>Erinnerungen als echte Wecker, vibriert auch lautlos</small></div><button class="btn sm" data-act="vibHelp">Status</button></div>` : Native.android() ? `<div class="row"><div class="l"><b>Zuverlässig vibrieren: Android-App</b><small>Kalendarium als echte App, vibriert wie WhatsApp, auch wenn alles zu ist</small></div><button class="btn sm primary" data-act="apkGet">${ic('runter','s')}Holen</button></div>` : ''}
         <div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>
         ${STANDALONE ? pushRows() : ''}
         <div class="row"><div class="l"><b>Kurse erinnern</b></div>${sw('courseReminders', s.courseReminders, 'Kurse erinnern')}</div>
@@ -7779,6 +7804,13 @@ const ACTIONS = {
   },
   async testReminder(){
     Reminders.unlock();
+    if (Native.on()) {
+      window.KalNative.notifyNow('Test von Kalendarium', 'So meldet sich eine Erinnerung, mit Vibration.', 5);
+      window.KalNative.testIn(15, 'Test-Wecker von Kalendarium', 'Kam das bei gesperrtem Handy mit Vibration? Dann klappen deine Erinnerungen.');
+      Native.sync(true);
+      toast('Test läuft', 'Jetzt kam eine Benachrichtigung. In 15 Sekunden kommt noch eine: Sperr dazu ruhig das Handy.');
+      return;
+    }
     let vib = false; try { vib = !!(navigator.vibrate && navigator.vibrate([300, 120, 300, 120, 500])); } catch {}
     if (!state.settings.vibrate) { state.settings.vibrate = true; commit(); }
     let perm = 'Notification' in window ? Notification.permission : 'na';
@@ -7800,6 +7832,24 @@ const ACTIONS = {
     if (perm !== 'granted') { ui._vh.ban = 'nein'; vibHelp(); toast('Benachrichtigungen sind blockiert', 'Erlaube sie in den Android-Einstellungen, siehe Weg 2.'); return; }
     try { const r = await navigator.serviceWorker.ready; await r.showNotification('Test von Kalendarium', {body: 'Hat das Handy vibriert?', icon: 'icon-192.png', badge: 'icon-192.png', vibrate: [400, 150, 400], tag: 'kal-' + Date.now(), renotify: true, requireInteraction: true}); }
     catch { try { new Notification('Test von Kalendarium', {body: 'Hat das Handy vibriert?'}); } catch {} }
+  },
+  nativeSettings(){ try { window.KalNative.openSettings(); } catch {} },
+  apkGet(){
+    openSheet(`<div class="detail">${head('Android-App installieren')}
+      <ol class="vh-steps" style="margin-top:0">
+        <li><b>App herunterladen.</b> Tipp unten auf „Herunterladen“. Chrome fragt eventuell, ob du die Datei behalten willst: „Trotzdem herunterladen“.</li>
+        <li><b>Öffnen und installieren.</b> Android fragt einmal, ob Chrome Apps installieren darf: erlauben, dann „Installieren“. Play Protect kennt die App nicht, das ist bei selbst gebauten Apps normal: „Trotzdem installieren“.</li>
+        <li><b>Kalendarium-App öffnen</b> und Benachrichtigungen erlauben.</li>
+        <li><b>Daten rüberholen:</b> Hier in der Browser-Version auf „In die App übertragen“ tippen.</li>
+      </ol>
+      <div class="sheet-foot"><button class="btn" data-act="toApp">${ic('handy','s')}In die App übertragen</button><div class="r"><a class="btn primary" href="${APK_URL}">${ic('runter','s')}Herunterladen</a></div></div></div>`);
+  },
+  async toApp(){
+    toast('Daten werden vorbereitet …', '');
+    try {
+      const withSync = GistSync.on(), tok = await xferUpload(await packState(withSync ? {gist: {token: GistSync.cfg.token, id: GistSync.cfg.id}} : {}));
+      location.href = `intent://slesta21.github.io/kalendarium/#t=${tok}#Intent;scheme=https;package=de.kalendarium.app;S.browser_fallback_url=${encodeURIComponent(APK_URL)};end`;
+    } catch { toast('Übertragen ging gerade nicht', 'Versuch es gleich noch einmal oder nutze den QR-Code.'); }
   },
   vhPushOn(){ ACTIONS.pushOn(); setTimeout(() => vibHelp(), 200); },
   async vhPush(){ try { await Push.send({title: 'Test von Kalendarium', body: 'Wenn das vibriert, klappen deine Losgeh-Erinnerungen.', prio: 5}); toast('Push gesendet', 'Kommt in ein paar Sekunden über ntfy.'); } catch { toast('Push ging nicht raus', navigator.onLine ? 'ntfy.sh ist gerade nicht erreichbar.' : 'Du bist offline.'); } },
@@ -8671,7 +8721,7 @@ const Push = {
     const r = await fetch(this.url((seq ? '/' + seq : '') + '?' + q.toString()), {method:'POST', body: a.body});
     if (!r.ok) { const e = new Error('ntfy ' + r.status); e.status = r.status; throw e; }
   },
-  queue(){ if (!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 6000); },
+  queue(){ Native.queue(); if (!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 6000); },
   async known(){
     const r = await fetch(this.url('/json?poll=1&sched=1&since=all'), {cache:'no-store'}); if (!r.ok) throw new Error('poll');
     const now = Date.now() / 1000, k = {};
@@ -8704,6 +8754,19 @@ const VIB_FIX = {
   pushVib: `Der Push kommt an, vibriert aber nicht: Android-Einstellungen → Apps → <b>ntfy</b> → Benachrichtigungen. Dort jede Kategorie mit „Priorität“ antippen, vor allem <b>„Höchste Priorität“</b>, und <b>„Vibration“</b> einschalten. Auf Samsung zusätzlich „Benachrichtigungstöne/Vibration bei Lautlos zulassen“ prüfen. In ntfy selbst: Thema antippen → drei Punkte → Benachrichtigungseinstellungen, dort nichts stummschalten.`
 };
 function vibHelp(step){
+  if (Native.on()) {
+    const st = Native.status(), ok = (b, t, h) => `<div class="vh-row ${b ? 'ok' : 'no'}">${ic(b ? 'haken' : 'x', 's')}<span><b>${t}</b>${h ? `<small>${h}</small>` : ''}</span></div>`;
+    openSheet(`<div class="detail vibhelp">${head('Erinnerungen in der Android-App')}
+      <div class="vh-list">
+        ${ok(st.notif, 'Benachrichtigungen erlaubt', st.notif ? '' : 'Tipp unten auf „Android-Einstellungen“ und erlaube sie.')}
+        ${ok(st.channelVib && st.channel >= 4, 'Vibration und Pop-up für „Losgehen“', st.channelVib && st.channel >= 4 ? '' : 'In den Android-Einstellungen bei „Losgehen und wichtige Erinnerungen“ Vibration und Pop-up einschalten.')}
+        ${ok(st.exact, 'Pünktliche Wecker', st.exact ? '' : 'Android erlaubt keine exakten Wecker, Erinnerungen können ein paar Minuten später kommen.')}
+        ${ok((st.planned || 0) > 0, `${st.planned || 0} Erinnerungen für die nächsten 3 Tage geplant`, 'Neu geplant wird bei jeder Änderung automatisch.')}
+      </div>
+      <p class="note" style="margin-top:var(--s2)">Die Android-App vibriert selbst wie ein Wecker, auch lautlos und wenn sie geschlossen ist.</p>
+      <div class="sheet-foot"><button class="btn" data-act="nativeSettings">Android-Einstellungen</button><div class="r"><button class="btn primary" data-act="testReminder">${ic('glocke','s')}Testen</button></div></div></div>`);
+    return;
+  }
   ui._vh = ui._vh || {};
   const V = ui._vh, n = state.settings.ntfy || {}, ff = /Firefox/i.test(navigator.userAgent);
   const row = (k, num, title, desc, act, ans) => {
@@ -8719,6 +8782,7 @@ function vibHelp(step){
     ? `<button class="btn sm primary" data-act="vhPushOn">${ic('glocke','s')}ntfy einschalten</button>`
     : `<button class="btn sm primary" data-act="vhPush">${ic('glocke','s')}Push senden</button><a class="btn sm" href="${sub}">In ntfy abonnieren</a><a class="btn sm ghost" href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">ntfy installieren</a>`;
   openSheet(`<div class="detail vibhelp">${head('Vibration prüfen')}
+    ${Native.android() ? `<div class="apk-box"><b>Die sichere Lösung: Kalendarium als Android-App</b><span>Vibriert wie WhatsApp, auch lautlos und wenn alles zu ist. Kein ntfy nötig.</span><button class="btn primary" data-act="apkGet">${ic('runter','s')}Android-App holen</button></div>` : ''}
     <p class="muted" style="margin:0 0 var(--s2)">Drei Wege, einzeln getestet. Tipp jeweils auf den Knopf und sag, ob es vibriert hat.${ff ? ' <b>Firefox kann gar nicht vibrieren, öffne Kalendarium in Chrome.</b>' : ''}</p>
     ${row('vib', 1, 'Vibration bei offener App', 'Kurze Vibration direkt beim Antippen.', `<button class="btn sm" data-act="vhVib">Jetzt vibrieren</button>`, true)}
     ${row('ban', 2, 'Banner von Kalendarium', 'Benachrichtigung vom Handy-System, solange die App offen oder im Hintergrund ist.', `<button class="btn sm" data-act="vhBan">Banner senden</button>`, true)}
@@ -9359,6 +9423,7 @@ function init(){
   Reminders.load(); Reminders.last = Date.now();
   setInterval(() => Reminders.check(), 20000);
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
+  if (Native.on()) { setTimeout(() => Native.sync(true), 1500); setInterval(() => Native.sync(), 5 * 60000); document.addEventListener('visibilitychange', () => { if (document.hidden) Native.sync(); }); }
   if (STANDALONE) { setTimeout(() => Transit.refresh(), 2500); setInterval(() => { if (!document.hidden) Transit.refresh(); }, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Transit.refresh(); }); }
   if (STANDALONE) { setTimeout(() => Push.sync(), 4000); setInterval(() => { if (!document.hidden) Push.sync(); }, 20*60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Push.queue(); }); }
   let lastMin = new Date().getMinutes(), lastDay = ymd(new Date());
