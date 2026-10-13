@@ -14,7 +14,14 @@ public class Bridge {
     final Context ctx;
     Bridge(Context c) { ctx = c.getApplicationContext(); }
 
-    @JavascriptInterface public String version() { return "1"; }
+    @JavascriptInterface public String version() {
+        try { return String.valueOf(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).getLongVersionCode()); } catch (Exception e) { return "0"; }
+    }
+
+    /* Was diese App-Version kann, damit die Web-App passend reagiert */
+    @JavascriptInterface public String features() { return "vib,live"; }
+
+    @JavascriptInterface public void vibrateNamed(String id) { Notify.vibrate(ctx, Notify.pattern(id)); }
 
     @JavascriptInterface public int schedule(String json) { return Alarms.schedule(ctx, json); }
 
@@ -28,7 +35,16 @@ public class Bridge {
     }
 
     @JavascriptInterface public void notifyNow(String title, String body, int prio) {
-        Notify.show(ctx, (int) (System.currentTimeMillis() & 0x7fffffff), title, body, prio);
+        Notify.show(ctx, (int) (System.currentTimeMillis() & 0x7fffffff), title, body, prio, prio >= 5 ? "wecker" : "doppelt");
+    }
+
+    @JavascriptInterface public void notifyVib(String title, String body, String vib) {
+        Notify.show(ctx, (int) (System.currentTimeMillis() & 0x7fffffff), title, body, 5, vib);
+    }
+
+    /* Live-Banner sofort zeigen (Vorschau) */
+    @JavascriptInterface public void liveNow(String title, String body, String phase, double when, double until) {
+        Notify.live(ctx, 4242, title, body, phase, (long) when, (long) until);
     }
 
     /* Test-Wecker in X Sekunden (Handy sperren und abwarten) */
@@ -37,7 +53,7 @@ public class Bridge {
             JSONObject o = new JSONObject();
             o.put("key", "test:" + System.currentTimeMillis());
             o.put("at", System.currentTimeMillis() + seconds * 1000L);
-            o.put("title", title); o.put("body", body); o.put("prio", 5);
+            o.put("title", title); o.put("body", body); o.put("prio", 5); o.put("vib", "wecker");
             android.app.AlarmManager am = (android.app.AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
             if (am != null) Alarms.set(ctx, am, o.getLong("at"), Alarms.intent(ctx, o));
         } catch (Exception ignored) { }
@@ -48,7 +64,7 @@ public class Bridge {
         try {
             NotificationManager nm = ctx.getSystemService(NotificationManager.class);
             o.put("notif", nm != null && nm.areNotificationsEnabled());
-            NotificationChannel ch = nm != null ? nm.getNotificationChannel(Notify.CH_HIGH) : null;
+            NotificationChannel ch = nm != null ? nm.getNotificationChannel(Notify.channel("wecker")) : null;
             o.put("channel", ch != null ? ch.getImportance() : -1);
             o.put("channelVib", ch != null && ch.shouldVibrate());
             o.put("exact", Alarms.exactAllowed(ctx));
