@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 19  ·  persönlicher Kalender für alles
+ KALENDARIUM 19.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -457,7 +457,7 @@ main{padding:20px 32px 130px;min-width:0}
 .form{display:flex;flex-direction:column;gap:15px}
 .f{display:flex;flex-direction:column;gap:6px;min-width:0}
 .f > span{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.f input,.f select,.f textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);min-width:0;font-size:15.5px}
+.f input,.f select,.f textarea,.rfind-r input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);min-width:0;font-size:15.5px}
 .f textarea{min-height:80px;resize:vertical}
 .f input.title{font-size:21px;font-weight:500;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 0}
 .frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
@@ -628,7 +628,7 @@ body{font-size:16.5px;letter-spacing:.003em}
 .tt-block:hover{background:color-mix(in oklab, var(--c) 88%, black)}
 .tt-block .ty{color:rgba(255,255,255,.82)}
 .tt-block small{color:rgba(255,255,255,.85)}
-.newplace{display:grid;gap:10px;padding:14px;border-radius:14px;background:var(--accent-soft)}
+.newplace{display:grid;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
 .newplace .q{font-weight:600;font-size:15px}
 
 /* ---- v5: Übergänge, Tagesfarben, Stil-Optionen ---- */
@@ -1231,14 +1231,29 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 
 /* Live-Verbindungen */
 .travel .late,.tl-travel .late{color:var(--danger);font-weight:600}
-.route{display:grid;gap:10px;padding-top:12px;border-top:1px solid var(--line)}
-.route-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.route-h b{font-size:15px;display:block}
-.route-h small{color:var(--muted);font-size:13px;display:block}
-.rleg{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
+.route{display:grid;gap:12px}
+.route[hidden]{display:none}
+.rlab{font-size:13px;font-weight:600;color:var(--muted)}
+.rfind{display:grid;gap:8px}
+.rfind-r{display:flex;gap:8px;align-items:center}
+.rfind-r input{flex:1;min-width:0}
+.rmanual{display:grid;gap:10px}
+.rfind + .rmanual{padding-top:12px;border-top:1px solid var(--line)}
+.rleg{display:grid;gap:8px}
+.rleg + .rleg{padding-top:10px;border-top:1px solid var(--line)}
 .rleg-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--muted)}
+.rgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rgrid.r2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rgrid .f{min-width:0}
+.rgrid input[data-k="line"]{font-weight:700}
+@media (max-width:560px){ .rgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.route > small{line-height:1.45}
 .rauto{display:flex;flex-wrap:wrap;gap:6px}
 .rauto:empty{display:none}
+.rhost-h{display:flex;flex-direction:column;gap:2px;padding-top:12px;border-top:1px solid var(--line);margin-bottom:10px}
+.rhost-h b{font-size:15px}
+.rhost-h small{color:var(--muted);font-size:12.5px}
+.leave .lv-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .lnb{display:inline-block;font-size:12.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--lc, var(--ink));color:#fff;line-height:1.35;white-space:nowrap;font-variant-numeric:tabular-nums}
 .leave{display:flex;flex-direction:column;gap:4px;padding:12px 0 2px;border-top:1px solid var(--line);animation:memin var(--d2) var(--ease) both}
 .leave:empty{display:none}
@@ -2590,7 +2605,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '19';
+const APP_VERSION = '19.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -2720,40 +2735,61 @@ function catOptions(sel){ return state.categories.map(c => `<option value="${esc
 function placeOptions(sel){
   return `<option value="" ${!sel?'selected':''}>Automatisch (Kategorie oder erkannt)</option><option value="home" ${sel==='home'?'selected':''}>Zuhause oder online</option><option value="none" ${sel==='none'?'selected':''}>Ohne Weg</option>`
     + state.places.filter(p => !p.home).map(p => `<option value="${esc(p.id)}" ${p.id===sel?'selected':''}>${esc(p.name)} · ${dur(p.minutes)} ${MODES[p.mode]||''}</option>`).join('')
-    + `<option value="__new" ${sel==='__new'?'selected':''}>+ Neuer Ort mit Wegzeit …</option>`;
+    + `<option value="__new" ${sel==='__new'?'selected':''}>+ Neuer Ort …</option>`;
 }
-/* Strecken-Editor (Ort und neuer Ort im Termin): Linie, Ein- und Ausstieg, Fahrzeit, Takt, eine Abfahrt */
+/* Strecken-Editor, einfach gehalten: je Linie ein Satz
+   „mit [S7] fährt [10] min, alle [10 min], z. B. um [08:07]“.
+   In der App geht es noch schneller: Ziel suchen, Verbindung antippen. */
 const EVERY = [3, 4, 5, 6, 10, 15, 20, 30, 40, 60, 120];
+const MODE_L = {oepnv:'Bahn oder Bus', rad:'Fahrrad', fuss:'Zu Fuß', auto:'Auto'};
+const modeChips = (name, val) => `<div class="remchips">${Object.keys(MODES).map(k => `<label><input type="radio" name="${name}" value="${k}" ${k === val ? 'checked' : ''}><span>${MODE_L[k] || MODES[k]}</span></label>`).join('')}</div>`;
 function routeLegRow(g = {}, i = 0){
-  const ev = +g.every || 10, opts = (EVERY.includes(ev) ? EVERY : [...EVERY, ev].sort((a, b) => a - b));
+  const ev = +g.every || 10, opts = EVERY.includes(ev) ? EVERY : [...EVERY, ev].sort((a, b) => a - b);
   return `<div class="rleg" data-rleg>
-    <div class="rleg-h"><span>${i ? 'Umstieg' : 'Bahn oder Bus'}</span>${i ? `<button type="button" class="btn sm ghost" data-act="routeDel">${ic('x','s')}Entfernen</button>` : ''}</div>
-    <div class="frow"><label class="f"><span>Linie</span><input data-k="line" value="${esc(g.line || '')}" placeholder="z. B. S7, U2, M10" autocomplete="off"></label><label class="f"><span>Einsteigen</span><input data-k="from" value="${esc(g.from || '')}" placeholder="Haltestelle" autocomplete="off"></label><label class="f"><span>Aussteigen</span><input data-k="to" value="${esc(g.to || '')}" placeholder="Haltestelle" autocomplete="off"></label></div>
-    <div class="frow"><label class="f"><span>Fahrzeit (min)</span><input type="number" data-k="ride" min="1" max="300" value="${+g.ride || ''}" placeholder="z. B. 14"></label><label class="f"><span>Fährt alle</span><select data-k="every">${opts.map(v => `<option value="${v}" ${v === ev ? 'selected' : ''}>${v} min</option>`).join('')}</select></label><label class="f"><span>Eine Abfahrt (optional)</span><input type="time" data-k="at" value="${esc(g.at || '')}"></label></div>
-    <input type="hidden" data-k="dir" value="${esc(g.dir || '')}"></div>`;
-}
-function routeFields(R, show){
-  R = R || {};
-  const legs = R.legs && R.legs.length ? R.legs : [{}];
-  return `<div class="route" data-route ${show ? '' : 'hidden'}>
-    <div class="route-h"><div><b>Deine Strecke</b><small>Die Bahn oder den Bus, den du wirklich nimmst</small></div>${Transit.ok() ? `<button type="button" class="btn sm" data-act="routeAuto">${ic('zug','s')}Verbindung suchen</button>` : ''}</div>
-    <div class="rauto" data-rauto></div>
-    <label class="f"><span>Fußweg bis zur Haltestelle (min)</span><input type="number" name="r_walkTo" min="0" max="90" value="${R.walkTo != null ? +R.walkTo : 5}"></label>
-    <div data-rlegs>${legs.map(routeLegRow).join('')}</div>
-    <button type="button" class="btn sm ghost" style="justify-self:start" data-act="routeAdd">${ic('plus','s')}Umstieg</button>
-    <label class="f"><span>Fußweg von der Haltestelle zum Ziel (min)</span><input type="number" name="r_walkFrom" min="0" max="90" value="${R.walkFrom != null ? +R.walkFrom : 3}"></label>
-    <small class="muted">Mit einer Abfahrtszeit rechnet der Kalender über den Takt die letzte Bahn aus, die dich pünktlich hinbringt. Ohne plant er eine volle Taktlänge Wartezeit ein. Beim Umsteigen sind ${TRANSFER_MIN} min eingeplant.</small>
+    ${i ? `<div class="rleg-h"><span>Umstieg</span><button type="button" class="iconbtn" data-act="routeDel" aria-label="Umstieg entfernen">${ic('x','s')}</button></div>` : ''}
+    <div class="rgrid">
+      <label class="f"><span>Linie</span><input data-k="line" value="${esc(g.line || '')}" placeholder="z. B. S7" autocomplete="off"></label>
+      <label class="f"><span>Fahrzeit (min)</span><input type="number" data-k="ride" min="1" max="300" value="${+g.ride || ''}" placeholder="z. B. 15" inputmode="numeric"></label>
+      <label class="f"><span>Fährt alle</span><select data-k="every">${opts.map(v => `<option value="${v}" ${v === ev ? 'selected' : ''}>${v} min</option>`).join('')}</select></label>
+      <label class="f"><span>Abfahrt (optional)</span><input type="time" data-k="at" value="${esc(g.at || '')}"></label>
+    </div>
+    <input type="hidden" data-k="from" value="${esc(g.from || '')}"><input type="hidden" data-k="to" value="${esc(g.to || '')}"><input type="hidden" data-k="dir" value="${esc(g.dir || '')}">
   </div>`;
 }
-function readRoute(f){
-  const F = f.elements, n = (v, d) => { const x = num(v); return x == null ? d : Math.max(0, Math.round(x)); };
-  const legs = [...f.querySelectorAll('[data-rleg]')].map(r => { const v = k => { const el = r.querySelector(`[data-k="${k}"]`); return el ? String(el.value || '').trim() : ''; };
+function routeFields(R, vbb, show = true){
+  R = R || {};
+  const legs = R.legs && R.legs.length ? R.legs : [{}];
+  const find = Transit.ok() ? `<div class="rfind"><span class="rlab">Am schnellsten: Ziel suchen und Verbindung antippen</span>
+      <div class="rfind-r"><input data-vq placeholder="Haltestelle oder Adresse am Ziel" value="${esc(vbb ? vbb.name : '')}" autocomplete="off" aria-label="Ziel suchen"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div>
+      <input type="hidden" name="vbb" value="${esc(vbb ? JSON.stringify(vbb) : '')}"><div class="chips" data-vres></div><div class="rauto" data-rauto></div></div>` : '';
+  return `<div class="route" data-route ${show ? '' : 'hidden'}>
+    ${find}
+    <div class="rmanual">
+      <span class="rlab">${find ? 'Oder selbst eintragen' : 'Deine Bahn'}</span>
+      <div data-rlegs style="display:grid;gap:10px">${legs.map(routeLegRow).join('')}</div>
+      <button type="button" class="btn sm ghost" style="justify-self:start" data-act="routeAdd">${ic('plus','s')}Umstieg</button>
+      <div class="rgrid r2"><label class="f"><span>Fußweg zur Haltestelle (min)</span><input type="number" name="r_walkTo" min="0" max="90" inputmode="numeric" value="${R.walkTo != null ? +R.walkTo : 5}"></label><label class="f"><span>Fußweg am Ziel (min)</span><input type="number" name="r_walkFrom" min="0" max="90" inputmode="numeric" value="${R.walkFrom != null ? +R.walkFrom : 3}"></label></div>
+    </div>
+    <small class="muted">Eine Abfahrtszeit reicht, den Rest rechnet der Kalender über den Takt aus, minutengenau. Ohne plant er etwas Wartezeit ein.</small>
+  </div>`;
+}
+function readRoute(sc){
+  if (!sc) return null;
+  const n = (v, d) => { const x = num(v); return x == null ? d : Math.max(0, Math.round(x)); }, q = k => sc.querySelector(`[name="${k}"]`);
+  const legs = [...sc.querySelectorAll('[data-rleg]')].map(r => { const v = k => { const el = r.querySelector(`[data-k="${k}"]`); return el ? String(el.value || '').trim() : ''; };
     return {line: v('line').replace(/\s+/g, ' '), from: v('from'), to: v('to'), ride: n(v('ride'), 0), every: Math.max(1, n(v('every'), 10)), at: /^\d{2}:\d{2}$/.test(v('at')) ? v('at') : '', dir: v('dir')}; }).filter(g => g.ride > 0);
   if (!legs.length) return null;
-  return {walkTo: n(F.r_walkTo && F.r_walkTo.value, 0), walkFrom: n(F.r_walkFrom && F.r_walkFrom.value, 0), legs};
+  return {walkTo: n(q('r_walkTo') && q('r_walkTo').value, 0), walkFrom: n(q('r_walkFrom') && q('r_walkFrom').value, 0), legs};
 }
-function vbbBlock(p){
-  return Transit.ok() ? `<div class="f"><span>Ziel als Haltestelle oder Adresse (für Live-Verbindungen)</span><div style="display:flex;gap:8px"><input id="vbbQ" placeholder="z. B. Ernst-Reuter-Platz oder Straße und Hausnummer" value="${esc(p && p.vbb ? p.vbb.name : '')}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p && p.vbb ? JSON.stringify(p.vbb) : '')}"><div id="vbbRes" class="chips" style="margin-top:8px">${p && p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : ''}</div></div>` : '';
+const readVbb = sc => { try { const el = sc && sc.querySelector('[name="vbb"]'); return el && el.value ? JSON.parse(el.value) : null; } catch { return null; } };
+/* Strecke, die im Termin-Editor für einen bestehenden Ort geöffnet wurde, beim Ort speichern */
+function saveHostRoute(f){
+  const host = f.querySelector('[data-rhost]'), sc = host && host.dataset.pid && host.querySelector('[data-route]'); if (!sc) return;
+  const p = placeById(host.dataset.pid); if (!p) return;
+  const r = readRoute(sc), vbb = readVbb(sc);
+  if (r) { p.route = r; p.mode = 'oepnv'; p.minutes = routeBase(r); }
+  if (vbb) p.vbb = vbb;
+  if (typeof Transit !== 'undefined') Transit.reset();
 }
 /* Aus einer VBB-Verbindung die Strecke ableiten; Takt aus den anderen Verbindungen derselben Linien */
 function routeFromJourney(j, all){
@@ -2770,12 +2806,16 @@ function routeFromJourney(j, all){
 }
 /* Termin- und Kurs-Editor: Losgehzeit sofort anzeigen */
 function formPlace(f){
-  const F = f.elements, v = F.placeId ? F.placeId.value : '';
+  const F = f.elements, v = F.placeId ? F.placeId.value : '', host = f.querySelector('[data-rhost]'), hr = host && host.dataset.pid && host.querySelector('[data-route]');
   if (v === 'home' || v === 'none') return null;
-  if (v === '__new') { const mode = F.np_mode ? F.np_mode.value : 'oepnv'; return {id:'_tmp', name: (F.np_name && F.np_name.value.trim()) || 'Ziel', minutes: +(F.np_min && F.np_min.value) || 30, mode, route: mode === 'oepnv' ? readRoute(f) : null}; }
-  if (v) return placeById(v) || null;
-  const cat = F.catId && state.categories.find(c => c.id === F.catId.value);
-  return cat && cat.placeId ? placeById(cat.placeId) || null : null;
+  if (v === '__new') {
+    const mode = F.np_mode ? F.np_mode.value : 'oepnv';
+    return {id:'_tmp', name: (F.np_name && F.np_name.value.trim()) || 'Ziel', minutes: mode === 'oepnv' ? 30 : (+(F.np_min && F.np_min.value) || 20), mode, route: mode === 'oepnv' ? readRoute(f.querySelector('[data-newplace] [data-route]')) : null};
+  }
+  let p = v ? placeById(v) : null;
+  if (!v) { const cat = F.catId && state.categories.find(c => c.id === F.catId.value); p = cat && cat.placeId ? placeById(cat.placeId) : null; }
+  if (p && hr && host.dataset.pid === p.id) return {...p, mode:'oepnv', route: readRoute(hr) || p.route};
+  return p || null;
 }
 function formStart(f){
   const F = f.elements; if (F.allDay && F.allDay.checked) return null;
@@ -2788,18 +2828,21 @@ let _leaveT = 0;
 function leaveSchedule(f){ clearTimeout(_leaveT); _leaveT = setTimeout(() => { if (document.body.contains(f)) leaveUpdate(f); }, 120); }
 function leaveUpdate(f){
   const box = f.querySelector('[data-leave]'); if (!box) return;
-  const pl = formPlace(f), st = formStart(f);
-  if (!pl || pl.home || !st) { box.innerHTML = ''; return; }
-  const T = state.settings.travel, arriveBy = addMin(st, -(+T.arriveEarly || 0)), tr = pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null;
+  const pl = formPlace(f), st = formStart(f), host = f.querySelector('[data-rhost]'), open = !!(host && host.dataset.pid);
+  if (!pl || pl.home) { box.innerHTML = ''; box.dataset.h = ''; return; }
+  const btn = pl.id !== '_tmp' && !open && placeById(pl.id) ? `<button type="button" class="btn sm" data-act="routeOpen" data-id="${esc(pl.id)}">${ic('zug','s')}${pl.mode === 'oepnv' && routeOk(pl.route) ? 'Bahn ändern' : 'Bahn angeben'}</button>` : '';
   let h;
-  if (tr) {
-    const tl = tr.legs.filter(g => !g.walk), g0 = tl[0];
-    h = `<b>Losgehen ${hm(tr.depart)}</b><span class="lv-l">${tl.map(g => lnBadge(g.line, g.product)).join('')}<span>${g0.approx ? '' : hm(new Date(g0.dep)) + ' '}${g0.from ? 'ab ' + esc(g0.from) : ''} · da um ${hm(tr.arrive)}</span></span>
-      <small>${tr.exact ? `Ab Zuhause, nach deinem Fahrplan. ${T.arriveEarly} min vor Beginn da.` : 'Ungefähr: Ohne Abfahrtszeit ist eine volle Taktlänge Wartezeit eingeplant.'}</small>`;
-  } else {
-    const t = travelMinutes(pl, arriveBy);
-    h = `<b>Losgehen ${hm(addMin(arriveBy, -t.total))}</b><span class="lv-l">${dur(t.total)} zu ${esc(pl.name)}, Puffer eingerechnet</span>
-      <small>Ab Zuhause.${pl.mode === 'oepnv' ? ' Mit deiner Linie und einer Abfahrtszeit beim Ort rechnet der Kalender nach Fahrplan.' : ''}</small>`;
+  if (!st) h = `<div class="lv-top"><span class="muted" style="font-size:14px">Mit Uhrzeit zeigt der Kalender hier, wann du losmusst.</span>${btn}</div>`;
+  else {
+    const T = state.settings.travel, arriveBy = addMin(st, -(+T.arriveEarly || 0)), tr = pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null;
+    if (tr) {
+      const tl = tr.legs.filter(g => !g.walk), g0 = tl[0];
+      h = `<div class="lv-top"><b>Losgehen ${hm(tr.depart)}</b>${btn}</div><span class="lv-l">${tl.map(g => lnBadge(g.line, g.product)).join('')}<span>${g0.approx ? '' : hm(new Date(g0.dep)) + ' '}${g0.from ? 'ab ' + esc(g0.from) + ' ' : ''}· da um ${hm(tr.arrive)}</span></span>
+        <small>${tr.exact ? `Nach Fahrplan, ${T.arriveEarly} min vor Beginn da.` : 'Ungefähr. Mit einer Abfahrtszeit wird es minutengenau.'}</small>`;
+    } else {
+      const t = travelMinutes(pl, arriveBy);
+      h = `<div class="lv-top"><b>Losgehen ${hm(addMin(arriveBy, -t.total))}</b>${btn}</div><span class="lv-l">${dur(t.total)} bis ${esc(pl.name)}, Puffer eingerechnet</span>`;
+    }
   }
   if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; }
 }
@@ -2807,23 +2850,23 @@ function leaveUpdate(f){
 /* Neuer Ort direkt im Formular: "Wie lange brauchst du von zuhause?" – wird gespeichert und wiederverwendet */
 function newPlaceBlock(show, name, catName){
   return `<div class="newplace" data-newplace ${show ? '' : 'hidden'}>
-    <span class="q">Wie lange brauchst du von zuhause dorthin?</span>
-    <div class="frow"><label class="f"><span>Wohin?</span><input name="np_name" value="${esc(name||'')}" placeholder="z. B. TU Berlin"></label><label class="f"><span>Mit</span><select name="np_mode">${Object.entries(MODES).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}</select></label><label class="f"><span>Minuten ungefähr</span><input type="number" name="np_min" min="1" max="600" value="30"></label></div>
-    ${vbbBlock(null)}
-    ${routeFields(null, true)}
+    <label class="f"><span>Name des Ortes</span><input name="np_name" value="${esc(name||'')}" placeholder="z. B. TU Berlin"></label>
+    <div class="f"><span>Wie kommst du hin?</span>${modeChips('np_mode', 'oepnv')}</div>
+    <label class="f" data-onlymin hidden><span>Wie lange dauert der Weg? (min)</span><input type="number" name="np_min" min="1" max="600" value="20"></label>
+    ${routeFields(null, null, true)}
     <label class="inline-check"><input type="checkbox" name="np_default" checked> Für alle Termine der Kategorie merken${catName ? ' (' + esc(catName) + ')' : ''}</label>
-    <small class="muted">Der Rückweg wird gleich lang gerechnet. Du musst die Zeit nur einmal angeben.</small></div>`;
+  </div>`;
 }
 function takeNewPlace(fd){
   let pid = fd.get('placeId') || '';
   if (pid !== '__new') return pid;
   const name = String(fd.get('np_name')||'').trim(); if (!name) return '';
-  const mode = fd.get('np_mode') || 'oepnv', route = mode === 'oepnv' ? readRoute(sheet.card.querySelector('[data-newplace]').closest('form')) : null;
-  let vbb = null; try { const v = fd.get('vbb'); vbb = v ? JSON.parse(v) : null; } catch {}
-  const p = {id:uid(), name, minutes: route ? routeBase(route) : (+fd.get('np_min') || 30), mode, home:false, route, vbb};
+  const sc = sheet.card.querySelector('[data-newplace]'), mode = fd.get('np_mode') || 'oepnv';
+  const route = mode === 'oepnv' ? readRoute(sc.querySelector('[data-route]')) : null, vbb = readVbb(sc);
+  const p = {id:uid(), name, minutes: route ? routeBase(route) : mode === 'oepnv' ? 30 : (+fd.get('np_min') || 20), mode, home:false, route, vbb};
   state.places.push(p); if (typeof Transit !== 'undefined') Transit.reset();
   if (fd.get('np_default')) { const cat = state.categories.find(c => c.id === fd.get('catId')); if (cat && !cat.placeId) cat.placeId = p.id; }
-  toast('Weg gespeichert', route ? `${name}: ${routeLabel(route)}, ${dur(p.minutes)} von Tür zu Tür` : `${name}: ${dur(p.minutes)} hin, ${dur(p.minutes)} zurück`);
+  toast('Ort gespeichert', route ? `${name}: ${routeLabel(route)}, ${dur(p.minutes)} von Tür zu Tür` : `${name}: ${dur(p.minutes)} Weg`);
   return cat_autoclear(p.id, fd);
 }
 function cat_autoclear(pid, fd){ const cat = state.categories.find(c => c.id === fd.get('catId')); return cat && cat.placeId === pid ? '' : pid; }
@@ -3881,9 +3924,9 @@ const EDITORS = {
         <div class="frow" data-time ${e.allDay?'hidden':''}><label class="f"><span>Beginn</span><input type="time" name="start" value="${esc(e.start)}"></label><label class="f"><span>Ende</span><input type="time" name="end" value="${esc(e.end)}"></label></div>
         <div class="frow" data-time ${e.allDay?'hidden':''}><label class="f"><span>Puffer davor (min)</span><input type="number" name="bufferBefore" min="0" max="120" value="${+e.bufferBefore||0}"></label><label class="f"><span>Puffer danach (min)</span><input type="number" name="bufferAfter" min="0" max="120" value="${+e.bufferAfter||0}"></label></div>
         <div class="ovl" data-ovl aria-live="polite"></div>
-        <div class="frow"><label class="f"><span>Ort mit Wegzeit</span><select name="placeId">${placeOptions(e.placeId)}</select></label><label class="f"><span>Adresse oder Raum</span><input name="location" value="${esc(e.location)}" placeholder="optional"></label></div>
+        <div class="frow"><label class="f"><span>Wohin?</span><select name="placeId">${placeOptions(e.placeId)}</select></label><label class="f"><span>Adresse oder Raum</span><input name="location" value="${esc(e.location)}" placeholder="optional"></label></div>
         ${newPlaceBlock(false, '', '')}
-        <div class="leave" data-leave aria-live="polite"></div>
+        <div class="leave" data-leave aria-live="polite"></div><div data-rhost></div>
         <div class="frow"><label class="f"><span>Wiederholen</span><select name="freq">${Object.entries(REPEAT).map(([k,v]) => `<option value="${k}" ${e.repeat?.freq===k?'selected':''}>${v}</option>`).join('')}</select></label><label class="f"><span>Bis (optional)</span><input type="date" name="until" value="${esc(e.repeat?.until||'')}"></label></div>
         <div class="f"><span>Erinnern vorher</span>${remChips('rem', rems)}</div>
         <label class="f"><span>Link</span><input name="link" value="${esc(e.link)}" placeholder="https://"></label>
@@ -3923,7 +3966,7 @@ const EDITORS = {
         <div class="f"><span>Zeitblock</span><div class="chips">${UNI_SLOTS.map(([a,b],i) => `<button type="button" class="chip" data-act="pickSlot" data-a="${a}" data-b="${b}" aria-pressed="${c.start===a&&c.end===b}">${pad(8+i*2)}–${pad(10+i*2)}</button>`).join('')}</div></div>
         <div class="frow"><label class="f"><span>Tag</span><select name="day">${WD_LONG.map((w,i) => `<option value="${i+1}" ${+c.day===i+1?'selected':''}>${w}</option>`).join('')}</select></label><label class="f"><span>Beginn</span><input type="time" name="start" required value="${esc(c.start)}"></label><label class="f"><span>Ende</span><input type="time" name="end" required value="${esc(c.end)}"></label></div>
         <div class="frow"><label class="f"><span>Rhythmus</span><select name="weeks"><option value="all" ${c.weeks==='all'?'selected':''}>Jede Woche</option><option value="odd" ${c.weeks==='odd'?'selected':''}>Ungerade KW</option><option value="even" ${c.weeks==='even'?'selected':''}>Gerade KW</option></select></label><label class="f"><span>Kategorie</span><select name="catId">${catOptions(c.catId)}</select></label></div>
-        ${(() => { const cat = state.categories.find(x => x.id === c.catId), ask = isNew && !(cat && cat.placeId && placeById(cat.placeId)) && !c.placeId; return `<div class="frow"><label class="f"><span>Ort mit Wegzeit</span><select name="placeId">${placeOptions(ask ? '__new' : c.placeId)}</select></label><label class="f"><span>Raum</span><input name="room" value="${esc(c.room)}" placeholder="z. B. H 0105"></label></div>${newPlaceBlock(ask, ask ? 'Uni' : '', cat ? cat.name : '')}<div class="leave" data-leave aria-live="polite"></div>`; })()}
+        ${(() => { const cat = state.categories.find(x => x.id === c.catId), ask = isNew && !(cat && cat.placeId && placeById(cat.placeId)) && !c.placeId; return `<div class="frow"><label class="f"><span>Wohin?</span><select name="placeId">${placeOptions(ask ? '__new' : c.placeId)}</select></label><label class="f"><span>Raum</span><input name="room" value="${esc(c.room)}" placeholder="z. B. H 0105"></label></div>${newPlaceBlock(ask, ask ? 'Uni' : '', cat ? cat.name : '')}<div class="leave" data-leave aria-live="polite"></div><div data-rhost></div>`; })()}
         <label class="f"><span>Lehrende</span><input name="lecturer" value="${esc(c.lecturer)}"></label>
         <label class="f"><span>Kursseite</span><input name="link" value="${esc(c.link)}" placeholder="ISIS-Kurs, Discord-Kanal …"></label>
         <label class="f"><span>Notizen</span><textarea name="notes">${esc(c.notes)}</textarea></label>
@@ -3948,12 +3991,14 @@ const EDITORS = {
   },
   place(p){
     const isNew = !p; p = p || {name:'', minutes:20, mode:'oepnv'};
-    const vb = p.home ? (Transit.ok() ? `<div class="f"><span>Haltestelle oder Adresse für Live-Verbindungen</span><div style="display:flex;gap:8px"><input id="vbbQ" placeholder="z. B. Ernst-Reuter-Platz oder Straße und Hausnummer" value="${esc(p.vbb ? p.vbb.name : '')}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p.vbb ? JSON.stringify(p.vbb) : '')}"><div id="vbbRes" class="chips" style="margin-top:8px">${p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : ''}</div></div>` : '') : vbbBlock(p) + routeFields(p.route, p.mode === 'oepnv');
-    openSheet(`${head(isNew ? 'Neuer Ort' : 'Ort bearbeiten')}<form class="form" data-form="place">
+    const tag = p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : '';
+    const homeVb = Transit.ok() ? `<div class="f" data-vscope><span>Deine Haltestelle oder Adresse, Start für Verbindungen</span><div class="rfind-r"><input data-vq placeholder="z. B. S Savignyplatz oder Straße und Hausnummer" value="${esc(p.vbb ? p.vbb.name : '')}" autocomplete="off"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p.vbb ? JSON.stringify(p.vbb) : '')}"><div class="chips" data-vres>${tag}</div></div>` : '<p class="note">Zuhause ist der Startpunkt für alle Wege.</p>';
+    const bahn = (p.mode || 'oepnv') === 'oepnv';
+    openSheet(`${head(isNew ? 'Neuer Ort' : p.home ? 'Zuhause' : 'Ort bearbeiten')}<form class="form" data-form="place">
       <label class="f"><input class="title" name="name" required placeholder="z. B. TU Berlin, Fitnessstudio" value="${esc(p.name)}" aria-label="Name"></label>
-      <div class="frow"><label class="f"><span>Weg von Zuhause (min)</span><input type="number" name="minutes" min="0" max="600" value="${+p.minutes||0}"></label><label class="f"><span>Unterwegs mit</span><select name="mode">${Object.entries(MODES).map(([k,v]) => `<option value="${k}" ${p.mode===k?'selected':''}>${v}</option>`).join('')}</select></label></div>
-      ${p.home ? '' : `<p class="note">Die Minuten gelten für Rad, Fuß und Auto und als grobe Schätzung. Fährst du Bahn oder Bus, trag unten deine Strecke ein, dann rechnet der Kalender mit den echten Abfahrten.</p>`}
-      ${vb}
+      ${p.home ? homeVb : `<div class="f"><span>Wie kommst du hin?</span>${modeChips('mode', p.mode || 'oepnv')}</div>
+      <label class="f" data-onlymin ${bahn ? 'hidden' : ''}><span>Wie lange dauert der Weg? (min)</span><input type="number" name="minutes" min="0" max="600" value="${+p.minutes||0}"></label>
+      ${routeFields(p.route, p.vbb, bahn)}`}
       ${foot(!isNew && !p.home)}</form>`, {kind:'place', id: isNew ? null : p.id});
   },
   template(t){
@@ -4104,6 +4149,7 @@ const SAVE = {
       const box = form.querySelector('[data-ovl]'); if (box) { box.classList.remove('nudge'); void box.offsetWidth; box.classList.add('nudge'); box.scrollIntoView({block:'nearest', behavior:'smooth'}); }
       haptic(); return;
     }
+    saveHostRoute(form);
     const o = { title: fd.get('title').trim(), catId: fd.get('catId'), placeId: takeNewPlace(fd), date: fd.get('date'), allDay: !!fd.get('allDay'), start: fd.get('start')||'', end: fd.get('end')||'', bufferBefore: +fd.get('bufferBefore')||0, bufferAfter: +fd.get('bufferAfter')||0, location: fd.get('location').trim(), link: fd.get('link').trim(), notes: fd.get('notes'), repeat:{freq: fd.get('freq'), interval:1, until: fd.get('until')||''}, reminders: readRems(fd) };
     if (!o.allDay && !o.start) o.allDay = true;
     if (!o.allDay && (!o.end || o.end <= o.start)) o.end = toHM(minutesOf(o.start) + 60);
@@ -4116,6 +4162,7 @@ const SAVE = {
     const isNew = upsert('deadlines', sheet.ctx.id, o); closeSheet(); toast(isNew ? 'Frist angelegt' : 'Frist gespeichert', o.title); commit();
   },
   course(form, fd){
+    saveHostRoute(form);
     const o = { title: fd.get('title').trim(), short: fd.get('short').trim(), type: fd.get('type'), day: +fd.get('day'), start: fd.get('start'), end: fd.get('end'), weeks: fd.get('weeks'), room: fd.get('room').trim(), lecturer: fd.get('lecturer').trim(), catId: fd.get('catId'), placeId: takeNewPlace(fd), link: fd.get('link').trim(), notes: fd.get('notes') };
     if (o.end <= o.start) { toast('Ende liegt vor dem Beginn', 'Bitte die Uhrzeiten prüfen.'); return; }
     const isNew = upsert('courses', sheet.ctx.id, o, {skip:[]});
@@ -4130,7 +4177,7 @@ const SAVE = {
   place(form, fd){
     const ex = sheet.ctx.id && placeById(sheet.ctx.id), isHome = !!(ex && ex.home);
     let vbb = ex && ex.vbb || null; try { const v = fd.get('vbb'); vbb = v ? JSON.parse(v) : null; } catch {}
-    const route = !isHome && fd.get('mode') === 'oepnv' ? readRoute(form) : null;
+    const route = !isHome && fd.get('mode') === 'oepnv' ? readRoute(form.querySelector('[data-route]')) : null;
     const name = fd.get('name').trim(), isNew = upsert('places', sheet.ctx.id, isHome ? {name, vbb} : {name, minutes: route ? routeBase(route) : +fd.get('minutes')||0, mode: fd.get('mode'), home:false, vbb, route});
     Transit.reset();
     if (isNew) { /* Uni-Ort automatisch der Kategorie Uni zuordnen */
@@ -4219,7 +4266,7 @@ const ACTIONS = {
   },
   importCancel(){ ui._import = null; closeSheet(); maybeOnboard(); },
   async vbbSearch(el){
-    const f = el.closest('form'), q = f.querySelector('#vbbQ').value.trim(), box = f.querySelector('#vbbRes'); if (!q) return;
+    const sc = el.closest('[data-route],[data-vscope]'), q = sc.querySelector('[data-vq]').value.trim(), box = sc.querySelector('[data-vres]'); if (!q) { sc.querySelector('[data-vq]').focus(); return; }
     box.innerHTML = '<span class="muted">Suche …</span>';
     try {
       ui._vbbRes = await Transit.search(q);
@@ -4227,38 +4274,45 @@ const ACTIONS = {
     } catch { box.innerHTML = '<span class="muted">Suche nicht möglich. Bist du online?</span>'; }
   },
   vbbPick(el){
-    const r = ui._vbbRes && ui._vbbRes[+el.dataset.i], f = el.closest('form'); if (!r) return;
-    f.elements.vbb.value = JSON.stringify(r); f.querySelector('#vbbQ').value = r.name;
-    f.querySelector('#vbbRes').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(r.name)}</span>`;
+    const r = ui._vbbRes && ui._vbbRes[+el.dataset.i], sc = el.closest('[data-route],[data-vscope]'); if (!r) return;
+    sc.querySelector('[name="vbb"]').value = JSON.stringify(r); sc.querySelector('[data-vq]').value = r.name;
+    sc.querySelector('[data-vres]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(r.name)}</span>`;
+    if (sc.matches('[data-route]')) ACTIONS.routeAuto(sc.querySelector('[data-vres]'));
+  },
+  routeOpen(el){
+    const f = el.closest('form'), p = placeById(el.dataset.id), host = f.querySelector('[data-rhost]'); if (!p || !host) return;
+    host.dataset.pid = p.id;
+    host.innerHTML = `<div class="rhost-h"><b>Bahn nach ${esc(p.name)}</b><small>Wird beim Ort gemerkt und gilt für alle Termine dort.</small></div>${routeFields(p.route, p.vbb, true)}`;
+    leaveUpdate(f);
+    const first = host.querySelector(Transit.ok() && !p.vbb ? '[data-vq]' : '[data-k="line"]'); if (first) first.focus({preventScroll:true});
+    host.scrollIntoView({block:'nearest', behavior:'smooth'});
   },
   routeAdd(el){
-    const box = el.closest('[data-route]').querySelector('[data-rlegs]'), n = box.querySelectorAll('[data-rleg]').length;
+    const box = el.closest('[data-route]').querySelector('[data-rlegs]'), rows = box.querySelectorAll('[data-rleg]'), n = rows.length;
     if (n >= 3) { toast('Höchstens zwei Umstiege', ''); return; }
-    const prev = box.querySelectorAll('[data-rleg]')[n - 1], to = prev && prev.querySelector('[data-k="to"]').value;
+    const to = rows[n - 1] && rows[n - 1].querySelector('[data-k="to"]').value;
     box.insertAdjacentHTML('beforeend', routeLegRow({from: to || ''}, n)); box.lastElementChild.querySelector('[data-k="line"]').focus();
   },
   routeDel(el){ const f = el.closest('form'); el.closest('[data-rleg]').remove(); leaveSchedule(f); },
   async routeAuto(el){
-    const f = el.closest('form'), box = f.querySelector('[data-rauto]'), home = placeById('home');
-    let to = null; try { to = f.elements.vbb && f.elements.vbb.value ? JSON.parse(f.elements.vbb.value) : null; } catch {}
-    if (!home || !home.vbb) { box.innerHTML = '<span class="muted" style="font-size:13px">Trag zuerst bei Zuhause deine Haltestelle oder Adresse ein (Einstellungen → Orte und Wege).</span>'; return; }
-    if (!to) { box.innerHTML = '<span class="muted" style="font-size:13px">Such oben zuerst das Ziel als Haltestelle oder Adresse.</span>'; f.querySelector('#vbbQ') && f.querySelector('#vbbQ').focus(); return; }
+    const sc = el.closest('[data-route]'), f = el.closest('form'), box = sc.querySelector('[data-rauto]'), home = placeById('home'), to = readVbb(sc);
+    if (!home || !home.vbb) { box.innerHTML = '<span class="muted" style="font-size:13px">Trag einmal bei Zuhause deine Haltestelle ein (Einstellungen → Orte und Wege → Zuhause). Dann klappt die Suche.</span>'; return; }
+    if (!to) { sc.querySelector('[data-vq]').focus(); return; }
     let arr = formStart(f); if (arr) arr = addMin(arr, -(+state.settings.travel.arriveEarly || 0));
     if (!arr || arr < new Date()) { arr = addDays(startOfDay(new Date()), 1); while (isoDow(arr) > 5) arr = addDays(arr, 1); arr.setHours(9, 0, 0, 0); }
     box.innerHTML = '<span class="muted" style="font-size:13px">Suche Verbindungen …</span>';
     try {
       const js = await Transit.options(home.vbb, to, arr); ui._rOpts = js;
       const seen = new Set(), uniq = js.filter(j => { const k = j.legs.filter(g => !g.walk).map(g => g.line).join('>'); if (seen.has(k)) return false; seen.add(k); return true; });
-      box.innerHTML = uniq.length ? `<span class="muted" style="font-size:13px;width:100%">Welche nimmst du?</span>` + uniq.slice(0, 4).map(j => `<button type="button" class="chip" data-act="routePick" data-i="${js.indexOf(j)}">${j.legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ')} <span>${dur(Math.round((j.arrive - j.depart) / 60000))}</span></button>`).join('') : '<span class="muted" style="font-size:13px">Keine Verbindung gefunden.</span>';
-    } catch { box.innerHTML = '<span class="muted" style="font-size:13px">Verbindungen gerade nicht erreichbar. Du kannst die Strecke auch selbst eintragen.</span>'; }
+      box.innerHTML = uniq.length ? `<span class="muted" style="font-size:13px;width:100%">Welche nimmst du?</span>` + uniq.slice(0, 4).map(j => `<button type="button" class="chip" data-act="routePick" data-i="${js.indexOf(j)}">${j.legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ')} <span>${dur(Math.round((j.arrive - j.depart) / 60000))}</span></button>`).join('') : '<span class="muted" style="font-size:13px">Keine Verbindung gefunden. Trag sie unten selbst ein.</span>';
+    } catch { box.innerHTML = '<span class="muted" style="font-size:13px">Verbindungen gerade nicht erreichbar. Trag sie unten selbst ein.</span>'; }
   },
   routePick(el){
-    const j = ui._rOpts && ui._rOpts[+el.dataset.i], f = el.closest('form'); if (!j) return;
-    const R = routeFromJourney(j, ui._rOpts), wrap = f.querySelector('[data-route]');
-    f.elements.r_walkTo.value = R.walkTo; f.elements.r_walkFrom.value = R.walkFrom;
-    wrap.querySelector('[data-rlegs]').innerHTML = R.legs.map(routeLegRow).join('');
-    const mf = f.elements.minutes || f.elements.np_min; if (mf) mf.value = routeBase(R);
-    wrap.querySelector('[data-rauto]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(routeLabel(R))} übernommen</span>`;
+    const j = ui._rOpts && ui._rOpts[+el.dataset.i], sc = el.closest('[data-route]'), f = el.closest('form'); if (!j) return;
+    const R = routeFromJourney(j, ui._rOpts);
+    sc.querySelector('[name="r_walkTo"]').value = R.walkTo; sc.querySelector('[name="r_walkFrom"]').value = R.walkFrom;
+    sc.querySelector('[data-rlegs]').innerHTML = R.legs.map(routeLegRow).join('');
+    sc.querySelector('[data-rauto]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(routeLabel(R))} übernommen</span>`;
     haptic(); leaveUpdate(f);
   },
   async transitNow(){ Transit.reset(); await Transit.refresh(true); render(); },
@@ -5439,7 +5493,9 @@ function bindEvents(){
       { const mq = p.kind !== 'deadline' && titleMemory(p.title); if (mq) prev.insertAdjacentHTML('beforeend', `<span class="mem-hint">wie beim letzten Mal: ${esc(memSummary(mq))}</span>`); }
     }
     if (t.name === 'allDay') t.closest('form').querySelectorAll('[data-time]').forEach(r => r.hidden = t.checked);
-    if ((t.name === 'mode' || t.name === 'np_mode') && t.form) { const r = t.form.querySelector('[data-route]'); if (r) r.hidden = t.value !== 'oepnv'; }
+    if ((t.name === 'mode' || t.name === 'np_mode') && t.form) { const sc = t.closest('[data-newplace]') || t.form, r = sc.querySelector('[data-route]'), m = sc.querySelector('[data-onlymin]'); if (r) r.hidden = t.value !== 'oepnv'; if (m) m.hidden = t.value === 'oepnv'; }
+    if (t.dataset && t.dataset.k === 'line') { const row = t.closest('[data-rleg]'); if (row) row.querySelectorAll('[data-k="from"],[data-k="to"],[data-k="dir"]').forEach(x => x.value = ''); }
+    if ((t.name === 'placeId' || t.name === 'catId') && t.form) { const host = t.form.querySelector('[data-rhost]'); if (host && host.dataset.pid) { host.innerHTML = ''; delete host.dataset.pid; } }
     if (t.form && t.form.querySelector('[data-leave]') && (['date','start','end','allDay','placeId','catId','day','np_min','np_mode','np_name','r_walkTo','r_walkFrom'].includes(t.name) || t.closest('[data-route]'))) leaveSchedule(t.form);
     if (t.name === 'placeId') { const b = t.closest('form').querySelector('[data-newplace]'); if (b) { b.hidden = t.value !== '__new'; if (!b.hidden) b.querySelector('[name=np_name]').focus(); } }
     if (t.name === 'colorCustom') t.closest('form').querySelectorAll('[name=color]').forEach(r => r.checked = false);
