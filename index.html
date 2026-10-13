@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 36  ·  persönlicher Kalender für alles
+ KALENDARIUM 37  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2657,6 +2657,18 @@ main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
 .sl2-setup .btn.primary{background:var(--on-zone);color:var(--zone)}.sl2-setup .btn.ghost{background:none;color:var(--on-zone)}
 .sl2-night small.auto{display:flex;align-items:center;gap:6px;color:var(--zone-ink);font-weight:600}.sl2-night small.auto svg{width:15px;height:15px}
 .notice .acts.sq{flex-wrap:wrap}.notice .acts.sq .btn{min-width:40px;justify-content:center}
+
+.sl2-auto{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--tile);border-radius:var(--r-tile);padding:14px 18px}
+.sl2-auto .dot{width:10px;height:10px;border-radius:50%;background:var(--faint)}
+.sl2-auto.good .dot{background:var(--ok);box-shadow:0 0 0 4px color-mix(in oklab, var(--ok) 22%, transparent);animation:sl2pulse 2.4s ease-in-out infinite}
+.sl2-auto.warn .dot{background:var(--warn)}
+@keyframes sl2pulse{50%{box-shadow:0 0 0 7px color-mix(in oklab, var(--ok) 0%, transparent)}}
+@media (prefers-reduced-motion: reduce){ .sl2-auto .dot{animation:none} }
+.sl2-auto b{display:block;font-weight:700;font-size:15px}
+.sl2-auto small{display:block;color:var(--muted);font-size:13px;line-height:1.45;margin-top:2px}
+.sl2-auto .btn{white-space:nowrap;background:var(--tile-2)}
+.sl2-auto{align-items:start}.sl2-auto .dot{margin-top:5px}.sl2-auto > .btn{align-self:center}
+@media (max-width:560px){ .sl2-auto{grid-template-columns:12px minmax(0,1fr)} .sl2-auto .btn{grid-column:2;justify-self:start} }
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6410,7 +6422,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '36';
+const APP_VERSION = '37';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6954,7 +6966,6 @@ const VIEWS = {
       <span class="lbl">${ic('mond', 's')}Heute Nacht</span>
       ${tn ? `<div class="tt"><b>${hm(tn.bed)}</b><i>${ic('weiter')}</i><b>${hm(tn.wake)}</b></div>
       <small>${fmtH(tn.sleepMin)} Schlaf${tn.short ? ', weniger als dein Bedarf' : ''}. Ab ${hm(wd)} Bildschirm weg und Licht dimmen.</small>` : `<small>Kein Plan für heute Nacht. Schalte die Schlafplanung in den Einstellungen ein.</small>`}
-      ${SleepAuto.on() ? `<small class="auto">${ic('handy','s')}Die nächste Nacht erkennt die App von selbst.</small>` : ''}
       <div class="act">${logged ? `<button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('stift', 's')}Letzte Nacht ändern</button>` : `<button class="btn sm primary" data-act="sleepLog" data-date="${today}">${ic('plus', 's')}Letzte Nacht eintragen</button>${spToday ? `<button class="btn sm" data-act="sleepAsPlanned" data-date="${today}">Wie geplant</button>` : ''}`}
       ${tn ? `<button class="btn sm ghost" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">Warum diese Zeit</button>` : ''}</div>
     </section>`;
@@ -6990,7 +7001,8 @@ const VIEWS = {
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
     const setup = SleepAuto.avail() && S.detect !== false && !SleepAuto.ok() ? `<section class="sl2-tile sl2-setup"><span class="ic">${ic('handy')}</span><div><b>Nicht mehr eintragen</b><small>Kalendarium kann aus der Zeit, in der dein Handy nachts unbenutzt war, erkennen, wann du geschlafen hast. Dafür braucht die App den Zugriff auf Nutzungsdaten. Nichts verlässt dein Handy.</small><div class="act"><button class="btn sm primary" data-act="sleepUsage">Erlauben</button><button class="btn sm ghost" data-act="sleepDetectOff">Lieber selbst eintragen</button></div></div></section>` : '';
-    return `<div class="sl2">${hero}${night}${setup}${kpis}${muster}${chart}${duo}${proto}${how}</div>`;
+    const as = sleepAutoStatus(), stLine = setup || as.k === 'plan' ? '' : `<section class="sl2-auto ${as.lvl}"><span class="dot"></span><div><b>${as.t}</b><small>${as.sub}</small></div>${as.act || ''}</section>`;
+    return `<div class="sl2">${hero}${night}${setup}${stLine}${kpis}${muster}${chart}${duo}${proto}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7179,7 +7191,8 @@ const VIEWS = {
       <section class="panel">
         <div class="panel-h"><h2>Schlaf</h2>${sw('sleep.on', S.on, 'Schlafplanung')}</div>
         <div class="row"><div class="l"><b>Schlafdauer</b></div><span>${numIn('sleep.hours', S.hours, 5, 11, .5, 'Schlafdauer')} h</span></div>
-        ${Native.has('sleep') ? `<div class="row"><div class="l"><b>Nächte vom Handy erkennen</b><small>${SleepAuto.ok() ? 'Aus der Zeit, in der dein Handy nachts unbenutzt war. Bleibt auf dem Gerät.' : 'Braucht den Zugriff auf Nutzungsdaten'}</small></div>${SleepAuto.ok() ? sw('sleep.detect', S.detect !== false, 'Nächte vom Handy erkennen') : '<button class="btn sm" data-act="sleepUsage">Erlauben</button>'}</div>` : ''}
+        ${Native.on() && !Native.has('sleep') ? `<div class="row"><div class="l"><b>Nächte vom Handy erkennen</b><small>Braucht die neue Android-App</small></div></div>` : ''}
+        ${Native.has('sleep') ? `<div class="row"><div class="l"><b>Nächte vom Handy erkennen</b><small>${(() => { const a = sleepAutoStatus(); return a.t.replace('Automatisch erkennen: ', '').replace(/^./, c => c.toUpperCase()) + '. ' + a.sub; })()}</small></div>${SleepAuto.ok() ? sw('sleep.detect', S.detect !== false, 'Nächte vom Handy erkennen') : '<button class="btn sm" data-act="sleepUsage">Erlauben</button>'}</div>` : ''}
         <div class="row"><div class="l"><b>Automatisch berechnen</b><small>Fester Rhythmus aus deinem Stundenplan, frühe Tage vorbereitet, späte Abende berücksichtigt</small></div>${sw('sleep.auto', S.auto !== false, 'Schlafzeiten automatisch berechnen')}</div>
         ${S.auto !== false && state.settings.sleep.on ? (() => { sleepPlan(); const m = _sleepMeta; return m ? `<p class="note">Dein Rhythmus: werktags <b>${toHM(m.anchorW)}</b>, am Wochenende <b>${toHM(m.anchorWE)}</b> aufstehen (${m.anchorSrc}). Schlaf: ${m.cycles ? `${m.cycles} Zyklen, ${dur(m.sleepT)}` : dur(m.sleepT)}.</p>` : ''; })() : ''}
         <div class="row"><div class="l"><b>In Schlafzyklen planen</b><small>90-min-Zyklen, Wecker am Zyklusende</small></div>${sw('sleep.cycles', S.cycles !== false, 'Schlafzyklen')}</div>
@@ -8329,6 +8342,8 @@ const ACTIONS = {
   sleepQ(el){ const f = el.closest('form'); f.elements.q.value = el.dataset.v; f.querySelectorAll('[data-act=sleepQ]').forEach(b => b.setAttribute('aria-pressed', b === el)); },
   sleepRange(el){ ui.sleepRange = +el.dataset.v; render(); },
   sleepUsage(){ try { window.KalNative.usageOpen(); } catch {} toast('Nutzungsdaten erlauben', 'Kalendarium in der Liste antippen und „Zugriff erlauben“ einschalten, dann zurück zur App.'); },
+  sleepDetectOn(){ state.settings.sleep.detect = true; commit(); SleepAuto.run(true); render(); },
+  sleepDetectNow(){ const n = SleepAuto.run(true); render(); const st = SleepAuto.stat; toast(n ? `${n} ${n === 1 ? 'Nacht' : 'Nächte'} erkannt` : 'Nichts Neues', n ? 'Im Protokoll unter „vom Handy erkannt“.' : st && !st.ev ? 'Android liefert noch keine Bildschirmzeiten.' : 'Alle Nächte der letzten Tage sind schon eingetragen.'); },
   sleepDetectOff(){ state.settings.sleep.detect = false; commit(); toast('Erkennung aus', 'Du kannst sie in den Einstellungen unter Schlaf wieder einschalten.'); },
   sleepQuickQ(el){ const x = (state.sleepLog || []).find(o => o.date === el.dataset.date); if (!x) return; x.q = +el.dataset.v; commit(); haptic && haptic(); toast('Danke', 'Erholung gespeichert.'); },
   sleepPick(el){ const f = el.closest('form'), inp = f.elements[el.dataset.k], on = el.getAttribute('aria-pressed') === 'true'; inp.value = on ? '' : el.dataset.v; el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', !on && b === el)); },
@@ -9285,9 +9300,11 @@ const SleepAuto = {
     if (len < 180 || len > 16 * 60) return null;
     return {bed: hm(off), wake: hm(onT), waso: Math.round(waso / 60000 / 5) * 5, wakes: i1 - i0 - 1, off: +off, on: +onT};
   },
+  stat: null,
   run(force){
     if (!this.on()) return 0;
     if (!force && Date.now() - this._t < 2 * 60000) return 0; this._t = Date.now();
+    try { this.stat = {at: Date.now(), ev: this.events(Date.now() - 48 * 3600000, Date.now()).length, n: 0}; } catch { this.stat = {at: Date.now(), ev: 0, n: 0}; }
     const t0 = startOfDay(new Date()); let n = 0; state.sleepLog = state.sleepLog || [];
     for (let k = 6; k >= 0; k--) {
       const date = ymd(addDays(t0, -k)), ex = state.sleepLog.find(x => x.date === date);
@@ -9300,10 +9317,27 @@ const SleepAuto = {
       else { if (ex) state.sleepLog.splice(state.sleepLog.indexOf(ex), 1); state.sleepLog.push({id: uid(), date, q: 0, tags: [], ...o}); }
       n++;
     }
+    this.stat.n = n;
     if (n) { state.sleepLog.sort((a, b) => a.date.localeCompare(b.date)); commit(); }
+    else if (ui.view === 'schlaf' || ui.view === 'einstellungen') render();
     return n;
   }
 };
+/* Was die Erkennung gerade tut, in einem Satz */
+function sleepAutoStatus(){
+  const S = state.settings.sleep;
+  if (!Native.on()) return {k: 'web', lvl: '', t: 'Automatisch erkennen: nur in der Android-App', sub: 'Hier im Browser kann die App nicht sehen, wann dein Handy aus war. Nächte trägst du hier selbst ein.'};
+  if (!SleepAuto.avail()) return {k: 'old', lvl: 'warn', t: 'Automatisch erkennen: App zu alt', sub: 'Lade die neue Android-App von der Download-Seite, dann kann sie deine Nächte erkennen.'};
+  if (S.on === false) return {k: 'plan', lvl: '', t: 'Automatisch erkennen: aus', sub: 'Die Schlafplanung ist ausgeschaltet.', act: ''};
+  if (!SleepAuto.ok()) return {k: 'perm', lvl: 'warn', t: 'Automatisch erkennen: noch nicht erlaubt', sub: 'Die App braucht den Zugriff auf Nutzungsdaten.', act: `<button class="btn sm" data-act="sleepUsage">Erlauben</button>`};
+  if (S.detect === false) return {k: 'off', lvl: '', t: 'Automatisch erkennen: aus', sub: 'Du trägst deine Nächte selbst ein.', act: `<button class="btn sm" data-act="sleepDetectOn">Einschalten</button>`};
+  const st = SleepAuto.stat, last = (state.sleepLog || []).filter(x => x.src === 'handy').sort((a, b) => b.date.localeCompare(a.date))[0];
+  const when = st ? `zuletzt geprüft ${hm(new Date(st.at))}` : 'wird gleich geprüft';
+  if (st && !st.ev) return {k: 'nodata', lvl: 'warn', t: 'Automatisch erkennen: an, aber keine Daten', sub: `Android liefert gerade keine Bildschirmzeiten (${when}). Das ist nach dem Erlauben normal und füllt sich ab der nächsten Nacht. Bleibt es leer, prüf, ob der Zugriff auf Nutzungsdaten noch an ist.`, act: `<button class="btn sm" data-act="sleepDetectNow">Jetzt prüfen</button>`};
+  if (!last) return {k: 'wait', lvl: 'good', t: 'Automatisch erkennen: an', sub: `Noch keine Nacht erkannt, ${when}. Die nächste Nacht trägt die App morgens selbst ein.`, act: `<button class="btn sm" data-act="sleepDetectNow">Jetzt prüfen</button>`};
+  const ln = sleepNight(last), dd = parseYMD(last.date);
+  return {k: 'on', lvl: 'good', t: 'Automatisch erkennen: an', sub: `Zuletzt erkannt: Nacht auf ${esc(fmtShort(dd))}, ${last.bed} bis ${last.wake} (${fmtH(ln.dur)} Schlaf). ${when[0].toUpperCase() + when.slice(1)}${st && st.n ? `, ${st.n} ${st.n === 1 ? 'Nacht' : 'Nächte'} neu` : ''}.`, act: `<button class="btn sm" data-act="sleepDetectNow">Jetzt prüfen</button>`};
+}
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
