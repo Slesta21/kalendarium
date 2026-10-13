@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 18  ·  persönlicher Kalender für alles
+ KALENDARIUM 18.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2475,7 +2475,8 @@ const NAV = [
   {sep:true}, {id:'links', label:'Links'}, {id:'einstellungen', label:'Einstellungen'}
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
-const TABS = ['kalender','aufgaben','stundenplan','wetter','mehr'];
+const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
+const APP_VERSION = '18.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -2976,6 +2977,7 @@ const VIEWS = {
         <div class="row"><div class="l"><b>Sicherung speichern</b></div><button class="btn sm" data-act="saveBackup">${ic('runter','s')}JSON</button></div>
         <div class="row"><div class="l"><b>Sicherung laden</b><small>Ersetzt alle Daten</small></div><label class="btn sm" style="cursor:pointer">${ic('hoch','s')}Datei<input type="file" id="backupFile" accept=".json,application/json" hidden></label></div>
         ${hasExamples() ? `<div class="row"><div class="l"><b>Beispiele entfernen</b></div><button class="btn sm" data-act="clearExamples">Entfernen</button></div>` : ''}
+        <div class="row"><div class="l"><b>Version ${APP_VERSION}</b><small>${STANDALONE ? 'App-Version, aktualisiert sich beim Öffnen selbst' : 'claude.ai-Version'}</small></div>${STANDALONE ? '<button class="btn sm" data-act="appUpdate">Nach Update suchen</button>' : ''}</div>
         <div class="row"><div class="l"><b>${STANDALONE ? 'Auf ein anderes Gerät übertragen' : 'Daten in die App übertragen'}</b><small>${STANDALONE ? 'Ein Link mit allen Daten, zum Beispiel vom PC aufs Handy' : 'Alle Termine, Kurse, Fristen und Einstellungen mit einem Tipp in die App'}</small></div><button class="btn sm primary" data-act="transfer">Übertragen</button></div>
         <div class="row"><div class="l"><b>Als App auf den Startbildschirm</b><span>Ein Symbol auf dem Handy, das den Kalender direkt öffnet</span></div><button class="btn sm" data-act="installApp">Einrichten</button></div>
         <div class="row"><div class="l"><b>Einrichtung</b><span>Name, Weg zur Uni und Schlafrhythmus in drei Schritten</span></div><button class="btn sm" data-act="onbStart">Starten</button></div>
@@ -3811,7 +3813,7 @@ const EDITORS = {
       <button data-act="newLink">${ic('links')}<span><b>Link</b><small>Uni-Portal, Discord oder Website</small></span></button>
     </div>`);
   },
-  more(){ openSheet(`${head('Mehr')}<div class="menu">${['schlaf','links','einstellungen'].map(id => `<button data-act="go" data-v="${id}">${ic(id)}<span><b>${NAV.find(n=>n.id===id).label}</b></span></button>`).join('')}<button data-act="installApp">${ic('plus')}<span><b>Als App auf den Startbildschirm</b></span></button></div>`); },
+  more(){ openSheet(`${head('Mehr')}<div class="menu">${['wetter','links','einstellungen'].map(id => `<button data-act="go" data-v="${id}">${ic(id)}<span><b>${NAV.find(n=>n.id===id).label}</b></span></button>`).join('')}<button data-act="installApp">${ic('plus')}<span><b>Als App auf den Startbildschirm</b></span></button></div>`); },
   importIcs(){
     openSheet(`${head('ICS importieren')}<div class="form">
       <p class="muted" style="margin:0">Exportiere deinen Stundenplan oder Kalender als .ics (zum Beispiel in MOSES oder im ISIS-Kalender) und wähle die Datei aus. Bereits importierte Einträge werden aktualisiert.</p>
@@ -3977,6 +3979,11 @@ async function saveFile(filename, data){
 function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 const ACTIONS = {
+  async appUpdate(){
+    try { const r = await navigator.serviceWorker.getRegistration(); if (r) { await r.update(); if (r.installing || r.waiting) { toast('Update gefunden', 'Die App lädt gleich neu.'); return; } } } catch {}
+    try { const res = await fetch('index.html?v=' + Date.now(), {cache:'no-store'}), txt = await res.text(), m = /APP_VERSION = '([^']+)'/.exec(txt); if (m && m[1] !== APP_VERSION) { toast('Neue Version ' + m[1], 'Wird geladen …'); setTimeout(() => location.reload(), 600); return; } } catch {}
+    toast('Du hast die neueste Version', 'Version ' + APP_VERSION);
+  },
   sleepLog(el){ EDITORS.sleepEntry(el.dataset.date || ymd(new Date())); },
   sleepAsPlanned(el){
     const date = el.dataset.date, sp = sleepPlan()[date]; if (!sp) return;
@@ -5265,10 +5272,11 @@ init();
 
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).then(r => { r.update().catch(() => {}); document.addEventListener('visibilitychange', () => { if (!document.hidden) r.update().catch(() => {}); }); }).catch(() => {}));
   let reloaded = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded) return; reloaded = true; if (!document.querySelector('#sheet:not([hidden])')) location.reload(); });
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded) return; reloaded = true; try { sessionStorage.setItem('kal-updated', '1'); } catch {} if (!document.querySelector('#sheet:not([hidden])')) location.reload(); });
 }
+window.addEventListener('load', () => { try { if (sessionStorage.getItem('kal-updated')) { sessionStorage.removeItem('kal-updated'); setTimeout(() => toast('App aktualisiert', 'Version ' + APP_VERSION), 1200); } } catch {} });
 </script>
 </body>
 </html>
