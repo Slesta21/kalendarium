@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'de.kalendarium.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'de.kalendarium.app'
+        minSdk 26
+        targetSdk 34
+        versionCode((System.getenv('VCODE') ?: '1').toInteger())
+        versionName "1.${System.getenv('VCODE') ?: '0'}"
+    }
+    signingConfigs {
+        release {
+            storeFile file('kal.keystore')
+            storePassword 'kalendarium'
+            keyAlias 'kal'
+            keyPassword 'kalendarium'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError false; checkReleaseBuilds false }
+}
