@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 25.4  ·  persönlicher Kalender für alles
+ KALENDARIUM 26  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1956,6 +1956,27 @@ details.sx[open] > summary .sx-t b{color:var(--accent-ink)}
 .sx-body{padding:0 2px 20px 42px;animation:memin var(--d2) var(--ease) both}
 .sx-tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;margin:0 0 10px}
 @media (max-width:560px){ .sx-body{padding-left:2px} }
+.stop-sheet{position:relative;isolation:isolate}
+.st-bg{position:absolute;left:-28px;right:-28px;top:-28px;height:460px;z-index:-1;pointer-events:none;background:radial-gradient(60% 60% at 30% 30%, var(--c1, var(--accent)) 0, transparent 70%),radial-gradient(50% 55% at 75% 40%, var(--c2, var(--c1, var(--accent))) 0, transparent 70%);filter:blur(42px) saturate(1.4);opacity:.42;-webkit-mask-image:linear-gradient(#000 45%, transparent);mask-image:linear-gradient(#000 45%, transparent)}
+.st-bg.img{background-size:cover;background-position:center;filter:blur(46px) saturate(1.6) brightness(.95);opacity:.55;transform:scale(1.15)}
+.st-hero{position:relative;height:230px;border-radius:22px;overflow:hidden;margin:0 0 14px;background:var(--sunk);animation:memin var(--d2) var(--ease) both}
+.st-photo{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .5s var(--ease)}
+.st-hero.noimg .st-photo{background:radial-gradient(70% 90% at 20% 20%, var(--c1, var(--accent)) 0, transparent 65%),radial-gradient(60% 80% at 85% 70%, var(--c2, var(--c1, var(--accent))) 0, transparent 65%),var(--sunk);filter:blur(20px) saturate(1.3);opacity:.75;transform:scale(1.2)}
+.st-hero.img .st-photo{animation:stzoom 14s ease-out both}
+@keyframes stzoom{from{transform:scale(1.08)}to{transform:scale(1)}}
+.st-top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:2}
+.st-top .iconbtn,.st-top .sheet-back{background:color-mix(in oklab, var(--surface) 45%, transparent);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);border-radius:999px;margin:0;color:var(--ink)}
+.st-glass{position:absolute;left:12px;right:12px;bottom:12px;z-index:2;padding:12px 14px 13px;border-radius:16px;background:color-mix(in oklab, var(--surface) 55%, transparent);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);border:1px solid color-mix(in oklab, #fff 16%, transparent)}
+.st-glass small{display:block;text-transform:uppercase;letter-spacing:.09em;font-size:10.5px;font-weight:600;color:var(--muted)}
+.st-glass b{display:block;font-family:var(--f-display);font-size:24px;font-weight:500;line-height:1.15;margin-top:2px}
+.st-lines{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.st-lines:empty{display:none}
+.st-map{height:150px;border-radius:18px;margin-top:0}
+.st-deps{margin-top:14px;border-top:0;border-radius:18px;padding:2px 14px 4px;background:color-mix(in oklab, var(--surface) 62%, transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line)}
+.st-deps .dep:last-child{border-bottom:0}
+.st-credit{display:block;color:var(--faint);font-size:11px;margin-top:10px;text-align:center}
+.st-credit:empty{display:none}
+.tmap .leaflet-container,.tmap{cursor:default}
 .vibchips{display:flex;flex-wrap:wrap;gap:6px}
 .vibchips label{display:inline-flex;position:relative}
 .vibchips input{position:absolute;opacity:0;pointer-events:none}
@@ -5736,7 +5757,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '25.4';
+const APP_VERSION = '26';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7099,6 +7120,23 @@ function chatAddCand(c){
    ================================================================ */
 const sheet = { el:null, card:null, ctx:null };
 function openSheet(html, ctx){ clearTimeout(sheet._t); sheet.el.classList.remove('closing', 'cmdmode', 'onbmode'); sheet.card.innerHTML = html; sheet.ctx = ctx || null; sheet.el.hidden = false; sheet.card.scrollTop = 0; const f = sheet.card.querySelector('input.title'); if (f && !f.value) setTimeout(() => f.focus(), 40); }
+/* Zurück-Geste (Android, installierte App, Browser): schließt zuerst die offene
+   Ansicht, dann geht es zum Kalender. Ein Platzhalter im Verlauf fängt die Geste ab. */
+const BackNav = {
+  init(){
+    try { history.replaceState({kal: 'root'}, ''); history.pushState({kal: 'arm'}, ''); } catch {}
+    window.addEventListener('popstate', () => {
+      if (this.handle()) { try { history.pushState({kal: 'arm'}, ''); } catch {} }
+      else if (!Native.on()) { toast('Nochmal zurück zum Schließen', ''); try { history.pushState({kal: 'arm'}, ''); } catch {} this._exit = setTimeout(() => { this._exit = null; }, 2000); }
+    });
+  },
+  handle(){
+    if (this._exit) { clearTimeout(this._exit); this._exit = null; try { history.go(-2); } catch {} return false; }
+    if (sheet.el && !sheet.el.hidden) { if (ui._back && document.querySelector('[data-act="sheetBack"]')) ACTIONS.sheetBack(); else closeSheet(); return true; }
+    if (ui.view !== 'kalender') { ui.view = 'kalender'; render(); return true; }
+    return false;
+  }
+};
 function closeSheet(){
   sheet.ctx = null; clearTimeout(sheet._t); ui._back = null; clearInterval(LiveTrip.timer);
   const done = () => { sheet.el.classList.remove('cmdmode', 'onbmode', 'closing'); sheet.el.hidden = true; sheet.card.innerHTML = ''; };
@@ -7862,15 +7900,36 @@ const ACTIONS = {
   sheetBack(){ const b = ui._back; if (!b) return; if (b.home) ACTIONS.homeRoute(); else { DETAIL.travel(b.date, b.i); afterTripSheet(); } },
   liveTrip(el){ LiveTrip.open(el.dataset.home ? {home: true} : {date: el.dataset.date, i: el.dataset.i}); },
   async stopInfo(el){
-    const d = el.dataset, lat = parseFloat(d.lat), lon = parseFloat(d.lon), has = !isNaN(lat) && !isNaN(lon);
-    openSheet(`<div class="detail stop-sheet">${backBtn()}<div class="st-hero" data-hero hidden><img alt=""><small></small></div>${head(esc(d.name || 'Haltestelle'))}
-      ${has ? '<div class="tmap small" data-stopmap></div>' : ''}
-      ${d.id ? `<div class="deps" data-deps data-n="8" data-stop="${esc(d.id)}" data-src="${esc(d.src || '')}" data-line="" data-name="${esc(d.name || '')}"></div>` : ''}</div>`);
-    if (d.id) depsLoadAll();
+    const d = el.dataset, lat = parseFloat(d.lat), lon = parseFloat(d.lon), has = !isNaN(lat) && !isNaN(lon), name = d.name || 'Haltestelle';
+    const kind = /^S\+U\b/.test(name) ? 'S- und U-Bahnhof' : /^S\b/.test(name) ? 'S-Bahnhof' : /^U\b/.test(name) ? 'U-Bahnhof' : 'Haltestelle';
+    openSheet(`<div class="detail stop-sheet"><div class="st-bg" data-stbg></div>
+      <div class="st-hero noimg" data-hero>
+        <div class="st-photo" data-stphoto></div>
+        <div class="st-top">${backBtn()}<span></span>${closeBtn()}</div>
+        <div class="st-glass"><small>${kind}</small><b>${esc(name.replace(/\s*\((Berlin|Bln)\)$/, '').replace(kind === 'Haltestelle' ? /^$/ : /^(S\+U|S|U)\s+/, ''))}</b><span class="st-lines" data-stlines></span></div>
+      </div>
+      ${has ? '<div class="tmap small st-map" data-stopmap></div>' : ''}
+      ${d.id ? `<div class="deps st-deps" data-deps data-n="8" data-stop="${esc(d.id)}" data-src="${esc(d.src || '')}" data-line="" data-name="${esc(name)}"></div>` : ''}
+      <small class="st-credit" data-stcredit></small></div>`);
+    if (d.id) depsLoadAll().then(() => {
+      const box = document.querySelector('[data-stlines]'); if (!box) return;
+      const seen = new Set(), badges = [...document.querySelectorAll('.st-deps .lnb')].filter(b => !seen.has(b.textContent) && seen.add(b.textContent)).slice(0, 8);
+      box.innerHTML = badges.map(b => b.outerHTML).join('');
+      const hero = document.querySelector('[data-hero]');
+      if (hero && hero.classList.contains('noimg')) { const cols = badges.map(b => getComputedStyle(b).getPropertyValue('--lc').trim()).filter(Boolean); if (cols.length) { hero.style.setProperty('--c1', cols[0]); hero.style.setProperty('--c2', cols[1] || cols[0]); document.querySelector('[data-stbg]').style.setProperty('--c1', cols[0]); } }
+    });
     if (has) {
       const mapEl = document.querySelector('[data-stopmap]'); if (mapEl) tripMap(mapEl, null, {point: [lat, lon], fitMe: false});
-      const r = await StopImg.get(lat, lon, d.name || ''); const hero = document.querySelector('[data-hero]');
-      if (r && hero) { const im = hero.querySelector('img'); im.onload = () => { hero.hidden = false; }; im.src = r.src; hero.querySelector('small').textContent = `Foto: ${r.title} · Wikipedia`; }
+      const r = await StopImg.get(lat, lon, name);
+      const hero = document.querySelector('[data-hero]'), bg = document.querySelector('[data-stbg]'), ph = document.querySelector('[data-stphoto]');
+      if (r && hero && ph) {
+        const im = new Image(); im.onload = () => {
+          const u = `url("${r.src.replace(/"/g, '%22')}")`;
+          ph.style.backgroundImage = u; if (bg) { bg.style.backgroundImage = u; bg.classList.add('img'); }
+          hero.classList.remove('noimg'); hero.classList.add('img');
+          const c = document.querySelector('[data-stcredit]'); if (c) c.textContent = `Foto: ${r.title} · Wikipedia`;
+        }; im.src = r.src;
+      }
     }
   },
   sleepInfo(el){ DETAIL.sleep(el.dataset.date); },
@@ -8762,7 +8821,7 @@ async function tripMap(el, lv, opt = {}){
   if (!document.body.contains(el)) return null;
   if (el._map) { try { el._map.m.remove(); } catch {} el._map = null; }
   el.innerHTML = '';
-  const m = L.map(el, {zoomControl: true, attributionControl: true, scrollWheelZoom: false});
+  const m = L.map(el, {zoomControl: false, attributionControl: true, dragging: false, touchZoom: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false});
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(m);
   const pts = [];
   for (const g of (lv ? lv.legs : [])) {
@@ -9594,6 +9653,7 @@ function init(){
   applyTheme(); bindEvents(); bindDrag(); bindSwipe(); setSync(); render();
   Reminders.load(); Reminders.last = Date.now();
   setInterval(() => Reminders.check(), 20000);
+  BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
   if (Native.on()) { setTimeout(() => Native.sync(true), 1500); setInterval(() => Native.sync(), 5 * 60000); document.addEventListener('visibilitychange', () => { if (document.hidden) Native.sync(); }); }
   if (STANDALONE) { setTimeout(() => Transit.refresh(), 2500); setInterval(() => { if (!document.hidden) Transit.refresh(); }, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Transit.refresh(); }); }
