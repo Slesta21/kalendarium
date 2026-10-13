@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 29  ·  persönlicher Kalender für alles
+ KALENDARIUM 29.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1912,7 +1912,10 @@ print-color-adjust: exact;
 .tx-stop:hover,.tx-stop:focus-visible{color:var(--accent-ink)}
 .st-img{display:block;width:100%;max-width:340px;height:110px;object-fit:cover;border-radius:10px;margin:2px 0 8px;background:var(--sunk);animation:memin var(--d2) var(--ease) both}
 details.sv{margin:4px 0 2px}
-details.sv summary{cursor:pointer;color:var(--accent-ink);font-size:13px;list-style:none}
+details.sv summary{cursor:pointer;color:var(--accent-ink);font-size:13px;list-style:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px 6px 0;margin:-4px 0;-webkit-tap-highlight-color:transparent;user-select:none;position:relative;z-index:1}
+details.sv summary .sv-a{display:inline-flex;transition:transform var(--d2) var(--ease)}
+details.sv[open] summary .sv-a{transform:rotate(90deg)}
+details.sv[open] summary .sv-l::after{content:" ausblenden";color:var(--muted)}
 details.sv summary::-webkit-details-marker{display:none}
 .sv-list{list-style:none;margin:6px 0 2px;padding:0;display:grid;gap:0}
 .sv-list button{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:12px 46px minmax(0,1fr);gap:8px;align-items:center;width:100%;padding:5px 0;font-size:13.5px}
@@ -5894,7 +5897,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '29';
+const APP_VERSION = '29.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -8868,8 +8871,10 @@ const Transit = {
   liveSheet(){
     const b = ui._back, t = document.querySelector('#sheetCard .trip'); if (!b || !t || !sheet.el || sheet.el.hidden) return;
     const l = planDay(parseYMD(b.date)).legs[+b.i]; if (!l || !l.live || l.live.plan) return;
-    const open = [...t.querySelectorAll('details')].map(d => d.open), w = document.createElement('div'); w.innerHTML = transitHtml(l.live);
-    const n = w.querySelector('.trip'); if (!n) return; n.querySelectorAll('details').forEach((d, i) => { if (open[i]) d.open = true; });
+    const w = document.createElement('div'); w.innerHTML = transitHtml(l.live);
+    const n = w.querySelector('.trip'); if (!n) return;
+    const strip = x => x.replace(/<small data-ago[^>]*>[^<]*<\/small>/, '').replace(/ open=""/g, '');
+    if (strip(n.outerHTML) === strip(t.outerHTML)) { const a = t.querySelector('[data-ago]'); if (a) a.dataset.ago = l.live.fetchedAt; return; }
     n.style.animation = 'none'; t.replaceWith(n); try { stopImgLoadAll(); } catch {}
   },
   /* Für Orte mit Adresse die Strecke ab Zuhause einmal aus dem Fahrplan holen */
@@ -8944,6 +8949,7 @@ async function depsLoadAll(){
   clearInterval(ui._depsT); ui._depsT = setInterval(() => { if (document.hidden) return; if (!document.querySelector('[data-deps]')) { clearInterval(ui._depsT); return; } depsLoadAll(); }, 30000);
 }
 const stopAttrs = v => `data-id="${esc(v.id || '')}" data-src="${esc(v.src || '')}" data-name="${esc(v.name || '')}" data-lat="${v.ll ? v.ll[0] : ''}" data-lon="${v.ll ? v.ll[1] : ''}"`;
+const SV_OPEN = new Set();
 function transitHtml(lv, opt = {}){
   const mins = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 60000));
   const tm = (t, p, d, ap) => `<span class="tm">${ap ? '<span class="ca">ca.</span>' : ''}${hm(new Date(t))}${d > 0 ? `<span class="late">+${d}</span>` : ''}${d > 0 && p ? `<s>${hm(new Date(p))}</s>` : ''}</span>`;
@@ -8956,7 +8962,7 @@ function transitHtml(lv, opt = {}){
     const nx = L[i + 1], xfer = nx && !nx.walk ? `<div class="tleg xfer"><span></span><span></span><span class="tx"><small>${mins(g.arr, nx.dep)} min Umstieg</small></span></div>` : '';
     return `<div class="tleg${g.x ? ' x' : ''}" style="--lc:${lc}">${tm(g.dep, g.pdep, g.ddel, g.approx)}<span class="ln">${esc(lineLabel(g))}</span><span class="tx">${img}<button type="button" class="tx-stop" data-act="stopInfo" ${stopAttrs({id: g.fromId, src: g.src, name: g.from, ll: g.fromLL})}>${esc(g.from)}</button>${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}
       <small>${g.dir ? `Richtung ${esc(g.dir)} · ` : ''}${g.approx ? `alle ${g.every} min · ` : ''}<b>${m} min</b>${mid.length ? ` · ${mid.length} ${mid.length === 1 ? 'Halt' : 'Halte'} dazwischen` : ''}</small>
-      ${mid.length ? `<details class="sv"><summary>Haltestellen anzeigen</summary><ol class="sv-list">${mid.map(row).join('')}</ol></details>` : ''}
+      ${mid.length ? `<details class="sv" data-svk="${esc(normLine(g.line) + '|' + stopKey(g.from))}"${SV_OPEN.has(normLine(g.line) + '|' + stopKey(g.from)) ? ' open' : ''}><summary><span class="sv-a">${ic('weiter','s')}</span><span class="sv-l">${mid.length} Haltestellen</span></summary><ol class="sv-list">${mid.map(row).join('')}</ol></details>` : ''}
       <small>an <button type="button" class="tx-stop" style="font-weight:500" data-act="stopInfo" ${stopAttrs({id: g.toId, src: g.src, name: g.to, ll: g.toLL})}>${esc(g.to || '')}</button> ${g.approx ? 'ca. ' : ''}${hm(new Date(g.arr))}${g.adel > 0 ? ` <span class="late" style="color:var(--danger)">+${g.adel}</span>` : ''}</small>
       ${g.x ? '<small style="color:var(--danger)">Fällt aus</small>' : ''}${(g.notes || []).map(n => `<small>${esc(n)}</small>`).join('')}</span></div>${xfer}`;
   };
@@ -9243,7 +9249,9 @@ const LiveTrip = {
     if (!redraw && el0 && el0._map) { const o = el0._map, sp = tripSoll(lv, now); if (sp && !sp.done) { if (o.sollM) o.sollM.setLatLng(sp.ll); else o.sollM = o.L.circleMarker(sp.ll, sollStyle).bindTooltip('Hier laut Plan').addTo(o.m); } else if (o.sollM) { o.sollM.remove(); o.sollM = null; } }
     if (redraw) {
       const el = document.querySelector('[data-livemap]'); if (el) tripMap(el, lv, {fitMe: true, soll: true});
-      const stp = document.querySelector('[data-ltsteps]'); if (stp) { stp.innerHTML = transitHtml(lv, {noRefresh: true}); stopImgLoadAll(); }
+      const stp = document.querySelector('[data-ltsteps]'), html = transitHtml(lv, {noRefresh: true}), sig = html.replace(/<small data-ago[^>]*>[^<]*<\/small>/, '');
+      if (stp && stp._sig !== sig) { stp.innerHTML = html; stp._sig = sig; stopImgLoadAll(); }
+      else if (stp) { const a = stp.querySelector('[data-ago]'); if (a) a.dataset.ago = lv.fetchedAt; }
     }
   }
 };
@@ -9921,6 +9929,7 @@ function bindEvents(){
     if (t.name === 'colorCustom') t.closest('form').querySelectorAll('[name=color]').forEach(r => r.checked = false);
   });
   document.addEventListener('toggle', ev => {
+    const v = ev.target; if (v && v.matches && v.matches('details.sv[data-svk]')) { if (v.open) SV_OPEN.add(v.dataset.svk); else SV_OPEN.delete(v.dataset.svk); return; }
     const d = ev.target; if (!d || !d.matches || !d.matches('details.sx')) return;
     if (d.open) { ui._sxOpen = d.dataset.sx; document.querySelectorAll('details.sx[open]').forEach(x => { if (x !== d) x.open = false; }); setTimeout(() => d.scrollIntoView({block: 'nearest', behavior: 'smooth'}), 60); }
     else if (ui._sxOpen === d.dataset.sx) ui._sxOpen = null;
