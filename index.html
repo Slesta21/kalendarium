@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 24  ·  persönlicher Kalender für alles
+ KALENDARIUM 25  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1926,6 +1926,16 @@ details.sv summary::-webkit-details-marker{display:none}
 .lt-now b{font-size:16px}
 .lt-now small{color:var(--muted);font-size:13.5px}
 .lt-note{font-size:13px;color:var(--accent-ink)}
+.vibchips{display:flex;flex-wrap:wrap;gap:6px}
+.vibchips label{display:inline-flex;position:relative}
+.vibchips input{position:absolute;opacity:0;pointer-events:none}
+.vibchips span{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 10px;font-size:13px;color:var(--muted);cursor:pointer;transition:border-color var(--d1),background var(--d1),color var(--d1)}
+.vibchips input:checked + span{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.vibchips input:focus-visible + span{outline:2px solid var(--accent-ink);outline-offset:2px}
+.vg{position:relative;display:inline-block;width:30px;height:10px;border-radius:3px;background:color-mix(in oklab, currentColor 12%, transparent);overflow:hidden}
+.vg i{position:absolute;top:2px;bottom:2px;border-radius:2px;background:currentColor}
+.vg-off{background:none;border:1px dashed color-mix(in oklab, currentColor 45%, transparent)}
+.vibset{margin:10px 0}
 .apk-box{display:grid;gap:6px;padding:14px 0 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:var(--s2)}
 .apk-box b{font-size:16px}
 .apk-box span{color:var(--muted);font-size:13.5px}
@@ -4597,6 +4607,8 @@ function defaultState(){
       weather:{ cities:[{key:'2601546', name:'Berlin'}, {key:'167558', name:'Augsburg'}, {key:'2608456', name:'Paris'}], active:'2601546' },
       travel:{ bufferPct:15, minBuffer:5, rainExtra:8, arriveEarly:5, stayGap:45, remind:true, remindAt:[10, 3] },
       loc:{ on:false },
+      vib:{ go:'wecker', event:'doppelt', deadline:'puls' },
+      live:{ on:true, lead:60 },
       sleep:{ on:true, hours:8, latency:15, routine:45, wakeWeek:'07:30', wakeWeekend:'08:30', flex:60, shift:30, remind:30, auto:true, cycles:true, windDown:30 },
       style:{ font:'classic', tone:'cool', density:'normal', radius:'soft', dayColors:true, motion:true },
       ntfy:{ on:false, topic:'' }
@@ -4702,6 +4714,8 @@ function migrate(s){
     travel:{...base.settings.travel, ...(ss.travel||{})},
     loc:{...base.settings.loc, ...(ss.loc||{})},
     sleep:{...base.settings.sleep, ...(ss.sleep||{})},
+    vib:{...base.settings.vib, ...(ss.vib||{})},
+    live:{...base.settings.live, ...(ss.live||{})},
     style:{...base.settings.style, ...(ss.style||{})}};
   if (old) { s.settings.accent = base.settings.accent; if (s.settings.dayEnd < 23) s.settings.dayEnd = 23; }
   if (!Array.isArray(s.settings.weather.cities) || !s.settings.weather.cities.length) s.settings.weather.cities = base.settings.weather.cities;
@@ -4796,6 +4810,24 @@ function commit(){ Store.schedule(); invalidate(); render(); if (STANDALONE) Pus
 /* §16m ANDROID-APP: Läuft Kalendarium in der eigenen Android-App (window.KalNative),
    plant die App alle Erinnerungen der nächsten 3 Tage als echte Android-Wecker.
    Die vibrieren zuverlässig wie WhatsApp, auch bei geschlossener App und lautlos. */
+/* Vibrationsmuster (ms an, aus, an …), gleich wie in der Android-App */
+const VIBS = [
+  ['wecker', 'Wecker', [600, 250, 600, 250, 900]],
+  ['doppelt', 'Doppelt', [250, 150, 250]],
+  ['kurz', 'Kurz', [250]],
+  ['puls', 'Puls', [150, 100, 150, 100, 150, 100, 150]],
+  ['herz', 'Herzschlag', [120, 90, 240, 500, 120, 90, 240]],
+  ['lang', 'Lang', [1200]],
+  ['sos', 'SOS', [150, 100, 150, 100, 150, 300, 450, 150, 450, 150, 450, 300, 150, 100, 150, 100, 150]],
+  ['aus', 'Ohne', []]
+];
+const vibOf = id => (VIBS.find(v => v[0] === id) || VIBS[1]);
+const vibPlay = id => { const p = vibOf(id)[2]; if (!p.length) return; try { if (Native.on() && window.KalNative.vibrateNamed) window.KalNative.vibrateNamed(id); else navigator.vibrate && navigator.vibrate(p); } catch {} };
+/* Kleine Grafik des Musters: Balken = Vibration, Lücke = Pause */
+const vibGlyph = id => { const p = vibOf(id)[2]; if (!p.length) return '<span class="vg vg-off"></span>'; const tot = p.reduce((a, b) => a + b, 0); let x = 0, r = ''; p.forEach((d, i) => { const w = d / tot * 100; if (i % 2 === 0) r += `<i style="left:${x.toFixed(1)}%;width:${Math.max(2.5, w).toFixed(1)}%"></i>`; x += w; }); return `<span class="vg">${r}</span>`; };
+function vibChips(name, val, withStd){
+  return `<div class="vibchips">${withStd ? `<label><input type="radio" name="${name}" value="" ${!val ? 'checked' : ''}><span>Standard</span></label>` : ''}${VIBS.map(([id, nm]) => `<label><input type="radio" name="${name}" value="${id}" ${val === id ? 'checked' : ''}><span>${vibGlyph(id)}${nm}</span></label>`).join('')}</div>`;
+}
 const APK_URL = 'https://github.com/Slesta21/kalendarium/releases/download/android-app/kalendarium.apk';
 const Native = {
   last: '', timer: null,
@@ -4804,11 +4836,33 @@ const Native = {
   queue(){ if (!this.on()) return; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync(), 1500); },
   sync(force){
     if (!this.on() || !state) return 0;
-    const now = Date.now(), list = Reminders.plan(now + 15000, now + 72 * 3600000).map(a => ({key: a.key, at: a.at, title: a.title, body: a.body, prio: a.prio || 4}));
+    const now = Date.now(), list = Reminders.plan(now + 15000, now + 72 * 3600000).map(a => ({key: a.key, at: a.at, title: a.title, body: a.body, prio: a.prio || 4, vib: a.vib || 'doppelt'})).concat(this.lives(now));
     const js = JSON.stringify(list); if (!force && js === this.last) return list.length;
     this.last = js; try { return window.KalNative.schedule(js); } catch { return 0; }
   },
   status(){ try { return JSON.parse(window.KalNative.status()); } catch { return {}; } },
+  has(f){ try { return String(window.KalNative.features ? window.KalNative.features() : '').split(',').includes(f); } catch { return false; } },
+  /* Live-Banner: „Fertig machen“ bis zum Losgehen, dann „Unterwegs“ bis zur Ankunft;
+     ohne Weg „Gleich“ bis zum Beginn. Countdown läuft im Banner selbst weiter. */
+  lives(now){
+    const L = state.settings.live || {}; if (!L.on || !this.has('live')) return [];
+    const lead = Math.max(10, +L.lead || 60) * 60000, out = [], nm = o => o.kind === 'course' ? (o.ref.short || o.ref.title) : o.title, t0 = startOfDay(new Date(now));
+    const push = (key, phase, title, body, from, when, until) => { if (until <= now || from > now + 72 * 3600000) return; out.push({type: 'live', key, phase, title, body, at: Math.max(from, now + 3000), when, until}); };
+    for (const d of [t0, addDays(t0, 1), addDays(t0, 2)]) {
+      const P = planDay(d), withLeg = new Set();
+      for (const l of P.legs.filter(x => x.kind === 'go')) {
+        withLeg.add(l.before.key);
+        const f = l.live && l.live.legs ? l.live.legs.find(g => !g.walk) : null, lastT = l.live && l.live.legs ? [...l.live.legs].reverse().find(g => !g.walk) : null;
+        const how = f ? `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.ddel > 0 ? ` +${f.ddel}` : ''}${f.from ? ' ab ' + f.from : ''}${f.plat ? ', Gleis ' + f.plat : ''}` : `${dur(l.mins)} bis ${l.to.name}`;
+        push(`live:${l.before.key}:prep`, 'Fertig machen', nm(l.before), `Losgehen ${hm(l.depart)} · ${how}`, +l.depart - lead, +l.depart, +l.depart);
+        push(`live:${l.before.key}:way`, 'Unterwegs', nm(l.before), `Ankunft ${hm(l.arrive)}${lastT ? ' · aussteigen ' + lastT.to : ''} · Beginn ${hm(l.before.start)}`, +l.depart, +l.arrive, +l.arrive);
+      }
+      for (const o of dayItems(d).filter(x => isTimed(x) && !withLeg.has(x.key) && x.kind !== 'deadline')) {
+        push(`live:${o.key}:soon`, 'Gleich', nm(o), `Beginn ${hm(o.start)}${placeLabel(o) ? ' · ' + placeLabel(o) : ''}`, +o.start - Math.min(lead, 30 * 60000), +o.start, +o.start);
+      }
+    }
+    return out;
+  },
   vibrate(p){ try { window.KalNative.vibrate((Array.isArray(p) ? [0, ...p] : [0, p]).join(',')); return true; } catch { return false; } }
 };
 if (Native.on()) { try { navigator.vibrate = p => Native.vibrate(p); } catch {} }
@@ -5425,11 +5479,11 @@ const Reminders = {
   },
   /* Alle Erinnerungen zwischen from und to (ms), für die App und für Push */
   plan(from, to){
-    const out = [], add = (t, key, title, body, sym, prio) => { if (t > from && t <= to) out.push({at:t, key, title, body, sym, prio}); };
+    const V = state.settings.vib || {}, out = [], add = (t, key, title, body, sym, prio, vib) => { if (t > from && t <= to) out.push({at:t, key, title, body, sym, prio, vib: vib || V.event || 'doppelt'}); };
     for (const o of occurrences(new Date(from - 60000), new Date(to + 8*86400000))) {
       if (o.allDay) continue;
       const nm = o.kind === 'course' ? o.ref.title : o.title, pl = placeLabel(o);
-      for (const lead of this.leadsFor(o)) add(o.start.getTime() - lead*60000, `${o.key}:${lead}`, nm, `${o.kind==='deadline'?'Frist':o.kind==='course'?'Kurs':'Termin'} ${lead?'in '+dur(lead):'jetzt'} · ${hm(o.start)} Uhr${pl ? ' · ' + pl : ''}`, o.cat.symbol, o.kind === 'deadline' ? 5 : 4);
+      for (const lead of this.leadsFor(o)) add(o.start.getTime() - lead*60000, `${o.key}:${lead}`, nm, `${o.kind==='deadline'?'Frist':o.kind==='course'?'Kurs':'Termin'} ${lead?'in '+dur(lead):'jetzt'} · ${hm(o.start)} Uhr${pl ? ' · ' + pl : ''}`, o.cat.symbol, o.kind === 'deadline' ? 5 : 4, o.ref.vib || (o.kind === 'deadline' ? V.deadline : V.event));
     }
     const d0 = startOfDay(new Date(from)), days = Math.min(5, Math.ceil((to - +d0) / 86400000) + 1);
     const T = state.settings.travel, leads = Array.isArray(T.remindAt) && T.remindAt.length ? T.remindAt : [10];
@@ -5439,7 +5493,7 @@ const Reminders = {
       const how = f ? `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.ddel > 0 ? ` (+${f.ddel})` : ''}${f.from ? ' ab ' + f.from : ''}${f.plat ? ', Gleis ' + f.plat : ''}` : `${dur(l.mins)} Weg`;
       for (const lead of leads) add(l.depart.getTime() - lead * 60000, `${go ? 'go' : 'back'}:${(go ? l.before : l.after).key}:${lead}`,
         lead <= 3 ? (go ? `Jetzt losgehen, in ${lead} min` : `In ${lead} min los nach Hause`) : (go ? `In ${lead} min losgehen` : `In ${lead} min los nach Hause`),
-        go ? `${how} · für ${nmOf(l.before)}${l.to && l.to.name ? ' · ' + l.to.name : ''}` : `${how} · zuhause ${hm(l.arrive)}`, 'kompass', lead <= 5 ? 5 : 4);
+        go ? `${how} · für ${nmOf(l.before)}${l.to && l.to.name ? ' · ' + l.to.name : ''}` : `${how} · zuhause ${hm(l.arrive)}`, 'kompass', lead <= 5 ? 5 : 4, (go ? l.before : l.after).ref.vib || V.go);
     }
     if (state.settings.sleep.on && +state.settings.sleep.remind) { const SP = sleepPlan(); for (let k = 0; k < days; k++) {
       const sp = SP[ymd(addDays(d0, k + 1))];
@@ -5450,15 +5504,17 @@ const Reminders = {
   check(){
     const now = Date.now(), from = this.last;
     if (now - from > 6*3600000) { this.last = now; return; }
-    for (const a of this.plan(from, now)) if (!this.fired[a.key]) { this.fired[a.key] = now; this.fire(a.title, a.body, a.sym); }
+    for (const a of this.plan(from, now)) if (!this.fired[a.key]) { this.fired[a.key] = now; this.fire(a.title, a.body, a.sym, a.vib); }
     this.last = now; this.save();
   },
-  fire(title, body, symbol){
+  fire(title, body, symbol, vib){
     toast(title, body, {rem:true, sym:symbol, ttl:0});
     if (Native.on()) return;
+    if (vib && state.settings.vibrate && !(Push.on() && document.hidden)) { const p = vibOf(vib)[2]; if (p.length) try { navigator.vibrate && navigator.vibrate(p); } catch {} if (!Push.on()) { this._skipVib = true; } }
     if (state.settings.sound) this.chime();
     if (Push.on() && document.hidden) return;
-    if (state.settings.vibrate) { try { navigator.vibrate && navigator.vibrate([180,90,180,90,320]); } catch {} }
+    if (state.settings.vibrate && !this._skipVib) { try { navigator.vibrate && navigator.vibrate([180,90,180,90,320]); } catch {} }
+    this._skipVib = false;
     if (Push.on()) return;
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -5650,7 +5706,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '24';
+const APP_VERSION = '25';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6414,9 +6470,16 @@ const VIEWS = {
         <div class="panel-h"><h2>Erinnerungen</h2><button class="btn sm" data-act="testReminder">${ic('glocke','s')}Testen</button><button class="btn sm ghost" data-act="vibHelp">Vibration prüfen</button></div>
         <div class="row"><div class="l"><b>Ton</b></div>${sw('sound', s.sound, 'Ton')}</div>
         <div class="row"><div class="l"><b>Vibration</b><small>Wenn der Browser es erlaubt</small></div>${sw('vibrate', s.vibrate, 'Vibration')}</div>
-        ${Native.on() ? `<div class="row"><div class="l"><b>Android-App</b><small>Erinnerungen als echte Wecker, vibriert auch lautlos</small></div><button class="btn sm" data-act="vibHelp">Status</button></div>` : Native.android() ? `<div class="row"><div class="l"><b>Zuverlässig vibrieren: Android-App</b><small>Kalendarium als echte App, vibriert wie WhatsApp, auch wenn alles zu ist</small></div><button class="btn sm primary" data-act="apkGet">${ic('runter','s')}Holen</button></div>` : ''}
-        <div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>
-        ${STANDALONE ? pushRows() : ''}
+        ${Native.on() ? `<div class="row"><div class="l"><b>Android-App</b><small>${Native.has('live') ? 'Erinnerungen als echte Wecker, vibriert auch lautlos' : 'Neue Version verfügbar: Vibrationsmuster und Live-Banner'}</small></div>${Native.has('live') ? '<button class="btn sm" data-act="vibHelp">Status</button>' : `<a class="btn sm primary" href="${APK_URL}">${ic('runter','s')}Aktualisieren</a>`}</div>` : Native.android() ? `<div class="row"><div class="l"><b>Zuverlässig vibrieren: Android-App</b><small>Kalendarium als echte App, vibriert wie WhatsApp, auch wenn alles zu ist</small></div><button class="btn sm primary" data-act="apkGet">${ic('runter','s')}Holen</button></div>` : ''}
+        <div class="f vibset"><span>Vibration beim Losgehen</span>${vibChips('vib_go', (s.vib || {}).go || 'wecker', false)}</div>
+        <div class="f vibset"><span>Vibration bei Terminen</span>${vibChips('vib_event', (s.vib || {}).event || 'doppelt', false)}</div>
+        <div class="f vibset"><span>Vibration bei Fristen</span>${vibChips('vib_deadline', (s.vib || {}).deadline || 'puls', false)}</div>
+        <small class="muted" style="display:block;margin:-4px 0 10px">Antippen spielt das Muster ab. Für einzelne Termine stellst du es im Termin ein.</small>
+        ${Native.on() ? `<div class="row"><div class="l"><b>Live-Banner</b><small>Dauerhaft oben im Handy: „Fertig machen“ mit Countdown bis zum Losgehen, dann „Unterwegs“ bis zur Ankunft</small></div>${sw('live.on', (s.live || {}).on, 'Live-Banner')}</div>
+        ${(s.live || {}).on ? `<div class="row"><div class="l"><b>Banner zeigen ab</b></div><div class="remchips">${[30, 45, 60, 90, 120].map(m => `<label><input type="radio" name="live_lead" value="${m}" ${+(s.live || {}).lead === m ? 'checked' : ''}><span>${m < 60 ? m + ' min' : m / 60 + ' h'} vorher</span></label>`).join('')}</div></div>
+        <div class="row"><div class="l"><b>Vorschau</b><small>So sieht das Banner aus</small></div><button class="btn sm" data-act="livePreview">Zeigen</button></div>` : ''}` : ''}
+        ${Native.on() ? '' : `<div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>`}
+        ${STANDALONE && !Native.on() ? pushRows() : ''}
         <div class="row"><div class="l"><b>Kurse erinnern</b></div>${sw('courseReminders', s.courseReminders, 'Kurse erinnern')}</div>
         ${['event','deadline','course'].map(k => `<div class="row"><div class="l"><b>Standard ${({event:'Termine',deadline:'Fristen',course:'Kurse'})[k]}</b><small>${remList(s.reminders[k])}</small></div><button class="btn sm" data-act="editDefaultRem" data-k="${k}">Ändern</button></div>`).join('')}
         <p class="note">Erinnerungen erscheinen, solange die Seite offen ist. Damit dein Handy auch sonst vibriert, übernimm den Kalender per Export in die Kalender-App deines Handys. Losgeh-Erinnerungen werden mit exportiert.</p>
@@ -7156,6 +7219,7 @@ const EDITORS = {
         <div class="leave" data-leave aria-live="polite"></div><div data-rhost></div>
         <div class="frow"><label class="f"><span>Wiederholen</span><select name="freq">${Object.entries(REPEAT).map(([k,v]) => `<option value="${k}" ${e.repeat?.freq===k?'selected':''}>${v}</option>`).join('')}</select></label><label class="f"><span>Bis (optional)</span><input type="date" name="until" value="${esc(e.repeat?.until||'')}"></label></div>
         <div class="f"><span>Erinnern vorher</span>${remChips('rem', rems)}</div>
+        <div class="f"><span>Vibration für diesen Termin</span>${vibChips('vib', e.vib || '', true)}</div>
         <label class="f"><span>Link</span><input name="link" value="${esc(e.link)}" placeholder="https://"></label>
         <label class="f"><span>Notizen</span><textarea name="notes">${esc(e.notes)}</textarea></label>
         ${(e.skip||[]).length ? `<div class="f"><span>Fällt aus am</span><div class="chips">${e.skip.map(sk => `<button type="button" class="chip" data-act="unskip" data-date="${sk}">${fmtShort(parseYMD(sk))} ${ic('x','s')}</button>`).join('')}</div></div>` : ''}
@@ -7379,7 +7443,7 @@ const SAVE = {
       haptic(); return;
     }
     saveHostRoute(form);
-    const o = { title: fd.get('title').trim(), catId: fd.get('catId'), placeId: (form._tw = takeTrip(form)) ? form._tw.placeId : takeNewPlace(fd), date: fd.get('date'), allDay: !!fd.get('allDay'), start: fd.get('start')||'', end: fd.get('end')||'', bufferBefore: +fd.get('bufferBefore')||0, bufferAfter: +fd.get('bufferAfter')||0, location: fd.get('location').trim(), link: fd.get('link').trim(), notes: fd.get('notes'), repeat:{freq: fd.get('freq'), interval:1, until: fd.get('until')||''}, reminders: readRems(fd) };
+    const o = { title: fd.get('title').trim(), catId: fd.get('catId'), placeId: (form._tw = takeTrip(form)) ? form._tw.placeId : takeNewPlace(fd), date: fd.get('date'), allDay: !!fd.get('allDay'), start: fd.get('start')||'', end: fd.get('end')||'', bufferBefore: +fd.get('bufferBefore')||0, bufferAfter: +fd.get('bufferAfter')||0, location: fd.get('location').trim(), link: fd.get('link').trim(), notes: fd.get('notes'), repeat:{freq: fd.get('freq'), interval:1, until: fd.get('until')||''}, reminders: readRems(fd), vib: fd.get('vib') || '' };
     if (form._tw) { o.fromId = form._tw.fromId; o.route = form._tw.route; o.routeBack = form._tw.routeBack; }
     if (!o.allDay && !o.start) o.allDay = true;
     if (!o.allDay && (!o.end || o.end <= o.start)) o.end = toHM(minutesOf(o.start) + 60);
@@ -7792,7 +7856,7 @@ const ACTIONS = {
     if (!cur.size) { el.checked = true; toast('Mindestens eine Zeit', ''); return; }
     T.remindAt = [...cur].sort((a, b) => b - a); commit(); if (typeof Push !== 'undefined') Push.queue();
   },
-  toggle(el){ const k = el.dataset.k; setPath(k, !getPath(k)); applyTheme(); commit(); if (k === 'loc.on') Loc.sync(true); },
+  toggle(el){ const k = el.dataset.k; setPath(k, !getPath(k)); applyTheme(); commit(); if (k === 'loc.on') Loc.sync(true); if (k === 'live.on') Native.sync(true); },
   wxCity(el){ state.settings.weather.active = el.dataset.key; WX.watch(el.dataset.key); commit(); },
   wxAdd(el){ const c = state.settings.weather.cities; if (!c.some(x => x.key === el.dataset.key)) c.push({key: el.dataset.key, name: el.dataset.name}); toast('Ort hinzugefügt', el.dataset.name); commit(); },
   wxRemove(el){ const w = state.settings.weather; if (w.cities.length <= 1) { toast('Mindestens ein Ort', 'Ein Wetterort muss bleiben.'); return; } w.cities = w.cities.filter(x => x.key !== el.dataset.key); if (w.active === el.dataset.key) { w.active = w.cities[0].key; WX.watch(w.active); } commit(); },
@@ -7832,6 +7896,11 @@ const ACTIONS = {
     if (perm !== 'granted') { ui._vh.ban = 'nein'; vibHelp(); toast('Benachrichtigungen sind blockiert', 'Erlaube sie in den Android-Einstellungen, siehe Weg 2.'); return; }
     try { const r = await navigator.serviceWorker.ready; await r.showNotification('Test von Kalendarium', {body: 'Hat das Handy vibriert?', icon: 'icon-192.png', badge: 'icon-192.png', vibrate: [400, 150, 400], tag: 'kal-' + Date.now(), renotify: true, requireInteraction: true}); }
     catch { try { new Notification('Test von Kalendarium', {body: 'Hat das Handy vibriert?'}); } catch {} }
+  },
+  livePreview(){
+    if (!Native.has('live')) { toast('Bitte die Android-App aktualisieren', 'Das Live-Banner braucht die neue App-Version.'); ACTIONS.apkGet(); return; }
+    const now = Date.now(); window.KalNative.liveNow('Tutorium', 'Losgehen ' + hm(addMin(new Date(), 37)) + ' · U8 ab Rosenthaler Platz, Gleis 2', 'Fertig machen', now + 37 * 60000, now + 2 * 60000);
+    toast('Vorschau', 'Schau oben in die Benachrichtigungen. Die Vorschau verschwindet nach 2 Minuten.');
   },
   nativeSettings(){ try { window.KalNative.openSettings(); } catch {} },
   apkGet(){
@@ -9371,6 +9440,9 @@ function bindEvents(){
   document.addEventListener('change', async ev => {
     const t = ev.target;
     if (t.dataset && t.dataset.remgo) { ACTIONS.remGo(t); return; }
+    if (t.name && /^vib_(go|event|deadline)$/.test(t.name)) { state.settings.vib = {...(state.settings.vib || {}), [t.name.slice(4)]: t.value}; vibPlay(t.value); Store.schedule(); Native.queue(); if (STANDALONE) Push.queue(); return; }
+    if (t.name === 'vib' && t.form && t.value) { vibPlay(t.value); return; }
+    if (t.name === 'live_lead') { state.settings.live = {...(state.settings.live || {}), lead: +t.value}; Store.schedule(); Native.queue(); return; }
     if (t.dataset && t.dataset.set) {
       let v = t.type === 'number' ? parseFloat(t.value) : t.value;
       if (t.type === 'number' && isNaN(v)) return;
