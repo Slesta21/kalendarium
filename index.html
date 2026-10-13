@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 25.2  ·  persönlicher Kalender für alles
+ KALENDARIUM 25.3  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1301,6 +1301,11 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 .xcode{display:grid;justify-items:center;gap:2px;margin:2px 0 var(--s2)}
 .xcode span{font-size:12.5px;color:var(--muted)}
 .xcode b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:30px;letter-spacing:.14em;font-weight:700}
+.xget{display:grid;gap:8px;margin-top:var(--s2);padding-top:var(--s2);border-top:1px solid var(--line)}
+.xget-l{font-size:13px;color:var(--muted);text-align:center}
+.xget-r{display:flex;gap:8px;max-width:360px;width:100%;justify-self:center}
+.xget-r .btn{flex:none}
+.xcode-in.sm{font-size:20px;padding:10px;min-width:0;flex:1}
 .xcode-in{width:100%;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:30px;letter-spacing:.14em;text-transform:uppercase;padding:14px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
 .xfer .qr{width:min(340px, 82vw);box-shadow:none;border-radius:18px;padding:0}
 .qr-done{display:grid;place-items:center;gap:6px;min-height:280px;text-align:center;animation:memin var(--d2) var(--ease) both}
@@ -5731,7 +5736,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '25.2';
+const APP_VERSION = '25.3';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -8363,8 +8368,9 @@ async function transferSheet(){
   openSheet(`<div class="detail xfer">${head(title)}
     ${qr ? `<div class="qr-box" data-qrbox>${qr}</div>
       <div class="xcode"><span>oder am Handy eintippen</span><b>${esc(xFmt(tok))}</b></div>
-      <ol class="xfer-steps"><li><span>Handy-Kamera auf den Code halten, Link antippen</span></li><li><span>Dann <b>Übernehmen</b>. Oder am Handy unter Mehr → <b>Code eingeben</b></span></li></ol>
-      <p class="xfer-note" data-xstat>${esc(what)} und alle Einstellungen.${tok ? ` Verschlüsselt, gültig bis ${hm(until)}.` : ''}</p>
+      <ol class="xfer-steps"><li><span>Handy-Kamera auf den Code halten, Link antippen</span></li><li><span>Dann <b>Übernehmen</b>. Ohne Kamera: am Handy hier unten den Code eintippen</span></li></ol>
+      <p class="xfer-note" data-xstat>${what === 'Einstellungen' ? 'Alle Einstellungen' : esc(what) + ' und alle Einstellungen'}.${tok ? ` Verschlüsselt, gültig bis ${hm(until)}.` : ''}</p>
+      <form class="xget" data-form="codeEnter"><span class="xget-l">Code von einem anderen Gerät? Hier eintippen</span><div class="xget-r"><input name="code" class="xcode-in sm" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX XXXX" aria-label="Code eingeben"><button class="btn primary" type="submit">Holen</button></div></form>
       <div class="sheet-foot"><button class="btn ghost" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button><div class="r"><button class="btn" data-act="transfer">${ic('wdh','s')}Neuer Code</button></div></div>`
     : `<p style="font-size:16px">Zu viele Daten für einen QR-Code. Kopier den Link und öffne ihn auf dem Handy.</p><div class="sheet-foot"><button class="btn primary" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button></div>`}
   </div>`, {xfer:true});
