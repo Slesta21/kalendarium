@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 25.3  ·  persönlicher Kalender für alles
+ KALENDARIUM 25.4  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -5736,7 +5736,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '25.3';
+const APP_VERSION = '25.4';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -8473,6 +8473,17 @@ const Transit = {
   bases:['https://v6.vbb.transport.rest', 'https://v6.bvg.transport.rest', 'https://v6.db.transport.rest'],
   api: (() => { try { return localStorage.getItem('kal-tr-base') || 'https://v6.vbb.transport.rest'; } catch { return 'https://v6.vbb.transport.rest'; } })(),
   cache:{}, busy:false, alerted:{}, err:'', down:false,
+  /* Einmal gewählte Fahrt festhalten: gleiche Linien, gleiche Abfahrt. Gewechselt
+     wird nur, wenn sie ausfällt oder nicht mehr pünktlich ankommt. */
+  pins: (() => { try { const p = JSON.parse(localStorage.getItem('kal-pins') || '{}'), cut = Date.now() - 2 * 86400000; for (const k in p) if (!p[k] || p[k].t < cut) delete p[k]; return p; } catch { return {}; } })(),
+  tripId(j){ const t = j.legs.filter(g => !g.walk); return t.map(g => normLine(g.line) + '@' + stopKey(g.from)).join('>') + '#' + (t[0] ? +new Date(t[0].pdep || t[0].dep) : 0); },
+  pin(key, j){ if (!key || !j) return; this.pins[key] = {id: this.tripId(j), t: Date.now()}; try { localStorage.setItem('kal-pins', JSON.stringify(this.pins)); } catch {} },
+  pinned(key, js, ok){
+    const p = key && this.pins[key]; if (!p) return null;
+    const exact = js.find(j => this.tripId(j) === p.id && ok(j)); if (exact) return exact;
+    const sig = p.id.split('#')[0], same = js.filter(j => this.tripId(j).split('#')[0] === sig && ok(j)).sort((a, b) => b.depart - a.depart);
+    return same[0] || null;
+  },
   fam(b){ return /\.db\./.test(b || '') ? 'db' : 'vbb'; },
   async get(build, timeout = 9000){
     const order = [this.api, ...this.bases.filter(b => b !== this.api)]; let last = null;
@@ -8544,8 +8555,13 @@ const Transit = {
     const {data} = await this.get(this.jq(l.from.vbb, l.to.vbb, {arrival: arriveBy.toISOString(), results: '5', remarks: 'true', stopovers: 'true', polylines: 'true'}));
     const js = (data.journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length);
     const pref = routeLegs((l.before && l.before.ref && routeOk(l.before.ref.route)) ? l.before.ref.route : l.to.route).flatMap(g => [g.line, ...(g.alt || [])]).map(normLine).filter(Boolean), hasPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line))) ? 1 : 0;
-    const okJ = js.filter(j => !j.cancelled && j.arrive <= addMin(arriveBy, 1)).sort((a, b) => (hasPref(b) - hasPref(a)) || (b.depart - a.depart));
-    const best = okJ[0] || js.find(j => !j.cancelled) || js[0];
+    const inTime = j => !j.cancelled && j.arrive <= addMin(arriveBy, 1), pinKey = l.before && l.before.key;
+    const R0 = l.before && l.before.ref && routeOk(l.before.ref.route) ? l.before.ref.route : l.to.route;
+    const rKey = routeOk(R0) ? routeLegs(R0).map(g => stopKey(g.from) + '>' + stopKey(g.to)).join('|') : '';
+    const score = j => (rKey && segKey(j) === rKey ? 2 : 0) + hasPref(j);
+    const okJ = js.filter(inTime).sort((a, b) => (score(b) - score(a)) || (b.depart - a.depart));
+    const best = this.pinned(pinKey, js, inTime) || okJ[0] || js.find(j => !j.cancelled) || js[0];
+    this.pin(pinKey, best);
     if (!best) return null;
     const alts = groupJourneys(js.filter(j => segKey(j) !== segKey(best))).map(gr => repOf(gr, arriveBy)).slice(0, 3);
     let better = null, switched = false;
@@ -8587,7 +8603,8 @@ const Transit = {
         try {
           const js = (await this.options(hl.from.vbb, home.vbb, at0, 'departure', {stopovers: 'true', polylines: 'true', remarks: 'true'})).filter(j => j.depart >= addMin(at0, -1));
           const pref = routeLegs(routeOk(hl.after.ref.routeBack) ? hl.after.ref.routeBack : hl.from.routeBack).flatMap(g => [g.line, ...(g.alt || [])]).map(normLine), isPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line)));
-          const best = js.find(isPref) || js[0];
+          const best = this.pinned(key, js, j => !j.cancelled && j.depart >= addMin(at0, -1)) || js.find(isPref) || js[0];
+          this.pin(key, best);
           if (best) {
             const quicker = js.filter(j => j !== best && !j.cancelled).sort((a, b) => a.arrive - b.arrive)[0];
             const better = isPref(best) && quicker && best.arrive - quicker.arrive >= 3 * 60000 ? {label: lineSeq(quicker), gain: Math.round((best.arrive - quicker.arrive) / 60000), kind: 'früher zuhause'} : null;
