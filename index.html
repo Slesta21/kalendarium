@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 23  ·  persönlicher Kalender für alles
+ KALENDARIUM 23.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1926,6 +1926,15 @@ details.sv summary::-webkit-details-marker{display:none}
 .lt-now b{font-size:16px}
 .lt-now small{color:var(--muted);font-size:13.5px}
 .lt-note{font-size:13px;color:var(--accent-ink)}
+.vh-list{display:grid;gap:0;border-top:1px solid var(--line)}
+.vh-row{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;padding:11px 0;border-bottom:1px solid var(--line)}
+.vh-row svg{margin-top:2px}
+.vh-row.ok svg{color:var(--ok, #2e9e5b)}
+.vh-row.no svg{color:var(--danger)}
+.vh-row b{display:block;font-size:15px}
+.vh-row small{color:var(--muted);font-size:13px;line-height:1.4}
+.vh-steps{margin:var(--s2) 0 0;padding-left:20px;display:grid;gap:10px;font-size:14.5px;line-height:1.45}
+.vh-steps b{font-weight:600}
 .trip{display:flex;flex-direction:column;gap:0;margin-top:var(--s2);border-top:1px solid var(--line)}
 .trip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 0 6px}
 .trip-h b{font-size:15px}
@@ -5417,7 +5426,7 @@ const Reminders = {
     if (Push.on()) return;
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification(title, {body, icon:'icon-192.png', badge:'icon-192.png', vibrate:[180,90,180,90,320], tag: title + body})).catch(() => {});
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification(title, {body, icon:'icon-192.png', badge:'icon-192.png', vibrate:[300,120,300,120,500], tag: 'kal-' + Date.now(), renotify: true, silent: false, requireInteraction: true})).catch(() => {});
         else new Notification(title, {body});
       }
     } catch {}
@@ -5605,7 +5614,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '23';
+const APP_VERSION = '23.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6366,7 +6375,7 @@ const VIEWS = {
       </section>
 
       <section class="panel">
-        <div class="panel-h"><h2>Erinnerungen</h2><button class="btn sm" data-act="testReminder">${ic('glocke','s')}Testen</button></div>
+        <div class="panel-h"><h2>Erinnerungen</h2><button class="btn sm" data-act="testReminder">${ic('glocke','s')}Testen</button><button class="btn sm ghost" data-act="vibHelp">Vibriert nicht?</button></div>
         <div class="row"><div class="l"><b>Ton</b></div>${sw('sound', s.sound, 'Ton')}</div>
         <div class="row"><div class="l"><b>Vibration</b><small>Wenn der Browser es erlaubt</small></div>${sw('vibrate', s.vibrate, 'Vibration')}</div>
         <div class="row"><div class="l"><b>Systembenachrichtigungen</b><small>${notif}</small></div><button class="btn sm" data-act="askNotif">Erlauben</button></div>
@@ -7563,7 +7572,7 @@ const ACTIONS = {
   },
   pushOff(el){ if (!armConfirm(el, 'Wirklich ausschalten?')) return; Push.clear(); state.settings.ntfy.on = false; commit(); toast('Push ausgeschaltet', ''); },
   async pushTest(){
-    try { await Push.send({title:'Kalendarium', body:'Test: So kommen deine Erinnerungen an.', prio:4}); toast('Test gesendet', 'Kommt gleich als Benachrichtigung von ntfy.'); }
+    try { await Push.send({title:'Kalendarium', body:'Test: So kommen deine Erinnerungen an.', prio:5}); toast('Test gesendet', 'Kommt gleich als Benachrichtigung von ntfy.'); }
     catch { toast('Test hat nicht geklappt', navigator.onLine ? 'ntfy.sh ist gerade nicht erreichbar.' : 'Du bist offline.'); }
   },
   async pushNow(){ await Push.sync(true); toast(Push.err ? 'Planen hat nicht geklappt' : 'Erinnerungen geplant', Push.err || `${Push.count} in den nächsten ${Math.round(Push.horizonH)} Stunden`); render(); },
@@ -7756,7 +7765,20 @@ const ACTIONS = {
     catch { toast('Nicht verfügbar', 'Nutze den Kalender-Export für Erinnerungen am Handy.'); }
     render();
   },
-  testReminder(){ Reminders.unlock(); toast('Test läuft', 'Die Erinnerung kommt in 5 Sekunden.'); setTimeout(() => Reminders.fire('Test-Erinnerung', 'So sieht eine Erinnerung aus.', 'glocke'), 5000); },
+  async testReminder(){
+    Reminders.unlock();
+    let vib = false; try { vib = !!(navigator.vibrate && navigator.vibrate([300, 120, 300, 120, 500])); } catch {}
+    if (!state.settings.vibrate) { state.settings.vibrate = true; commit(); }
+    let perm = 'Notification' in window ? Notification.permission : 'na';
+    if (perm === 'default') { try { perm = await Notification.requestPermission(); } catch {} }
+    let push = 'aus';
+    if (Push.on()) { try { await Push.send({title: 'Test-Erinnerung', body: 'So meldet sich Kalendarium, auch bei geschlossener App.', prio: 5}); push = 'gesendet'; } catch { push = 'fehler'; } }
+    ui._diag = {vib, perm, push};
+    toast('Test läuft', 'Hat es gerade vibriert? In 5 Sekunden kommt zusätzlich eine Benachrichtigung, du kannst das Handy jetzt sperren.');
+    setTimeout(() => { Reminders.fire('Test-Erinnerung', 'So sieht eine Erinnerung aus.', 'glocke'); }, 5000);
+    setTimeout(() => { if (!sheet.el || sheet.el.hidden) vibHelp(); }, 9000);
+  },
+  vibHelp(){ vibHelp(); },
   async copyIcs(){ const text = buildICS(); try { await navigator.clipboard.writeText(text); toast('Kopiert', 'In der Kalender-App oder einer .ics-Datei einfügen.'); } catch { EDITORS.icsText(text); } },
   async saveIcs(){ if (await saveFile('kalendarium-ics.txt', buildICS())) toast('Gesichert', 'Endung in .ics ändern und mit der Kalender-App öffnen.'); },
   async saveBackup(){ if (await saveFile(`kalendarium-sicherung-${ymd(new Date())}.json`, JSON.stringify(state, null, 2))) toast('Sicherung gespeichert', ''); },
@@ -8650,12 +8672,31 @@ const Push = {
   },
   async clear(){ if (!state.settings.ntfy || !state.settings.ntfy.topic) return; try { const k = await this.known(); for (const id in k) await fetch(this.url('/' + id), {method:'DELETE'}); } catch {} }
 };
+/* Hilfe, wenn das Handy nicht vibriert: zeigt, was geklappt hat und was zu tun ist */
+function vibHelp(){
+  const d = ui._diag || {}, isAndroid = /Android/i.test(navigator.userAgent);
+  const st = (ok, label, hint) => `<div class="vh-row ${ok ? 'ok' : 'no'}">${ic(ok ? 'haken' : 'x', 's')}<span><b>${label}</b>${hint ? `<small>${hint}</small>` : ''}</span></div>`;
+  const permOk = d.perm === 'granted';
+  openSheet(`<div class="detail vibhelp">${head('Hat es vibriert?')}
+    <div class="vh-list">
+      ${st(d.vib, 'Vibration bei offener App', d.vib ? 'Der Browser darf vibrieren.' : 'Der Browser hat die Vibration abgelehnt, meist weil das Handy auf lautlos steht oder „Bitte nicht stören“ an ist.')}
+      ${st(permOk, 'Benachrichtigungen erlaubt', permOk ? 'Banner kommen, solange Kalendarium offen oder im Hintergrund ist.' : d.perm === 'denied' ? 'Blockiert. Erlaube sie in den Einstellungen, siehe Schritt 2.' : 'Noch nicht erlaubt.')}
+      ${st(d.push === 'gesendet', 'Push bei geschlossener App (ntfy)', d.push === 'gesendet' ? 'Test-Push ist raus, er sollte gerade als Banner gekommen sein.' : d.push === 'fehler' ? 'ntfy.sh war gerade nicht erreichbar.' : 'Noch nicht eingerichtet. Ohne ntfy vibriert das Handy nicht, wenn Kalendarium geschlossen ist.')}
+    </div>
+    <ol class="vh-steps">
+      <li><b>Lautlos und „Bitte nicht stören“ aus.</b> Im Lautlos-Modus vibriert Android bei Benachrichtigungen oft gar nicht. Stell auf „Vibrieren“ oder „Klingeln“.</li>
+      ${isAndroid || true ? `<li><b>Benachrichtigungen mit Vibration.</b> Android-Einstellungen → Apps → ${STANDALONE ? 'Kalendarium (oder Chrome)' : 'Chrome'} → Benachrichtigungen: erlauben, und bei der Kategorie für Websites „Vibration“ und „Als Pop-up anzeigen“ einschalten.</li>` : ''}
+      <li><b>ntfy für geschlossene App.</b> ${Push.on() ? 'Android-Einstellungen → Apps → ntfy → Benachrichtigungen: bei den Kategorien für <b>hohe</b> und <b>höchste Priorität</b> „Vibration“ und „Als Pop-up anzeigen“ einschalten. In ntfy das Thema einmal antippen, damit es abonniert ist.' : 'Unter Einstellungen → Erinnerungen „Banner und Vibration auch bei geschlossener App“ einschalten und den drei Schritten folgen.'}</li>
+      <li><b>Akku-Optimierung.</b> Android-Einstellungen → Apps → ntfy → Akku → „Nicht eingeschränkt“. Sonst kommen Pushs manchmal zu spät.</li>
+    </ol>
+    <div class="sheet-foot"><button class="btn" data-act="go" data-v="einstellungen">Einstellungen</button><div class="r"><button class="btn primary" data-act="testReminder">${ic('glocke','s')}Nochmal testen</button></div></div></div>`);
+}
 function pushRows(){
   const n = state.settings.ntfy || {};
   if (!n.on) return `<div class="row"><div class="l"><b>Banner und Vibration auch bei geschlossener App</b><small>Auch auf dem Sperrbildschirm, über die kostenlose App ntfy. Kalendarium plant die Erinnerungen voraus, ntfy meldet sie pünktlich.</small></div><button class="btn sm primary" data-act="pushOn">Einschalten</button></div>`;
   const play = 'https://play.google.com/store/apps/details?id=io.heckel.ntfy', sub = `ntfy://ntfy.sh/${encodeURIComponent(n.topic)}`;
   const st = Push.err ? Push.err : Push.lastSync ? `${Push.count} Erinnerungen für die nächsten ${Math.round(Push.horizonH)} Stunden geplant` : 'Wird beim nächsten Öffnen geplant';
-  return `<div class="row"><div class="l"><b>Erinnerungen bei geschlossener App</b><small>${esc(st)}</small></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" data-act="pushTest">Test</button><button class="btn sm" data-act="pushNow">Neu planen</button><button class="btn sm danger" data-act="pushOff">Aus</button></span></div>
+  return `<div class="row"><div class="l"><b>Erinnerungen bei geschlossener App</b><small>${esc(st)}</small></div><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" data-act="testReminder">Test</button><button class="btn sm" data-act="pushNow">Neu planen</button><button class="btn sm danger" data-act="pushOff">Aus</button></span></div>
     <div class="row" style="flex-wrap:wrap;gap:8px"><div class="l" style="flex-basis:100%"><b>Einrichten am Handy</b><small>1. ntfy installieren. 2. Thema abonnieren (öffnet ntfy). 3. Auf „Test“ tippen.</small></div><a class="btn sm" href="${play}" target="_blank" rel="noopener">${ic('runter','s')}1. ntfy installieren</a><a class="btn sm primary" href="${sub}">${ic('glocke','s')}2. Abonnieren</a><button class="btn sm" data-act="copyTopic" title="Falls Abonnieren nicht öffnet: in ntfy auf + tippen und dieses Thema einfügen">${ic('kopie','s')}Thema kopieren</button></div>
     <p class="note">Falls „Abonnieren“ nicht direkt öffnet: In ntfy auf <b>+</b> tippen und das Thema <b>${esc(n.topic)}</b> einfügen. Vibration stellst du in ntfy pro Thema ein. Öffne Kalendarium mindestens alle zwei Tage, damit es weiter vorausplant. Wer das Thema kennt, kann deine Erinnerungen lesen, also nicht weitergeben.</p>`;
 }
