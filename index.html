@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 15  ·  persönlicher Kalender für alles
+ KALENDARIUM 16  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1228,6 +1228,23 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
   .top .faden{order:10;padding-top:2px}
   .wk.compact .wk-h,.wk.compact .wk-corner{top:var(--top-h, 0px)}
 }
+
+/* Live-Verbindungen */
+.travel .late,.tl-travel .late{color:var(--danger);font-weight:600}
+.trip{display:flex;flex-direction:column;gap:0;margin-top:var(--s2);border-top:1px solid var(--line)}
+.trip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 0 6px}
+.trip-h b{font-size:15px}
+.trip-h small{color:var(--muted);font-size:12.5px}
+.tleg{display:grid;grid-template-columns:52px 40px minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line)}
+.tleg .tm{font-variant-numeric:tabular-nums;font-size:14px;line-height:1.3}
+.tleg .tm s{color:var(--faint);font-size:12px;display:block}
+.tleg .tm .late{color:var(--danger);font-size:12px;display:block;font-weight:600}
+.tleg .ln{justify-self:start;font-size:12.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--lc, var(--ink));color:#fff;line-height:1.3;white-space:nowrap}
+.tleg .ln.walk{background:none;color:var(--muted);font-weight:500;padding:2px 0}
+.tleg .tx{font-size:14px;line-height:1.35;min-width:0}
+.tleg .tx small{display:block;color:var(--muted);font-size:12.5px}
+.tleg.x .tx,.tleg.x .tm{opacity:.55;text-decoration:line-through}
+.trip-alt{display:flex;flex-wrap:wrap;gap:6px;padding-top:10px}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -2033,9 +2050,10 @@ function planDay(date){
       if (gap > back + there + (+T.stayGap||0)) { legs.push({kind:'home', from:loc, to:home, depart:freeAt, arrive:addMin(freeAt, back), mins:back}); loc = home; }
     }
     if (loc && loc.id === pl.id) { prev = o; freeAt = o.end; continue; }
-    const tr = between(loc, pl, arriveBy), depart = addMin(arriveBy, -tr.total);
+    const tr = between(loc, pl, arriveBy), lv = Transit.liveFor(o.key, arriveBy);
+    const depart = lv ? lv.depart : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
     const tight = !!(freeAt && depart < freeAt);
-    legs.push({kind:'go', from:loc, to:pl, depart, arrive:arriveBy, mins:tr.total, base:tr.base, rainy:tr.rainy, est:tr.est, tight, slack: tight ? Math.round((arriveBy - freeAt)/60000) : null, before:o});
+    legs.push({kind:'go', from:loc, to:pl, depart, arrive, mins, base:tr.base, rainy:lv ? false : tr.rainy, est:tr.est, tight, slack: tight ? Math.round((arriveBy - freeAt)/60000) : null, before:o, live:lv || null});
     loc = pl; freeAt = o.end; prev = o;
   }
   if (loc && !loc.home && freeAt) { const back = travelMinutes(loc, freeAt).total; legs.push({kind:'home', from:loc, to:home, depart:freeAt, arrive:addMin(freeAt, back), mins:back}); }
@@ -2178,7 +2196,7 @@ const Reminders = {
     }
     const d0 = startOfDay(new Date(from)), days = Math.min(5, Math.ceil((to - +d0) / 86400000) + 1);
     if (state.settings.travel.remind) for (let k = 0; k < days; k++) for (const l of planDay(addDays(d0, k)).legs.filter(l => l.kind === 'go'))
-      add(l.depart.getTime() - 10*60000, `go:${l.before.key}`, 'In 10 min losgehen', `${l.before.kind === 'course' ? l.before.ref.title : l.before.title} · ${l.to.name} · ${dur(l.mins)} Weg`, 'kompass', 5);
+      add(l.depart.getTime() - 10*60000, `go:${l.before.key}`, 'In 10 min losgehen', l.live ? `${l.live.summary}${l.live.delay ? ` (+${l.live.delay} min)` : ''} · für ${l.before.kind === 'course' ? l.before.ref.title : l.before.title}` : `${l.before.kind === 'course' ? l.before.ref.title : l.before.title} · ${l.to.name} · ${dur(l.mins)} Weg`, 'kompass', 5);
     if (state.settings.sleep.on && +state.settings.sleep.remind) { const SP = sleepPlan(); for (let k = 0; k < days; k++) {
       const sp = SP[ymd(addDays(d0, k + 1))];
       if (sp) add(sp.bed.getTime() - state.settings.sleep.remind*60000, `bed:${ymd(sp.bed)}`, 'Bald Schlafenszeit', `Ins Bett um ${hm(sp.bed)}, Wecker ${hm(sp.wake)}`, 'stern', 3);
@@ -2572,7 +2590,7 @@ function dayTimeline(date){
   if (bedLate) body += `<div class="marker sleep late" style="top:${H*PX - 2}px"><span data-act="sleepInfo" data-date="${ymd(addDays(date,1))}">${ic('mond','s')}Schlafenszeit ${hm(bedT.bed)} (nach Mitternacht)</span></div>`;
   if (s.layers.travel) plan.legs.forEach((l, i) => {
     const h = Math.max(22, (l.arrive - l.depart)/3600000*PX - 2);
-    const label = l.kind === 'go' ? `<b>Losgehen ${hm(l.depart)}</b> · ${dur(l.mins)} zu ${esc(l.to.name)}${l.rainy?' · Regen eingeplant':''}` : l.needHome ? `<b>Heimweg</b> für ${esc(l.before.kind==='course'?l.before.ref.short||l.before.title:l.before.title)} · zuhause ${hm(l.arrive)}` : `Heimweg · zuhause ca. ${hm(l.arrive)}`;
+    const label = l.kind === 'go' ? `<b>Losgehen ${hm(l.depart)}</b> · ${l.live ? `${esc(l.live.summary)}${l.live.delay ? ` <span class="late">+${l.live.delay}</span>` : ''}${l.live.cancelled ? ' <span class="late">fällt aus</span>' : ''}` : `${dur(l.mins)} zu ${esc(l.to.name)}${l.rainy?' · Regen eingeplant':''}`}` : l.needHome ? `<b>Heimweg</b> für ${esc(l.before.kind==='course'?l.before.ref.short||l.before.title:l.before.title)} · zuhause ${hm(l.arrive)}` : `Heimweg · zuhause ca. ${hm(l.arrive)}`;
     body += `<button class="travel${l.tight?' tight':''}" style="top:${y(l.depart)}px;height:${h}px" data-act="travelInfo" data-date="${ymd(date)}" data-i="${i}">${ic('weg','s')}<span>${label}</span></button>`;
   });
   for (const L of layoutLanes(timed.map(o => ({o, start:o.start, end:o.end})))) {
@@ -2783,7 +2801,7 @@ const VIEWS = {
 
       <section class="panel">
         <div class="panel-h"><h2>Orte und Wege</h2><button class="btn sm" data-act="newPlace">${ic('plus','s')}Ort</button></div>
-        <div>${state.places.map(p => `<div class="listrow" ${p.home?'':`data-act="edit" data-kind="place" data-id="${esc(p.id)}"`}><span style="color:var(--accent-ink);display:flex">${ic(p.home?'haus':'ort','s')}</span><span class="grow">${esc(p.name)}<small>${p.home?'Startpunkt für alle Wege':`${dur(p.minutes)} · ${MODES[p.mode]} · mit Puffer ${dur(travelMinutes(p).total)}`}</small></span>${p.home?'':ic('weiter','s')}</div>`).join('')}</div>
+        <div>${state.places.map(p => `<div class="listrow" data-act="edit" data-kind="place" data-id="${esc(p.id)}"><span style="color:var(--accent-ink);display:flex">${ic(p.home?'haus':'ort','s')}</span><span class="grow">${esc(p.name)}<small>${p.home?`Startpunkt für alle Wege${p.vbb ? ' · ' + esc(p.vbb.name) : Transit.ok() ? ' · Haltestelle eintragen für Live-Verbindungen' : ''}`:`${p.vbb && Transit.ok() ? 'Live · ' : ''}${dur(p.minutes)} · ${MODES[p.mode]} · mit Puffer ${dur(travelMinutes(p).total)}`}</small></span>${p.home?'':ic('weiter','s')}</div>`).join('')}</div>
         <div class="row" style="margin-top:8px"><div class="l"><b>Puffer</b><small>Aufschlag auf jede Wegzeit</small></div><span>${numIn('travel.bufferPct', T.bufferPct, 0, 100, 1, 'Puffer in Prozent')} %</span></div>
         <div class="row"><div class="l"><b>Mindestpuffer</b></div><span>${numIn('travel.minBuffer', T.minBuffer, 0, 60, 1, 'Mindestpuffer')} min</span></div>
         <div class="row"><div class="l"><b>Früher da sein</b><small>Ankunft vor Beginn</small></div><span>${numIn('travel.arriveEarly', T.arriveEarly, 0, 60, 1, 'Früher da sein')} min</span></div>
@@ -3187,7 +3205,7 @@ function weekGrid(days){
     let body = '';
     if (s.layers.travel) plan.legs.forEach((l, i) => {
       if (l.depart.getHours() < h0 || !sameDay(l.depart, d)) return;
-      body += `<button class="travel${l.tight?' tight':''}" style="top:${y(l.depart)}px;height:${Math.max(14, (l.arrive - l.depart)/3600000*PX - 1)}px" data-act="travelInfo" data-date="${ymd(d)}" data-i="${i}" title="${l.kind==='go'?'Losgehen '+hm(l.depart):'Heimweg'}">${l.kind==='go'?hm(l.depart):''}</button>`;
+      body += `<button class="travel${l.tight?' tight':''}" style="top:${y(l.depart)}px;height:${Math.max(14, (l.arrive - l.depart)/3600000*PX - 1)}px" data-act="travelInfo" data-date="${ymd(d)}" data-i="${i}" title="${l.kind==='go'?'Losgehen '+hm(l.depart)+(l.live?' · '+l.live.summary:''):'Heimweg'}">${l.kind==='go'?hm(l.depart)+(l.live?' '+esc(l.live.first):''):''}</button>`;
     });
     for (const L of layoutLanes(items.filter(isTimed).filter(layerOk).concat(workFor(d)).map(o => ({o, start:o.start, end:o.end})))) {
       const o = L.o, w = 100/L.lanes, pos = `left:calc(${L.lane*w}% + 3px);width:calc(${w}% - 6px);right:auto`;
@@ -3498,10 +3516,11 @@ const DETAIL = {
     openSheet(`<div class="detail">${head(l.kind === 'go' ? `Weg zu ${esc(l.before.title)}` : 'Heimweg')}
       <div class="facts">
         ${fact('weg', `${esc(l.from?.name||'Zuhause')} → ${esc(l.to?.name||'Zuhause')}`, `${mode}${l.est?' · zwischen zwei Orten geschätzt':''}`)}
-        ${fact('uhr', l.kind === 'go' ? `Losgehen ${hm(l.depart)} · Ankunft ${hm(l.arrive)}` : `Ab ${hm(l.depart)} · zuhause ca. ${hm(l.arrive)}`, `${dur(l.mins)} insgesamt${l.base?` · reine Wegzeit ${dur(l.base)}, dazu ${T.bufferPct} % und ${T.minBuffer} min Puffer`:''}${l.rainy?` · ${T.rainExtra} min Regenzuschlag`:''}`)}
+        ${fact('uhr', l.kind === 'go' ? `Losgehen ${hm(l.depart)} · Ankunft ${hm(l.arrive)}` : `Ab ${hm(l.depart)} · zuhause ca. ${hm(l.arrive)}`, (l.live ? `${dur(l.mins)} laut Live-Fahrplan, Ankunft ${T.arriveEarly} min vor Beginn` : `${dur(l.mins)} insgesamt${l.base?` · reine Wegzeit ${dur(l.base)}, dazu ${T.bufferPct} % und ${T.minBuffer} min Puffer`:''}${l.rainy?` · ${T.rainExtra} min Regenzuschlag`:''}`))}
         ${l.tight ? fact('glocke', '<span style="color:var(--warn)">Knapp</span>', `Zwischen dem vorherigen Termin und der Ankunft bleiben nur ${Math.max(0,l.slack)} min.`) : ''}
         ${wxFactFor(l.depart)}
       </div>
+      ${l.live ? transitHtml(l.live) : Transit.ok() && l.kind === 'go' ? `<p class="note" style="margin-top:14px">${Transit.hint(l)}</p>` : ''}
       <p class="note" style="margin-top:14px">Wegzeiten und Puffer änderst du in den Einstellungen unter Orte und Wege.</p></div>`);
   },
   sleep(dateStr){
@@ -3601,11 +3620,13 @@ const EDITORS = {
   },
   place(p){
     const isNew = !p; p = p || {name:'', minutes:20, mode:'oepnv'};
+    const vb = Transit.ok() ? `<div class="f"><span>Haltestelle oder Adresse für Live-Verbindungen</span><div style="display:flex;gap:8px"><input id="vbbQ" placeholder="z. B. Ernst-Reuter-Platz oder Straße und Hausnummer" value="${esc(p.vbb ? p.vbb.name : '')}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p.vbb ? JSON.stringify(p.vbb) : '')}"><div id="vbbRes" class="chips" style="margin-top:8px">${p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : ''}</div></div>` : '';
     openSheet(`${head(isNew ? 'Neuer Ort' : 'Ort bearbeiten')}<form class="form" data-form="place">
       <label class="f"><input class="title" name="name" required placeholder="z. B. TU Berlin, Fitnessstudio" value="${esc(p.name)}" aria-label="Name"></label>
       <div class="frow"><label class="f"><span>Weg von Zuhause (min)</span><input type="number" name="minutes" min="0" max="600" value="${+p.minutes||0}"></label><label class="f"><span>Unterwegs mit</span><select name="mode">${Object.entries(MODES).map(([k,v]) => `<option value="${k}" ${p.mode===k?'selected':''}>${v}</option>`).join('')}</select></label></div>
-      <p class="note">Trag die reine Fahrzeit von Tür zu Tür ein, so wie eine Karten-App sie anzeigt. Puffer, Wartezeit und Regen rechnet der Kalender selbst dazu.</p>
-      ${foot(!isNew)}</form>`, {kind:'place', id: isNew ? null : p.id});
+      ${p.home ? '' : `<p class="note">Trag die reine Fahrzeit von Tür zu Tür ein, so wie eine Karten-App sie anzeigt. Puffer, Wartezeit und Regen rechnet der Kalender selbst dazu.</p>`}
+      ${vb}
+      ${foot(!isNew && !p.home)}</form>`, {kind:'place', id: isNew ? null : p.id});
   },
   template(t){
     const isNew = !t; t = t || {name:'', dur:60, bb:0, ba:0, catId:'privat', placeId:''};
@@ -3773,7 +3794,10 @@ const SAVE = {
     closeSheet(); commit();
   },
   place(form, fd){
-    const name = fd.get('name').trim(), isNew = upsert('places', sheet.ctx.id, {name, minutes: +fd.get('minutes')||0, mode: fd.get('mode'), home:false});
+    const ex = sheet.ctx.id && placeById(sheet.ctx.id), isHome = !!(ex && ex.home);
+    let vbb = ex && ex.vbb || null; try { const v = fd.get('vbb'); vbb = v ? JSON.parse(v) : null; } catch {}
+    const name = fd.get('name').trim(), isNew = upsert('places', sheet.ctx.id, isHome ? {name, vbb} : {name, minutes: +fd.get('minutes')||0, mode: fd.get('mode'), home:false, vbb});
+    Transit.reset();
     if (isNew) { /* Uni-Ort automatisch der Kategorie Uni zuordnen */
       const p = state.places[state.places.length-1], uni = state.categories.find(c => c.id === 'uni');
       if (uni && !uni.placeId && /\b(uni|tu|hu|fu|hochschule|campus|universit)/i.test(name)) { uni.placeId = p.id; toast('Ort verknüpft', `Uni-Termine bekommen jetzt automatisch ${name} mit Wegzeit.`); }
@@ -3825,6 +3849,20 @@ async function saveFile(filename, data){
 function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 const ACTIONS = {
+  async vbbSearch(el){
+    const f = el.closest('form'), q = f.querySelector('#vbbQ').value.trim(), box = f.querySelector('#vbbRes'); if (!q) return;
+    box.innerHTML = '<span class="muted">Suche …</span>';
+    try {
+      ui._vbbRes = await Transit.search(q);
+      box.innerHTML = ui._vbbRes.length ? ui._vbbRes.map((r, i) => `<button type="button" class="chip" data-act="vbbPick" data-i="${i}">${ic(r.type === 'stop' || r.type === 'station' ? 'zug' : 'ort','s')}${esc(r.name)}</button>`).join('') : '<span class="muted">Nichts gefunden. Versuch den Namen der Haltestelle.</span>';
+    } catch { box.innerHTML = '<span class="muted">Suche nicht möglich. Bist du online?</span>'; }
+  },
+  vbbPick(el){
+    const r = ui._vbbRes && ui._vbbRes[+el.dataset.i], f = el.closest('form'); if (!r) return;
+    f.elements.vbb.value = JSON.stringify(r); f.querySelector('#vbbQ').value = r.name;
+    f.querySelector('#vbbRes').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(r.name)}</span>`;
+  },
+  async transitNow(){ Transit.reset(); await Transit.refresh(true); render(); },
   pushOn(){
     const rnd = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijkmnopqrstuvwxyz23456789'[b % 33]).join('');
     state.settings.ntfy = {on:true, topic: state.settings.ntfy && state.settings.ntfy.topic || ('kal-' + rnd)};
@@ -4182,6 +4220,98 @@ function showKeys(){
 }
 
 /* ================================================================
+   §16i LIVE-VERBINDUNGEN (BVG, S-Bahn, Regio über VBB)
+   Für Wege mit ÖPNV zwischen zwei Orten mit Haltestelle oder Adresse
+   holt die App die passende Verbindung von v6.vbb.transport.rest:
+   spätestens pünktlich ankommen, Verspätungen und Ausfälle live.
+   Die Losgehzeit, der Tagesfaden und die Erinnerung zum Losgehen
+   folgen der echten Abfahrt. Nur in der App-Version.
+   ================================================================ */
+const LINE_COL = {suburban:'#3E8A3E', subway:'#1F5AA6', tram:'#C3282B', bus:'#8F2C8A', regional:'#B3242C', express:'#5B5B5B', ferry:'#2A7FB8'};
+const Transit = {
+  api:'https://v6.vbb.transport.rest', cache:{}, busy:false, alerted:{}, err:'',
+  ok(){ return STANDALONE && navigator.onLine !== false; },
+  reset(){ this.cache = {}; invalidate(); },
+  liveFor(key, arriveBy){ const c = this.cache[key]; return c && c.depart && Math.abs(c.arriveBy - arriveBy) < 60000 ? c : null; },
+  hint(l){
+    const miss = [l.from && !l.from.vbb ? l.from.name : null, l.to && !l.to.vbb ? l.to.name : null].filter(Boolean);
+    if (l.to && l.to.mode !== 'oepnv') return 'Live-Verbindungen gibt es für Orte mit „ÖPNV“.';
+    return miss.length ? `Für Live-Verbindungen trag bei ${miss.map(esc).join(' und ')} eine Haltestelle oder Adresse ein (Einstellungen → Orte und Wege).` : 'Die Live-Verbindung wird gerade geladen.';
+  },
+  async search(q){
+    const r = await fetch(`${this.api}/locations?query=${encodeURIComponent(q)}&results=7&language=de&pretty=false`); if (!r.ok) throw new Error('vbb');
+    return (await r.json()).map(x => ({type: x.type, id: x.id || null, name: x.name || x.address, address: x.address || null, poi: !!x.poi,
+      latitude: x.latitude ?? (x.location && x.location.latitude), longitude: x.longitude ?? (x.location && x.location.longitude)})).filter(x => x.name);
+  },
+  params(prefix, L){
+    if ((L.type === 'stop' || L.type === 'station') && L.id) return {[prefix]: L.id};
+    if (L.poi && L.id) return {[prefix + '.id']: L.id, [prefix + '.name']: L.name, [prefix + '.latitude']: L.latitude, [prefix + '.longitude']: L.longitude};
+    return {[prefix + '.address']: L.address || L.name, [prefix + '.latitude']: L.latitude, [prefix + '.longitude']: L.longitude};
+  },
+  simplify(j){
+    const legs = (j.legs || []).map(g => ({
+      walk: !!g.walking, line: g.line ? g.line.name : '', product: g.line ? g.line.product : '', dir: g.direction || '',
+      from: g.origin ? g.origin.name : '', to: g.destination ? g.destination.name : '',
+      dep: g.departure || g.plannedDeparture, pdep: g.plannedDeparture, ddel: g.departureDelay != null ? Math.round(g.departureDelay / 60) : null,
+      arr: g.arrival || g.plannedArrival, parr: g.plannedArrival, adel: g.arrivalDelay != null ? Math.round(g.arrivalDelay / 60) : null,
+      plat: g.departurePlatform || g.plannedDeparturePlatform || '', x: !!g.cancelled, dist: g.distance || null,
+      notes: (g.remarks || []).filter(r => r.type === 'warning' || r.type === 'status').map(r => r.summary || r.text).filter(Boolean).slice(0, 2)
+    }));
+    const first = legs.find(g => !g.walk) || null;
+    return {legs, depart: new Date(legs[0].dep), arrive: new Date(legs[legs.length - 1].arr), first: first ? first.line : 'zu Fuß',
+      summary: first ? `${first.line} ${hm(new Date(first.dep))} ab ${first.from}` : 'zu Fuß', delay: first && first.ddel > 0 ? first.ddel : 0, cancelled: legs.some(g => g.x)};
+  },
+  async fetchLeg(l, arriveBy){
+    const q = new URLSearchParams({...this.params('from', l.from.vbb), ...this.params('to', l.to.vbb), arrival: arriveBy.toISOString(), results: '4', language: 'de', remarks: 'true', pretty: 'false'});
+    const r = await fetch(`${this.api}/journeys?${q}`); if (!r.ok) throw new Error('vbb ' + r.status);
+    const js = ((await r.json()).journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length);
+    const okJ = js.filter(j => !j.cancelled && j.arrive <= addMin(arriveBy, 1)).sort((a, b) => b.depart - a.depart);
+    const best = okJ[0] || js.find(j => !j.cancelled) || js[0];
+    if (!best) return null;
+    return {...best, arriveBy: +arriveBy, fetchedAt: Date.now(), alts: js.filter(j => j !== best).slice(0, 3)};
+  },
+  async refresh(force){
+    if (!this.ok() || this.busy || !state) return; this.busy = true;
+    const T = state.settings.travel, now = Date.now(); let changed = false;
+    try {
+      const t0 = startOfDay(new Date());
+      for (const d of [t0, addDays(t0, 1)]) {
+        for (const o of dayItems(d).filter(isTimed)) {
+          const arriveBy = addMin(o.start, -(+T.arriveEarly || 0)); if (+arriveBy < now || +arriveBy > now + 30 * 3600000) continue;
+          const l = planDay(d).legs.find(x => x.kind === 'go' && x.before.key === o.key);
+          if (!l || !l.from || !l.to || !l.from.vbb || !l.to.vbb || l.to.mode !== 'oepnv') continue;
+          const c = this.cache[o.key], soon = +arriveBy - now < 3 * 3600000, maxAge = soon ? 90000 : 20 * 60000;
+          if (!force && c && c.arriveBy === +arriveBy && now - c.fetchedAt < maxAge) continue;
+          try { const lv = await this.fetchLeg(l, arriveBy); if (lv) { this.cache[o.key] = lv; changed = true; this.alert(o, lv); } this.err = ''; }
+          catch { this.err = 'Live-Verbindungen gerade nicht erreichbar.'; }
+        }
+      }
+    } finally { this.busy = false; }
+    if (changed) { invalidate(); renderSoft(); if (typeof Push !== 'undefined') Push.queue(); }
+  },
+  alert(o, lv){
+    if (lv.depart - Date.now() > 3 * 3600000) return;
+    const lvl = lv.cancelled ? 'x' : lv.delay >= 5 ? 'd' + Math.floor(lv.delay / 5) : ''; if (!lvl) return;
+    const k = o.key + ':' + lvl; if (this.alerted[k]) return; this.alerted[k] = 1;
+    const nm = o.kind === 'course' ? o.ref.title : o.title, title = lv.cancelled ? `${lv.first} fällt aus` : `${lv.first} +${lv.delay} min`;
+    const body = lv.cancelled ? `Für ${nm}: neue Verbindung im Kalender ansehen.` : `Für ${nm}: Losgehen jetzt ${hm(lv.depart)}.`;
+    toast(title, body, {rem:true, sym:'zug', ttl:0});
+    try { if (state.settings.vibrate && navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch {}
+    if (typeof Push !== 'undefined' && Push.on()) Push.send({title, body, prio: 5}).catch(() => {});
+  }
+};
+function transitHtml(lv){
+  const tm = (t, p, d) => `<span class="tm">${hm(new Date(t))}${d > 0 ? `<span class="late">+${d}</span>` : ''}${d > 0 && p ? `<s>${hm(new Date(p))}</s>` : ''}</span>`;
+  const leg = g => g.walk
+    ? `<div class="tleg">${tm(g.dep)}<span class="ln walk">${ic('laeufer','s')}</span><span class="tx">Zu Fuß${g.dist ? ` · ${g.dist} m` : ''}<small>bis ${esc(g.to)}</small></span></div>`
+    : `<div class="tleg${g.x ? ' x' : ''}">${tm(g.dep, g.pdep, g.ddel)}<span class="ln" style="--lc:${LINE_COL[g.product] || 'var(--ink)'}">${esc(g.line)}</span><span class="tx">${esc(g.from)}${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}<small>Richtung ${esc(g.dir)} · an ${esc(g.to)} ${hm(new Date(g.arr))}${g.adel > 0 ? ` (+${g.adel})` : ''}</small>${g.x ? '<small style="color:var(--danger)">Fällt aus</small>' : ''}${g.notes.map(n => `<small>${esc(n)}</small>`).join('')}</span></div>`;
+  const ago = Math.max(0, Math.round((Date.now() - lv.fetchedAt) / 60000));
+  return `<div class="trip"><div class="trip-h"><b>Verbindung live</b><small>${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'} · VBB</small></div>${lv.legs.map(leg).join('')}
+    ${lv.alts && lv.alts.length ? `<div class="trip-alt"><span class="muted" style="font-size:13px;width:100%">Andere Verbindungen</span>${lv.alts.map(a => `<span class="tag">${esc(a.first)} ${hm(a.depart)} → ${hm(a.arrive)}${a.cancelled ? ' · fällt aus' : a.delay ? ` · +${a.delay}` : ''}</span>`).join('')}</div>` : ''}
+    <div class="trip-alt"><button class="btn sm" data-act="transitNow">${ic('wdh','s')}Aktualisieren</button></div></div>`;
+}
+
+/* ================================================================
    §16h PUSH ÜBER NTFY: Erinnerungen und Vibration auch bei
    geschlossener App. Die App plant die Erinnerungen der nächsten
    Stunden als verzögerte Nachrichten auf einem geheimen ntfy-Thema
@@ -4463,7 +4593,7 @@ function fadenHtml(){
   else if (now >= z) lab = `<i>Zeit fürs Bett</i>`;
   else {
     const go = planDay(now).legs.find(l => l.kind === 'go' && l.depart > now), cur = its.find(o => o.start <= now && o.end > now), nx = its.find(o => o.start > now);
-    if (go && (!nx || go.depart <= nx.start) && (!cur || go.depart <= cur.end)) lab = `Losgehen <i>${relTime(go.depart, now)}</i>`;
+    if (go && (!nx || go.depart <= nx.start) && (!cur || go.depart <= cur.end)) lab = `Losgehen <i>${relTime(go.depart, now)}</i>${go.live ? ` · ${esc(go.live.first)}${go.live.delay ? ` +${go.live.delay}` : ''}` : ''}`;
     else if (cur) lab = `${esc(titleOf(cur))} <i>bis ${hm(cur.end)}</i>`;
     else if (nx) lab = `${esc(titleOf(nx))} <i>${relTime(nx.start, now)}</i>`;
     else lab = `Ins Bett <i>${relTime(z, now)}</i>`;
@@ -4784,6 +4914,7 @@ function init(){
   applyTheme(); bindEvents(); bindDrag(); bindSwipe(); setSync(); render();
   Reminders.load(); Reminders.last = Date.now();
   setInterval(() => Reminders.check(), 20000);
+  if (STANDALONE) { setTimeout(() => Transit.refresh(), 2500); setInterval(() => { if (!document.hidden) Transit.refresh(); }, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Transit.refresh(); }); }
   if (STANDALONE) { setTimeout(() => Push.sync(), 4000); setInterval(() => { if (!document.hidden) Push.sync(); }, 20*60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Push.queue(); }); }
   let lastMin = new Date().getMinutes(), lastDay = ymd(new Date());
   setInterval(() => {
