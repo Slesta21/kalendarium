@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 25  ·  persönlicher Kalender für alles
+ KALENDARIUM 25.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1298,7 +1298,11 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 .qr-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:qrspin .8s linear infinite}
 @keyframes qrspin{to{transform:rotate(360deg)}}
 .xfer .qr-box{padding:var(--s2) 0 var(--s1)}
-.xfer .qr{width:min(320px, 80vw);box-shadow:none;border-radius:18px;padding:0}
+.xcode{display:grid;justify-items:center;gap:2px;margin:2px 0 var(--s2)}
+.xcode span{font-size:12.5px;color:var(--muted)}
+.xcode b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:30px;letter-spacing:.14em;font-weight:700}
+.xcode-in{width:100%;text-align:center;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:30px;letter-spacing:.14em;text-transform:uppercase;padding:14px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+.xfer .qr{width:min(340px, 82vw);box-shadow:none;border-radius:18px;padding:0}
 .qr-done{display:grid;place-items:center;gap:6px;min-height:280px;text-align:center;animation:memin var(--d2) var(--ease) both}
 .qr-done svg{width:54px;height:54px;color:var(--ok, #2e9e5b)}
 .qr-done b{font-size:22px}
@@ -5706,7 +5710,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '25';
+const APP_VERSION = '25.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7353,7 +7357,7 @@ const EDITORS = {
       <button data-act="newLink">${ic('links')}<span><b>Link</b><small>Uni-Portal, Discord oder Website</small></span></button>
     </div>`);
   },
-  more(){ openSheet(`${head('Mehr')}<div class="menu"><button data-act="transfer">${ic('handy')}<span><b>Aufs Handy übertragen</b></span></button>${['wetter','links','einstellungen'].map(id => `<button data-act="go" data-v="${id}">${ic(id)}<span><b>${NAV.find(n=>n.id===id).label}</b></span></button>`).join('')}<button data-act="installApp">${ic('plus')}<span><b>Als App auf den Startbildschirm</b></span></button></div>`); },
+  more(){ openSheet(`${head('Mehr')}<div class="menu"><button data-act="transfer">${ic('handy')}<span><b>Aufs Handy übertragen</b></span></button><button data-act="codeEnter">${ic('runter')}<span><b>Code eingeben</b></span></button>${['wetter','links','einstellungen'].map(id => `<button data-act="go" data-v="${id}">${ic(id)}<span><b>${NAV.find(n=>n.id===id).label}</b></span></button>`).join('')}<button data-act="installApp">${ic('plus')}<span><b>Als App auf den Startbildschirm</b></span></button></div>`); },
   importIcs(){
     openSheet(`${head('ICS importieren')}<div class="form">
       <p class="muted" style="margin:0">Exportiere deinen Stundenplan oder Kalender als .ics (zum Beispiel in MOSES oder im ISIS-Kalender) und wähle die Datei aus. Bereits importierte Einträge werden aktualisiert.</p>
@@ -7375,6 +7379,7 @@ function upsert(listKey, id, obj, defaults = {}){
   state[listKey].push({id:uid(), ...defaults, ...obj}); return true;
 }
 const SAVE = {
+  codeEnter(form, fd){ const c = xNorm(fd.get('code')); if (c.length !== 8) { toast('Der Code hat 8 Zeichen', 'Zum Beispiel K7Q2 M9XD.'); return; } closeSheet(); importFromToken(c); },
   places(form){ const any = savePlaces(form); closeSheet(); commit(); toast(any ? 'Orte gespeichert' : 'Später geht es unter Einstellungen → Orte und Wege', any ? 'Die Wege werden jetzt aus dem Fahrplan berechnet.' : ''); if (any) Transit.fillRoutes(true); },
   sleepEntry(form, fd){
     const date = fd.get('date'), bed = fd.get('bed'), wake = fd.get('wake');
@@ -7549,7 +7554,7 @@ const ACTIONS = {
   async transferShare(){ const inp = document.getElementById('xferLink'); if (!inp) return; try { await navigator.share({title:'Kalendarium übertragen', url: inp.value}); } catch {} },
   async importApply(){
     const d = ui._import; if (!d) return; ui._import = null; try { sessionStorage.removeItem('kal-xfer'); } catch {}
-    if (ui._xferTok) { const tp = ui._xferTok.split('.')[0]; ui._xferTok = null; fetch(`${XFER_SRV}/${tp}?title=ok`, {method: 'POST', body: 'ok'}).catch(() => {}); }
+    if (ui._xferTok) { const tp = ui._xferTok.includes('.') ? ui._xferTok.split('.')[0] : xTopic(xNorm(ui._xferTok)); ui._xferTok = null; fetch(`${XFER_SRV}/${tp}?title=ok`, {method: 'POST', body: 'ok'}).catch(() => {}); }
     pushUndo();
     state = migrate(d.state); state.settings.onboarded = true; Store.fromExample = false;
     if (d.gist && d.gist.token && d.gist.id) { GistSync.cfg = {token: d.gist.token, id: d.gist.id}; GistSync.save(); }
@@ -7913,11 +7918,18 @@ const ACTIONS = {
       </ol>
       <div class="sheet-foot"><button class="btn" data-act="toApp">${ic('handy','s')}In die App übertragen</button><div class="r"><a class="btn primary" href="${APK_URL}">${ic('runter','s')}Herunterladen</a></div></div></div>`);
   },
+  codeEnter(){
+    openSheet(`<div class="detail">${head('Code eingeben')}
+      <p class="muted" style="margin:0 0 var(--s2)">Den 8-stelligen Code vom anderen Gerät, zu finden dort unter Mehr → Aufs Handy übertragen.</p>
+      <form class="form" data-form="codeEnter"><input name="code" class="xcode-in" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX XXXX" aria-label="Code" inputmode="text">
+      <div class="sheet-foot"><span></span><div class="r"><button class="btn primary" type="submit">Daten holen</button></div></div></form></div>`);
+    setTimeout(() => { const i = document.querySelector('.xcode-in'); if (i) i.focus(); }, 80);
+  },
   async toApp(){
     toast('Daten werden vorbereitet …', '');
     try {
       const withSync = GistSync.on(), tok = await xferUpload(await packState(withSync ? {gist: {token: GistSync.cfg.token, id: GistSync.cfg.id}} : {}));
-      location.href = `intent://slesta21.github.io/kalendarium/#t=${tok}#Intent;scheme=https;package=de.kalendarium.app;S.browser_fallback_url=${encodeURIComponent(APK_URL)};end`;
+      location.href = `intent://slesta21.github.io/kalendarium/#c=${tok}#Intent;scheme=https;package=de.kalendarium.app;S.browser_fallback_url=${encodeURIComponent(APK_URL)};end`;
     } catch { toast('Übertragen ging gerade nicht', 'Versuch es gleich noch einmal oder nutze den QR-Code.'); }
   },
   vhPushOn(){ ACTIONS.pushOn(); setTimeout(() => vibHelp(), 200); },
@@ -8252,20 +8264,30 @@ function qrSvg(text, ecc = 'M'){
   for (let y = 0; y < n; y++) { let x = 0; while (x < n) { if (!q.isDark(y, x)) { x++; continue; } let w = 1; while (x + w < n && q.isDark(y, x + w)) w++; d += `M${x + Z} ${y + Z}h${w}v1h-${w}z`; x += w; } }
   return `<svg class="qr" viewBox="0 0 ${S} ${S}" shape-rendering="crispEdges" role="img" aria-label="QR-Code zum Übertragen"><rect width="${S}" height="${S}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 }
-async function xferUpload(code){
-  const keyRaw = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await crypto.subtle.importKey('raw', keyRaw, 'AES-GCM', false, ['encrypt']);
-  const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, new TextEncoder().encode(code)));
-  const blob = b64u(iv) + '.' + b64u(ct), topic = 'kx' + b64u(crypto.getRandomValues(new Uint8Array(12))).replace(/[-_]/g, 'x');
+/* Übertragungs-Code: 8 Zeichen ohne Verwechslungsgefahr (kein 0/O, 1/I).
+   Daraus werden das ntfy-Thema und der AES-Schlüssel abgeleitet, der QR-Code
+   enthält nur noch diese 8 Zeichen in der Adresse und bleibt dadurch grob. */
+const XC_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const xCodeNew = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => XC_ALPH[b & 31]).join('');
+const xNorm = v => String(v || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+const xFmt = c => c.slice(0, 4) + ' ' + c.slice(4);
+const xTopic = c => 'kx' + c.toLowerCase();
+async function xKey(c, use){ const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kalendarium|' + c))); return crypto.subtle.importKey('raw', h.slice(0, 16), 'AES-GCM', false, [use]); }
+async function xferUpload(payload){
+  const c = xCodeNew(), iv = crypto.getRandomValues(new Uint8Array(12)), key = await xKey(c, 'encrypt');
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, new TextEncoder().encode(payload)));
+  const blob = b64u(iv) + '.' + b64u(ct), topic = xTopic(c);
   const parts = []; for (let i = 0; i < blob.length; i += 3800) parts.push(blob.slice(i, i + 3800));
   for (let i = 0; i < parts.length; i++) {
     const r = await fetch(`${XFER_SRV}/${topic}?title=${i + 1}/${parts.length}`, {method: 'POST', body: parts[i]});
     if (!r.ok) throw new Error('ntfy ' + r.status);
   }
-  return `${topic}.${b64u(keyRaw)}`;
+  return c;
 }
 async function xferDownload(tok){
-  const [topic, k] = tok.split('.'); if (!topic || !k) throw new Error('code');
+  const isNew = !String(tok).includes('.'), c = isNew ? xNorm(tok) : '';
+  if (isNew && c.length !== 8) throw new Error('code');
+  const [topic, k] = isNew ? [xTopic(c), ''] : tok.split('.'); if (!topic || (!isNew && !k)) throw new Error('code');
   const r = await fetch(`${XFER_SRV}/${topic}/json?poll=1&since=all`, {cache: 'no-store'}); if (!r.ok) throw new Error('ntfy ' + r.status);
   const msgs = (await r.text()).split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(m => m && m.event === 'message' && /^\d+\/\d+$/.test(m.title || ''));
   if (!msgs.length) throw new Error('weg');
@@ -8273,7 +8295,7 @@ async function xferDownload(tok){
   for (const m of msgs) { const [i, n] = m.title.split('/').map(Number); if (n === total) parts[i - 1] = m.message; }
   if (parts.length !== total || parts.some(x => x == null)) throw new Error('teil');
   const [iv, ct] = parts.join('').split('.');
-  const key = await crypto.subtle.importKey('raw', unb64u(k), 'AES-GCM', false, ['decrypt']);
+  const key = isNew ? await xKey(c, 'decrypt') : await crypto.subtle.importKey('raw', unb64u(k), 'AES-GCM', false, ['decrypt']);
   return new TextDecoder().decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: unb64u(iv)}, key, unb64u(ct)));
 }
 async function transferSheet(){
@@ -8283,22 +8305,23 @@ async function transferSheet(){
   const withSync = STANDALONE && GistSync.on(), extra = withSync ? {gist: {token: GistSync.cfg.token, id: GistSync.cfg.id}} : {};
   let code, link, tok = null;
   try { code = await packState(extra); } catch { openSheet(`<div class="detail">${head(title)}<p>Die Daten konnten nicht vorbereitet werden.</p></div>`); return; }
-  try { tok = await xferUpload(code); link = APP_URL + '#t=' + tok; }
+  try { tok = await xferUpload(code); link = APP_URL + '#c=' + tok; }
   catch { link = APP_URL + '#x=' + await packState({}); }
   if (!sheet.ctx || !sheet.ctx.xfer) return;
-  let qr = ''; try { qr = qrSvg(link, tok ? 'M' : 'L'); } catch { qr = ''; }
+  let qr = ''; try { qr = tok ? qrSvg(link, 'L') : ''; } catch { qr = ''; }
   const n = k => (state[k] || []).filter(x => !x.ex).length;
   const what = [[n('events'), 'Termin', 'Termine'], [n('courses'), 'Kurs', 'Kurse'], [n('deadlines'), 'Frist', 'Fristen'], [n('todos'), 'To-do', 'To-dos']].filter(x => x[0]).map(([c, a, b]) => `${c} ${c === 1 ? a : b}`).join(', ') || 'Einstellungen';
   ui._xferLink = link; const until = addMin(new Date(), 180);
   openSheet(`<div class="detail xfer">${head(title)}
     ${qr ? `<div class="qr-box" data-qrbox>${qr}</div>
-      <ol class="xfer-steps"><li><span>Handy-Kamera öffnen und auf den Code halten</span></li><li><span>Link antippen, dann <b>Übernehmen</b></span></li></ol>
+      <div class="xcode"><span>oder am Handy eintippen</span><b>${esc(xFmt(tok))}</b></div>
+      <ol class="xfer-steps"><li><span>Handy-Kamera auf den Code halten, Link antippen</span></li><li><span>Dann <b>Übernehmen</b>. Oder am Handy unter Mehr → <b>Code eingeben</b></span></li></ol>
       <p class="xfer-note" data-xstat>${esc(what)} und alle Einstellungen.${tok ? ` Verschlüsselt, gültig bis ${hm(until)}.` : ''}</p>
       <div class="sheet-foot"><button class="btn ghost" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button><div class="r"><button class="btn" data-act="transfer">${ic('wdh','s')}Neuer Code</button></div></div>`
     : `<p style="font-size:16px">Zu viele Daten für einen QR-Code. Kopier den Link und öffne ihn auf dem Handy.</p><div class="sheet-foot"><button class="btn primary" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button></div>`}
   </div>`, {xfer:true});
   if (tok) {
-    const topic = tok.split('.')[0], t0 = Math.floor(Date.now() / 1000) - 5;
+    const topic = xTopic(tok), t0 = Math.floor(Date.now() / 1000) - 5;
     ui._xferPoll = setInterval(async () => {
       if (!sheet.ctx || !sheet.ctx.xfer || !document.querySelector('[data-qrbox]')) { clearInterval(ui._xferPoll); return; }
       try {
@@ -9427,6 +9450,7 @@ function bindEvents(){
       { const mq = p.kind !== 'deadline' && titleMemory(p.title); if (mq) prev.insertAdjacentHTML('beforeend', `<span class="mem-hint">wie beim letzten Mal: ${esc(memSummary(mq))}</span>`); }
     }
     if (t.name === 'allDay') t.closest('form').querySelectorAll('[data-time]').forEach(r => r.hidden = t.checked);
+    if (t.classList && t.classList.contains('xcode-in')) { const c = xNorm(t.value).slice(0, 8); const v = c.length > 4 ? c.slice(0, 4) + ' ' + c.slice(4) : c; if (t.value !== v) t.value = v; return; }
     if (t.matches && t.matches('[data-psq]')) { clearTimeout(_psT); _psT = setTimeout(() => psSearch(t), 350); return; }
     if (t.matches && t.matches('[data-tq]')) { clearTimeout(_twST); _twST = setTimeout(() => twSearch(t), 350); return; }
     if (t.form && t.form.querySelector('[data-trip]') && ['date','start','end','day','catId','allDay'].includes(t.name)) twConnSchedule(t.form);
@@ -9488,7 +9512,7 @@ function init(){
   const local = Store.loadLocal();
   if (local) state = local; else { state = migrate(exampleState()); Store.fromExample = true; }
   try { const lv = JSON.parse(localStorage.getItem('kal-ui') || 'null'); if (lv && Date.now() - lv.t < 2*3600000 && NAV_IDS.includes(lv.view)) { ui.view = lv.view; if (MODE_ORDER[lv.mode] != null) ui.mode = lv.mode; } } catch {}
-  const hs = /^(import|x|t)=/.test(location.hash.slice(1)) ? '' : location.hash.slice(1);
+  const hs = /^(import|x|t|c)=/.test(location.hash.slice(1)) ? '' : location.hash.slice(1);
   if (LEGACY[hs]) { ui.view = 'kalender'; ui.mode = LEGACY[hs]; } else if (NAV_IDS.includes(hs)) ui.view = hs;
   WX.loadCache();
   applyTheme(); bindEvents(); bindDrag(); bindSwipe(); setSync(); render();
@@ -9510,10 +9534,10 @@ function init(){
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { Reminders.check(); invalidate(); renderSoft(); } });
   if (STANDALONE) {
     /* Code aus dem Link merken (überlebt das Neuladen beim ersten Besuch), dann aus der Adresse nehmen */
-    const m = /^#(t|x|import)=(.+)$/.exec(location.hash);
-    if (m) { try { sessionStorage.setItem('kal-xfer', (m[1] === 't' ? 't:' : 'x:') + m[2]); } catch {} try { history.replaceState(null, '', location.pathname + location.search); } catch {} }
+    const m = /^#(t|c|x|import)=(.+)$/i.exec(location.hash);
+    if (m) { try { sessionStorage.setItem('kal-xfer', (/^[tc]$/i.test(m[1]) ? 't:' : 'x:') + m[2]); } catch {} try { history.replaceState(null, '', location.pathname + location.search); } catch {} }
     let pend = null; try { pend = sessionStorage.getItem('kal-xfer'); } catch {}
-    if (!pend && m) pend = (m[1] === 't' ? 't:' : 'x:') + m[2];
+    if (!pend && m) pend = (/^[tc]$/i.test(m[1]) ? 't:' : 'x:') + m[2];
     if (pend) { ui._onbShown = true; setTimeout(() => pend.startsWith('t:') ? importFromToken(pend.slice(2)) : importFromCode(pend.slice(2)), 300); }
   }
   Store.connect();
