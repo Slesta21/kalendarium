@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 16  ·  persönlicher Kalender für alles
+ KALENDARIUM 17  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2869,6 +2869,7 @@ const VIEWS = {
         <div class="row"><div class="l"><b>Sicherung speichern</b></div><button class="btn sm" data-act="saveBackup">${ic('runter','s')}JSON</button></div>
         <div class="row"><div class="l"><b>Sicherung laden</b><small>Ersetzt alle Daten</small></div><label class="btn sm" style="cursor:pointer">${ic('hoch','s')}Datei<input type="file" id="backupFile" accept=".json,application/json" hidden></label></div>
         ${hasExamples() ? `<div class="row"><div class="l"><b>Beispiele entfernen</b></div><button class="btn sm" data-act="clearExamples">Entfernen</button></div>` : ''}
+        <div class="row"><div class="l"><b>${STANDALONE ? 'Auf ein anderes Gerät übertragen' : 'Daten in die App übertragen'}</b><small>${STANDALONE ? 'Ein Link mit allen Daten, zum Beispiel vom PC aufs Handy' : 'Alle Termine, Kurse, Fristen und Einstellungen mit einem Tipp in die App'}</small></div><button class="btn sm primary" data-act="transfer">Übertragen</button></div>
         <div class="row"><div class="l"><b>Als App auf den Startbildschirm</b><span>Ein Symbol auf dem Handy, das den Kalender direkt öffnet</span></div><button class="btn sm" data-act="installApp">Einrichten</button></div>
         <div class="row"><div class="l"><b>Einrichtung</b><span>Name, Weg zur Uni und Schlafrhythmus in drei Schritten</span></div><button class="btn sm" data-act="onbStart">Starten</button></div>
         <div class="row"><div class="l"><b>Alles zurücksetzen</b></div><button class="btn sm danger" data-act="resetAll">Zurücksetzen</button></div>
@@ -3849,6 +3850,27 @@ async function saveFile(filename, data){
 function setPath(path, value){ const ks = path.split('.'); let o = state.settings; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = value; }
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 const ACTIONS = {
+  transfer(){ transferSheet(); },
+  async transferCopy(){
+    const inp = document.getElementById('xferLink'); if (!inp) return;
+    let ok = false;
+    try { await navigator.clipboard.writeText(inp.value); ok = true; } catch {}
+    if (!ok) { try { inp.focus(); inp.select(); ok = document.execCommand('copy'); } catch {} }
+    toast(ok ? 'Link kopiert' : 'Kopieren nicht möglich', ok ? 'Füge ihn im Browser des anderen Geräts ein oder schick ihn dir selbst.' : 'Halte den Link gedrückt und kopiere ihn von Hand.');
+  },
+  async transferShare(){ const inp = document.getElementById('xferLink'); if (!inp) return; try { await navigator.share({title:'Kalendarium übertragen', url: inp.value}); } catch {} },
+  async importApply(){
+    const d = ui._import; if (!d) return; ui._import = null;
+    pushUndo();
+    state = migrate(d.state); state.settings.onboarded = true; Store.fromExample = false;
+    if (d.gist && d.gist.token && d.gist.id) { GistSync.cfg = {token: d.gist.token, id: d.gist.id}; GistSync.save(); }
+    try { localStorage.setItem('kal-saved-at', String(Date.now())); } catch {}
+    applyTheme(); closeSheet(); Store.schedule(0); invalidate(); render();
+    if (GistSync.on()) { await GistSync.push(); GistSync.start(true); }
+    if (typeof Transit !== 'undefined') Transit.reset();
+    toast('Daten übernommen', GistSync.on() ? 'Abgleich mit dem anderen Gerät ist eingeschaltet.' : 'Alles ist jetzt in der App.', undoOpt);
+  },
+  importCancel(){ ui._import = null; closeSheet(); maybeOnboard(); },
   async vbbSearch(el){
     const f = el.closest('form'), q = f.querySelector('#vbbQ').value.trim(), box = f.querySelector('#vbbRes'); if (!q) return;
     box.innerHTML = '<span class="muted">Suche …</span>';
@@ -3888,13 +3910,7 @@ const ACTIONS = {
   async installApp(){
     if (window.__installEvt) { try { window.__installEvt.prompt(); const r = await window.__installEvt.userChoice; window.__installEvt = null; if (r && r.outcome === 'accepted') { toast('Kalendarium installiert', 'Du findest es jetzt auf deinem Startbildschirm.'); return; } } catch {} }
     if (STANDALONE && matchMedia('(display-mode: standalone)').matches) { toast('Läuft schon als App', ''); return; }
-    if (!STANDALONE) {
-      openSheet(`<div class="detail">${head('Als App auf den Startbildschirm')}
-        <p style="font-size:16px;margin:0 0 var(--s2)">Die App-Version öffnet direkt den Kalender, im Vollbild und ohne claude.ai.</p>
-        <div class="facts">${fact('extern', 'App öffnen und installieren', `Öffne <b>${esc(APP_URL.replace('https://',''))}</b> in Chrome und tippe auf „App installieren“ oder im Menü ⋮ auf „Zum Startbildschirm hinzufügen“.`)}${fact('runter', 'Deine Daten mitnehmen', 'Hier unten „Sicherung speichern“ antippen. In der App unter Einstellungen „Sicherung laden“ wählen.')}${fact('wdh', 'PC und Handy abgleichen', 'In der App unter Einstellungen den Abgleich mit GitHub einschalten, auf beiden Geräten mit demselben Schlüssel.')}</div>
-        <div class="sheet-foot"><button class="btn" data-act="saveBackup">${ic('runter','s')}Sicherung speichern</button><div class="r"><a class="btn primary" href="${APP_URL}" target="_blank" rel="noopener">${ic('extern','s')}App öffnen</a></div></div></div>`);
-      return;
-    }
+    if (!STANDALONE) { transferSheet(); return; }
     const ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
     const step = (n, t, sub) => `<div class="row-item"><span class="num" style="width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-ink);font-weight:600;flex:none">${n}</span><div class="main" style="cursor:default"><div class="ti" style="white-space:normal"><span style="white-space:normal;overflow:visible">${t}</span></div>${sub ? `<div class="sm">${sub}</div>` : ''}</div></div>`;
     const steps = ios
@@ -4217,6 +4233,59 @@ function showKeys(){
     ${row(['Enter'], 'Speichern')}
     ${row(['Esc'], 'Schließen')}
   </dl></div>`, {keys:true});
+}
+
+/* ================================================================
+   §16j ÜBERTRAGEN: alle Daten als Link (komprimiert im #-Teil, wird
+   nie an einen Server geschickt). claude.ai → App und Gerät → Gerät.
+   ================================================================ */
+const b64u = bytes => { let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64u = str => { const b = str.replace(/-/g, '+').replace(/_/g, '/'); const bin = atob(b + '='.repeat((4 - b.length % 4) % 4)); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; };
+async function packState(extra = {}){
+  const json = JSON.stringify({app:'kalendarium', v:1, at: Date.now(), state, ...extra});
+  let bytes = new TextEncoder().encode(json), tag = 'j';
+  if (typeof CompressionStream === 'function') {
+    try { const st = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw')); bytes = new Uint8Array(await new Response(st).arrayBuffer()); tag = 'z'; } catch {}
+  }
+  return tag + b64u(bytes);
+}
+async function unpackState(code){
+  const tag = code[0]; let bytes = unb64u(code.slice(1));
+  if (tag === 'z') { const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw')); bytes = new Uint8Array(await new Response(st).arrayBuffer()); }
+  const d = JSON.parse(new TextDecoder().decode(bytes));
+  if (!d || d.app !== 'kalendarium' || !d.state) throw new Error('kein Kalendarium');
+  return d;
+}
+async function transferSheet(){
+  const withSync = STANDALONE && GistSync.on();
+  openSheet(`<div class="detail">${head(STANDALONE ? 'Auf ein anderes Gerät übertragen' : 'Daten in die App übertragen')}<p class="muted">Link wird erstellt …</p></div>`, {xfer:true});
+  let link = '';
+  try { link = APP_URL + '#x=' + await packState(withSync ? {gist: {token: GistSync.cfg.token, id: GistSync.cfg.id}} : {}); }
+  catch { openSheet(`<div class="detail">${head('Übertragen')}<p>Der Link konnte nicht erstellt werden. Nutze „Sicherung speichern“ unter Export und Daten.</p></div>`); return; }
+  const n = k => (state[k] || []).filter(x => !x.ex).length;
+  const what = [[n('events'), 'Termin', 'Termine'], [n('courses'), 'Kurs', 'Kurse'], [n('deadlines'), 'Frist', 'Fristen'], [n('todos'), 'To-do', 'To-dos'], [n('places'), 'Ort', 'Orte']].filter(x => x[0]).map(([c, a, b]) => `${c} ${c === 1 ? a : b}`).join(', ') || 'Einstellungen';
+  const canShare = typeof navigator.share === 'function';
+  const steps = STANDALONE
+    ? `<p style="font-size:16px;margin:0 0 var(--s2)">Öffne diesen Link auf dem anderen Gerät. Am einfachsten: <b>Teilen</b> und an dich selbst schicken, oder kopieren und dort im Browser einfügen.</p>${withSync ? '<p class="note">Der Link enthält auch deinen Abgleich-Schlüssel, das andere Gerät gleicht danach automatisch mit ab. Schick ihn nur an dich selbst.</p>' : ''}`
+    : `<p style="font-size:16px;margin:0 0 var(--s2)">Tippe auf <b>In der App öffnen</b>. Kalendarium fragt dort einmal nach und übernimmt dann alles.</p><p class="note">Willst du die Daten aufs Handy, die App aber am PC öffnen: Link kopieren und dir schicken, dann auf dem Handy antippen.</p>`;
+  openSheet(`<div class="detail">${head(STANDALONE ? 'Auf ein anderes Gerät übertragen' : 'Daten in die App übertragen')}
+    ${steps}
+    <div class="facts">${fact('haken', 'Im Link enthalten', esc(what) + ', dazu Kategorien, Orte und alle Einstellungen.')}</div>
+    <input id="xferLink" readonly value="${esc(link)}" aria-label="Übertragungs-Link" style="width:100%;margin-top:var(--s2);font-size:13px">
+    <div class="sheet-foot"><button class="btn" data-act="transferCopy">${ic('kopie','s')}Link kopieren</button><div class="r">${canShare ? `<button class="btn" data-act="transferShare">${ic('extern','s')}Teilen</button>` : ''}${STANDALONE ? '' : `<a class="btn primary" href="${esc(link)}" target="_blank" rel="noopener">${ic('extern','s')}In der App öffnen</a>`}</div></div></div>`, {xfer:true});
+}
+async function importFromCode(code){
+  let d;
+  try { d = await unpackState(code); }
+  catch { toast('Link unvollständig', 'Der Übertragungs-Link wurde abgeschnitten. Kopiere ihn noch einmal ganz.'); maybeOnboard(); return; }
+  ui._import = d;
+  const n = k => (d.state[k] || []).filter(x => !x.ex).length, mine = SECTIONS.some(k => Array.isArray(state[k]) && state[k].some(x => !x.ex));
+  const what = [[n('events'), 'Termin', 'Termine'], [n('courses'), 'Kurs', 'Kurse'], [n('deadlines'), 'Frist', 'Fristen'], [n('todos'), 'To-do', 'To-dos'], [n('places'), 'Ort', 'Orte']].filter(x => x[0]).map(([c, a, b]) => `${c} ${c === 1 ? a : b}`).join(', ') || 'nur Einstellungen';
+  openSheet(`<div class="detail">${head('Daten übernehmen?')}
+    <p style="font-size:16px;margin:0 0 var(--s2)">Vom ${new Date(d.at).toLocaleString(DE, {day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'})}: <b>${esc(what)}</b>.</p>
+    ${mine ? '<p class="note">Das ersetzt die Daten auf diesem Gerät. Rückgängig geht direkt danach.</p>' : ''}
+    ${d.gist ? '<p class="note">Der Abgleich mit dem anderen Gerät wird gleich mit eingeschaltet.</p>' : ''}
+    <div class="sheet-foot"><button class="btn" data-act="importCancel">Abbrechen</button><div class="r"><button class="btn primary" data-act="importApply">Übernehmen</button></div></div></div>`, {imp:true});
 }
 
 /* ================================================================
@@ -4908,7 +4977,7 @@ function init(){
   const local = Store.loadLocal();
   if (local) state = local; else { state = migrate(exampleState()); Store.fromExample = true; }
   try { const lv = JSON.parse(localStorage.getItem('kal-ui') || 'null'); if (lv && Date.now() - lv.t < 2*3600000 && NAV_IDS.includes(lv.view)) { ui.view = lv.view; if (MODE_ORDER[lv.mode] != null) ui.mode = lv.mode; } } catch {}
-  const hs = location.hash.slice(1);
+  const hs = /^(import|x)=/.test(location.hash.slice(1)) ? '' : location.hash.slice(1);
   if (LEGACY[hs]) { ui.view = 'kalender'; ui.mode = LEGACY[hs]; } else if (NAV_IDS.includes(hs)) ui.view = hs;
   WX.loadCache();
   applyTheme(); bindEvents(); bindDrag(); bindSwipe(); setSync(); render();
@@ -4926,6 +4995,7 @@ function init(){
     }
   }, 15000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { Reminders.check(); invalidate(); renderSoft(); } });
+  if (STANDALONE && /^#(import|x)=/.test(location.hash)) { ui._onbShown = true; const code = location.hash.replace(/^#(import|x)=/, ''); try { history.replaceState(null, '', location.pathname + location.search); } catch {} setTimeout(() => importFromCode(code), 300); }
   Store.connect();
   WX.start();
 }
