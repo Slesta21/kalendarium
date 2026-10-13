@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 18.2  ·  persönlicher Kalender für alles
+ KALENDARIUM 19  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -1231,6 +1231,21 @@ main.enter .wk-col .ev,main.enter .wk-col .travel{animation:evin var(--d3) var(-
 
 /* Live-Verbindungen */
 .travel .late,.tl-travel .late{color:var(--danger);font-weight:600}
+.route{display:grid;gap:10px;padding-top:12px;border-top:1px solid var(--line)}
+.route-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.route-h b{font-size:15px;display:block}
+.route-h small{color:var(--muted);font-size:13px;display:block}
+.rleg{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--line)}
+.rleg-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--muted)}
+.rauto{display:flex;flex-wrap:wrap;gap:6px}
+.rauto:empty{display:none}
+.lnb{display:inline-block;font-size:12.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--lc, var(--ink));color:#fff;line-height:1.35;white-space:nowrap;font-variant-numeric:tabular-nums}
+.leave{display:flex;flex-direction:column;gap:4px;padding:12px 0 2px;border-top:1px solid var(--line);animation:memin var(--d2) var(--ease) both}
+.leave:empty{display:none}
+.leave b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.leave .lv-l{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px}
+.leave small{color:var(--muted);font-size:12.5px;line-height:1.4}
+.tleg .tm .ca{color:var(--muted);font-size:11.5px;display:block}
 .trip{display:flex;flex-direction:column;gap:0;margin-top:var(--s2);border-top:1px solid var(--line)}
 .trip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 0 6px}
 .trip-h b{font-size:15px}
@@ -2127,9 +2142,61 @@ function layoutLanes(items){
    Ist die Lücke kürzer als Rückweg + Hinweg + "Vor Ort bleiben",
    geht es direkt weiter, sonst wird ein Heimweg eingeplant.
    ================================================================ */
+/* Strecke eines Ortes: Fußweg, Linien mit Fahrzeit und Takt, Fußweg am Ziel.
+   Mit einer bekannten Abfahrt rechnet routeTrip() rückwärts die letzte Bahn,
+   die noch pünktlich ankommt, und daraus die Losgehzeit. Ohne Abfahrt wird
+   sicherheitshalber eine volle Taktlänge Wartezeit eingeplant. */
+const TRANSFER_MIN = 3, STOP_SPARE = 2;
+const normLine = s => String(s || '').toUpperCase().replace(/\s+/g, '');
+function lineProduct(n){
+  n = normLine(n);
+  if (/^S\d/.test(n)) return 'suburban';
+  if (/^U\d/.test(n)) return 'subway';
+  if (/^(RE|RB|FEX)/.test(n)) return 'regional';
+  if (/^(ICE|IC|EC|FLX)/.test(n)) return 'express';
+  if (/^F\d/.test(n)) return 'ferry';
+  if (/^M(1|2|4|5|6|8|10|13|17)$/.test(n) || /^\d{2}$/.test(n)) return 'tram';
+  return 'bus';
+}
+const routeOk = R => !!(R && Array.isArray(R.legs) && R.legs.some(g => +g.ride > 0));
+const routeLegs = R => routeOk(R) ? R.legs.filter(g => +g.ride > 0) : [];
+function routeBase(R){
+  const L = routeLegs(R); if (!L.length) return 0;
+  return Math.round((+R.walkTo||0) + (+R.walkFrom||0) + L.reduce((a, g) => a + (+g.ride||0), 0) + (L.length - 1) * TRANSFER_MIN + STOP_SPARE);
+}
+const routeLabel = R => routeLegs(R).map(g => g.line || 'Bahn').join(' → ');
+const lnBadge = (line, product) => `<span class="lnb" style="--lc:${LINE_COL[product || lineProduct(line)] || 'var(--ink)'}">${esc(line || 'Bahn')}</span>`;
+function routeTrip(place, arriveBy){
+  const R = place && place.route, L = routeLegs(R); if (!L.length || !arriveBy) return null;
+  let t = addMin(arriveBy, -(+R.walkFrom||0)), exact = true;
+  const out = [];
+  for (let i = L.length - 1; i >= 0; i--) {
+    const g = L[i], ride = Math.round(+g.ride), every = Math.max(1, Math.round(+g.every || 10)), latest = addMin(t, -ride);
+    const m = /^(\d{1,2}):(\d{2})$/.exec(g.at || '');
+    let dep, approx = false;
+    if (m) {
+      const phase = ((+m[1] * 60 + +m[2]) % every + every) % every, base = startOfDay(latest), mins = Math.floor((latest - base) / 60000);
+      dep = addMin(base, mins - (((mins - phase) % every) + every) % every);
+    } else { dep = addMin(latest, -every); approx = true; exact = false; }
+    out.unshift({walk:false, line: g.line || 'Bahn', product: lineProduct(g.line), dir: g.dir || '', from: g.from || '', to: g.to || '', dep: +dep, pdep: null, ddel: null, arr: +addMin(dep, ride), parr: null, adel: null, plat: '', x: false, dist: null, notes: [], approx, every});
+    t = addMin(dep, -TRANSFER_MIN);
+  }
+  const f = out[0], last = out[out.length - 1], wt = +R.walkTo || 0, wf = +R.walkFrom || 0;
+  const leave = addMin(new Date(f.dep), -(wt + STOP_SPARE)), arrive = addMin(new Date(last.arr), wf);
+  const legs = [];
+  if (wt) legs.push({walk:true, dep: +leave, arr: +addMin(leave, wt), to: f.from || 'Haltestelle', mins: wt, notes: []});
+  legs.push(...out);
+  if (wf) legs.push({walk:true, dep: last.arr, arr: +arrive, to: place.name, mins: wf, notes: []});
+  return {legs, depart: leave, arrive, first: f.line, plan: true, exact, delay: 0, cancelled: false, alts: [], arriveBy: +arriveBy,
+    summary: `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.from ? ' ab ' + f.from : ''}`};
+}
 function travelMinutes(place, when){
   if (!place || place.home) return {total:0, base:0, rainy:false};
   const T = state.settings.travel;
+  if (place.mode === 'oepnv' && routeOk(place.route)) {
+    const b = routeBase(place.route), wait = Math.round((+routeLegs(place.route)[0].every || 10) / 2);
+    return {total: Math.round(b + wait + (+T.minBuffer||0)), base: b, rainy:false, route:true};
+  }
   let m = (+place.minutes||0) * (1 + (+T.bufferPct||0)/100) + (+T.minBuffer||0);
   if (place.mode === 'oepnv') m += 3;
   const w = when && wxAt(when);
@@ -2168,7 +2235,7 @@ function planDay(date){
       if (gap > back + there + (+T.stayGap||0)) { legs.push({kind:'home', from:loc, to:home, depart:freeAt, arrive:addMin(freeAt, back), mins:back}); loc = home; }
     }
     if (loc && loc.id === pl.id) { prev = o; freeAt = o.end; continue; }
-    const tr = between(loc, pl, arriveBy), lv = Transit.liveFor(o.key, arriveBy);
+    const tr = between(loc, pl, arriveBy), lv = Transit.liveFor(o.key, arriveBy) || (loc && loc.home && pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null);
     const depart = lv ? lv.depart : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
     const tight = !!(freeAt && depart < freeAt);
     legs.push({kind:'go', from:loc, to:pl, depart, arrive, mins, base:tr.base, rainy:lv ? false : tr.rainy, est:tr.est, tight, slack: tight ? Math.round((arriveBy - freeAt)/60000) : null, before:o, live:lv || null});
@@ -2523,7 +2590,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '18.2';
+const APP_VERSION = '19';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -2655,11 +2722,95 @@ function placeOptions(sel){
     + state.places.filter(p => !p.home).map(p => `<option value="${esc(p.id)}" ${p.id===sel?'selected':''}>${esc(p.name)} · ${dur(p.minutes)} ${MODES[p.mode]||''}</option>`).join('')
     + `<option value="__new" ${sel==='__new'?'selected':''}>+ Neuer Ort mit Wegzeit …</option>`;
 }
+/* Strecken-Editor (Ort und neuer Ort im Termin): Linie, Ein- und Ausstieg, Fahrzeit, Takt, eine Abfahrt */
+const EVERY = [3, 4, 5, 6, 10, 15, 20, 30, 40, 60, 120];
+function routeLegRow(g = {}, i = 0){
+  const ev = +g.every || 10, opts = (EVERY.includes(ev) ? EVERY : [...EVERY, ev].sort((a, b) => a - b));
+  return `<div class="rleg" data-rleg>
+    <div class="rleg-h"><span>${i ? 'Umstieg' : 'Bahn oder Bus'}</span>${i ? `<button type="button" class="btn sm ghost" data-act="routeDel">${ic('x','s')}Entfernen</button>` : ''}</div>
+    <div class="frow"><label class="f"><span>Linie</span><input data-k="line" value="${esc(g.line || '')}" placeholder="z. B. S7, U2, M10" autocomplete="off"></label><label class="f"><span>Einsteigen</span><input data-k="from" value="${esc(g.from || '')}" placeholder="Haltestelle" autocomplete="off"></label><label class="f"><span>Aussteigen</span><input data-k="to" value="${esc(g.to || '')}" placeholder="Haltestelle" autocomplete="off"></label></div>
+    <div class="frow"><label class="f"><span>Fahrzeit (min)</span><input type="number" data-k="ride" min="1" max="300" value="${+g.ride || ''}" placeholder="z. B. 14"></label><label class="f"><span>Fährt alle</span><select data-k="every">${opts.map(v => `<option value="${v}" ${v === ev ? 'selected' : ''}>${v} min</option>`).join('')}</select></label><label class="f"><span>Eine Abfahrt (optional)</span><input type="time" data-k="at" value="${esc(g.at || '')}"></label></div>
+    <input type="hidden" data-k="dir" value="${esc(g.dir || '')}"></div>`;
+}
+function routeFields(R, show){
+  R = R || {};
+  const legs = R.legs && R.legs.length ? R.legs : [{}];
+  return `<div class="route" data-route ${show ? '' : 'hidden'}>
+    <div class="route-h"><div><b>Deine Strecke</b><small>Die Bahn oder den Bus, den du wirklich nimmst</small></div>${Transit.ok() ? `<button type="button" class="btn sm" data-act="routeAuto">${ic('zug','s')}Verbindung suchen</button>` : ''}</div>
+    <div class="rauto" data-rauto></div>
+    <label class="f"><span>Fußweg bis zur Haltestelle (min)</span><input type="number" name="r_walkTo" min="0" max="90" value="${R.walkTo != null ? +R.walkTo : 5}"></label>
+    <div data-rlegs>${legs.map(routeLegRow).join('')}</div>
+    <button type="button" class="btn sm ghost" style="justify-self:start" data-act="routeAdd">${ic('plus','s')}Umstieg</button>
+    <label class="f"><span>Fußweg von der Haltestelle zum Ziel (min)</span><input type="number" name="r_walkFrom" min="0" max="90" value="${R.walkFrom != null ? +R.walkFrom : 3}"></label>
+    <small class="muted">Mit einer Abfahrtszeit rechnet der Kalender über den Takt die letzte Bahn aus, die dich pünktlich hinbringt. Ohne plant er eine volle Taktlänge Wartezeit ein. Beim Umsteigen sind ${TRANSFER_MIN} min eingeplant.</small>
+  </div>`;
+}
+function readRoute(f){
+  const F = f.elements, n = (v, d) => { const x = num(v); return x == null ? d : Math.max(0, Math.round(x)); };
+  const legs = [...f.querySelectorAll('[data-rleg]')].map(r => { const v = k => { const el = r.querySelector(`[data-k="${k}"]`); return el ? String(el.value || '').trim() : ''; };
+    return {line: v('line').replace(/\s+/g, ' '), from: v('from'), to: v('to'), ride: n(v('ride'), 0), every: Math.max(1, n(v('every'), 10)), at: /^\d{2}:\d{2}$/.test(v('at')) ? v('at') : '', dir: v('dir')}; }).filter(g => g.ride > 0);
+  if (!legs.length) return null;
+  return {walkTo: n(F.r_walkTo && F.r_walkTo.value, 0), walkFrom: n(F.r_walkFrom && F.r_walkFrom.value, 0), legs};
+}
+function vbbBlock(p){
+  return Transit.ok() ? `<div class="f"><span>Ziel als Haltestelle oder Adresse (für Live-Verbindungen)</span><div style="display:flex;gap:8px"><input id="vbbQ" placeholder="z. B. Ernst-Reuter-Platz oder Straße und Hausnummer" value="${esc(p && p.vbb ? p.vbb.name : '')}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p && p.vbb ? JSON.stringify(p.vbb) : '')}"><div id="vbbRes" class="chips" style="margin-top:8px">${p && p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : ''}</div></div>` : '';
+}
+/* Aus einer VBB-Verbindung die Strecke ableiten; Takt aus den anderen Verbindungen derselben Linien */
+function routeFromJourney(j, all){
+  const mm = (a, b) => Math.max(0, Math.round((new Date(b) - new Date(a)) / 60000));
+  const L = j.legs, tl = L.filter(g => !g.walk), i0 = L.indexOf(tl[0]), i1 = L.indexOf(tl[tl.length - 1]);
+  const sig = x => x.legs.filter(g => !g.walk).map(g => g.line).join('>'), same = all.filter(x => sig(x) === sig(j));
+  const legs = tl.map((g, i) => {
+    const deps = [...new Set(same.map(x => +new Date(x.legs.filter(y => !y.walk)[i].pdep || x.legs.filter(y => !y.walk)[i].dep)))].sort((a, b) => a - b);
+    let every = 0; for (let k = 1; k < deps.length; k++) { const d = Math.round((deps[k] - deps[k - 1]) / 60000); if (d >= 2 && (!every || d < every)) every = d; }
+    if (!every) every = {suburban:10, subway:5, tram:10, bus:10, regional:60, express:60, ferry:60}[g.product] || 10;
+    return {line: g.line, from: g.from, to: g.to, ride: mm(g.pdep || g.dep, g.parr || g.arr) || 1, every, at: hm(new Date(g.pdep || g.dep)), dir: g.dir};
+  });
+  return {walkTo: L.slice(0, i0).reduce((a, g) => a + mm(g.dep, g.arr), 0), walkFrom: L.slice(i1 + 1).reduce((a, g) => a + mm(g.dep, g.arr), 0), legs};
+}
+/* Termin- und Kurs-Editor: Losgehzeit sofort anzeigen */
+function formPlace(f){
+  const F = f.elements, v = F.placeId ? F.placeId.value : '';
+  if (v === 'home' || v === 'none') return null;
+  if (v === '__new') { const mode = F.np_mode ? F.np_mode.value : 'oepnv'; return {id:'_tmp', name: (F.np_name && F.np_name.value.trim()) || 'Ziel', minutes: +(F.np_min && F.np_min.value) || 30, mode, route: mode === 'oepnv' ? readRoute(f) : null}; }
+  if (v) return placeById(v) || null;
+  const cat = F.catId && state.categories.find(c => c.id === F.catId.value);
+  return cat && cat.placeId ? placeById(cat.placeId) || null : null;
+}
+function formStart(f){
+  const F = f.elements; if (F.allDay && F.allDay.checked) return null;
+  const st = F.start && F.start.value; if (!/^\d{2}:\d{2}$/.test(st || '')) return null;
+  if (F.date) return F.date.value ? at(F.date.value, st) : null;
+  if (F.day) { const now = new Date(); for (let k = 0; k < 8; k++) { const x = addDays(startOfDay(now), k); if (isoDow(x) === +F.day.value) { const d = at(ymd(x), st); if (d > now) return d; } } }
+  return null;
+}
+let _leaveT = 0;
+function leaveSchedule(f){ clearTimeout(_leaveT); _leaveT = setTimeout(() => { if (document.body.contains(f)) leaveUpdate(f); }, 120); }
+function leaveUpdate(f){
+  const box = f.querySelector('[data-leave]'); if (!box) return;
+  const pl = formPlace(f), st = formStart(f);
+  if (!pl || pl.home || !st) { box.innerHTML = ''; return; }
+  const T = state.settings.travel, arriveBy = addMin(st, -(+T.arriveEarly || 0)), tr = pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null;
+  let h;
+  if (tr) {
+    const tl = tr.legs.filter(g => !g.walk), g0 = tl[0];
+    h = `<b>Losgehen ${hm(tr.depart)}</b><span class="lv-l">${tl.map(g => lnBadge(g.line, g.product)).join('')}<span>${g0.approx ? '' : hm(new Date(g0.dep)) + ' '}${g0.from ? 'ab ' + esc(g0.from) : ''} · da um ${hm(tr.arrive)}</span></span>
+      <small>${tr.exact ? `Ab Zuhause, nach deinem Fahrplan. ${T.arriveEarly} min vor Beginn da.` : 'Ungefähr: Ohne Abfahrtszeit ist eine volle Taktlänge Wartezeit eingeplant.'}</small>`;
+  } else {
+    const t = travelMinutes(pl, arriveBy);
+    h = `<b>Losgehen ${hm(addMin(arriveBy, -t.total))}</b><span class="lv-l">${dur(t.total)} zu ${esc(pl.name)}, Puffer eingerechnet</span>
+      <small>Ab Zuhause.${pl.mode === 'oepnv' ? ' Mit deiner Linie und einer Abfahrtszeit beim Ort rechnet der Kalender nach Fahrplan.' : ''}</small>`;
+  }
+  if (box.dataset.h !== h) { box.dataset.h = h; box.innerHTML = h; }
+}
+
 /* Neuer Ort direkt im Formular: "Wie lange brauchst du von zuhause?" – wird gespeichert und wiederverwendet */
 function newPlaceBlock(show, name, catName){
   return `<div class="newplace" data-newplace ${show ? '' : 'hidden'}>
     <span class="q">Wie lange brauchst du von zuhause dorthin?</span>
-    <div class="frow"><label class="f"><span>Ort</span><input name="np_name" value="${esc(name||'')}" placeholder="z. B. TU Berlin"></label><label class="f"><span>Minuten (einfach)</span><input type="number" name="np_min" min="1" max="600" value="30"></label><label class="f"><span>Mit</span><select name="np_mode">${Object.entries(MODES).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div>
+    <div class="frow"><label class="f"><span>Wohin?</span><input name="np_name" value="${esc(name||'')}" placeholder="z. B. TU Berlin"></label><label class="f"><span>Mit</span><select name="np_mode">${Object.entries(MODES).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}</select></label><label class="f"><span>Minuten ungefähr</span><input type="number" name="np_min" min="1" max="600" value="30"></label></div>
+    ${vbbBlock(null)}
+    ${routeFields(null, true)}
     <label class="inline-check"><input type="checkbox" name="np_default" checked> Für alle Termine der Kategorie merken${catName ? ' (' + esc(catName) + ')' : ''}</label>
     <small class="muted">Der Rückweg wird gleich lang gerechnet. Du musst die Zeit nur einmal angeben.</small></div>`;
 }
@@ -2667,10 +2818,12 @@ function takeNewPlace(fd){
   let pid = fd.get('placeId') || '';
   if (pid !== '__new') return pid;
   const name = String(fd.get('np_name')||'').trim(); if (!name) return '';
-  const p = {id:uid(), name, minutes: +fd.get('np_min') || 30, mode: fd.get('np_mode') || 'oepnv', home:false};
-  state.places.push(p);
+  const mode = fd.get('np_mode') || 'oepnv', route = mode === 'oepnv' ? readRoute(sheet.card.querySelector('[data-newplace]').closest('form')) : null;
+  let vbb = null; try { const v = fd.get('vbb'); vbb = v ? JSON.parse(v) : null; } catch {}
+  const p = {id:uid(), name, minutes: route ? routeBase(route) : (+fd.get('np_min') || 30), mode, home:false, route, vbb};
+  state.places.push(p); if (typeof Transit !== 'undefined') Transit.reset();
   if (fd.get('np_default')) { const cat = state.categories.find(c => c.id === fd.get('catId')); if (cat && !cat.placeId) cat.placeId = p.id; }
-  toast('Weg gespeichert', `${name}: ${dur(p.minutes)} hin, ${dur(p.minutes)} zurück`);
+  toast('Weg gespeichert', route ? `${name}: ${routeLabel(route)}, ${dur(p.minutes)} von Tür zu Tür` : `${name}: ${dur(p.minutes)} hin, ${dur(p.minutes)} zurück`);
   return cat_autoclear(p.id, fd);
 }
 function cat_autoclear(pid, fd){ const cat = state.categories.find(c => c.id === fd.get('catId')); return cat && cat.placeId === pid ? '' : pid; }
@@ -2958,14 +3111,14 @@ const VIEWS = {
 
       <section class="panel">
         <div class="panel-h"><h2>Orte und Wege</h2><button class="btn sm" data-act="newPlace">${ic('plus','s')}Ort</button></div>
-        <div>${state.places.map(p => `<div class="listrow" data-act="edit" data-kind="place" data-id="${esc(p.id)}"><span style="color:var(--accent-ink);display:flex">${ic(p.home?'haus':'ort','s')}</span><span class="grow">${esc(p.name)}<small>${p.home?`Startpunkt für alle Wege${p.vbb ? ' · ' + esc(p.vbb.name) : Transit.ok() ? ' · Haltestelle eintragen für Live-Verbindungen' : ''}`:`${p.vbb && Transit.ok() ? 'Live · ' : ''}${dur(p.minutes)} · ${MODES[p.mode]} · mit Puffer ${dur(travelMinutes(p).total)}`}</small></span>${p.home?'':ic('weiter','s')}</div>`).join('')}</div>
+        <div>${state.places.map(p => `<div class="listrow" data-act="edit" data-kind="place" data-id="${esc(p.id)}"><span style="color:var(--accent-ink);display:flex">${ic(p.home?'haus':'ort','s')}</span><span class="grow">${esc(p.name)}<small>${p.home?`Startpunkt für alle Wege${p.vbb ? ' · ' + esc(p.vbb.name) : Transit.ok() ? ' · Haltestelle eintragen für Live-Verbindungen' : ''}`:`${p.vbb && Transit.ok() ? 'Live · ' : ''}${p.mode === 'oepnv' && routeOk(p.route) ? `${esc(routeLabel(p.route))} · ${dur(routeBase(p.route))}${routeLegs(p.route).every(g => g.at) ? ' · nach Fahrplan' : ''}` : `${dur(p.minutes)} · ${MODES[p.mode]} · mit Puffer ${dur(travelMinutes(p).total)}`}`}</small></span>${p.home?'':ic('weiter','s')}</div>`).join('')}</div>
         <div class="row" style="margin-top:8px"><div class="l"><b>Puffer</b><small>Aufschlag auf jede Wegzeit</small></div><span>${numIn('travel.bufferPct', T.bufferPct, 0, 100, 1, 'Puffer in Prozent')} %</span></div>
         <div class="row"><div class="l"><b>Mindestpuffer</b></div><span>${numIn('travel.minBuffer', T.minBuffer, 0, 60, 1, 'Mindestpuffer')} min</span></div>
         <div class="row"><div class="l"><b>Früher da sein</b><small>Ankunft vor Beginn</small></div><span>${numIn('travel.arriveEarly', T.arriveEarly, 0, 60, 1, 'Früher da sein')} min</span></div>
         <div class="row"><div class="l"><b>Regenzuschlag</b><small>Für Rad und Fußweg bei Regen</small></div><span>${numIn('travel.rainExtra', T.rainExtra, 0, 60, 1, 'Regenzuschlag')} min</span></div>
         <div class="row"><div class="l"><b>Vor Ort bleiben</b><small>Kein Heimweg, wenn die Lücke kürzer ist als Hin- und Rückweg plus</small></div><span>${numIn('travel.stayGap', T.stayGap, 0, 240, 5, 'Vor Ort bleiben')} min</span></div>
         <div class="row"><div class="l"><b>Erinnerung zum Losgehen</b><small>10 min vorher</small></div>${sw('travel.remind', T.remind, 'Erinnerung zum Losgehen')}</div>
-        <p class="note">Wegzeit einmal pro Ort eintragen. Daraus berechnet der Kalender Losgehzeit, Anschlüsse und Heimweg und plant bei Regen mehr Zeit ein.</p>
+        <p class="note">Wegzeit einmal pro Ort eintragen, bei Bahn und Bus am besten mit deiner Linie und einer Abfahrtszeit. Daraus berechnet der Kalender Losgehzeit, Anschlüsse und Heimweg und plant bei Regen mehr Zeit ein.</p>
       </section>
 
       <section class="panel">
@@ -3295,7 +3448,7 @@ function weekList(days){
     const items = dayItems(d).filter(layerOk), timed = items.filter(isTimed).concat(workFor(d)), allday = items.filter(o => !isTimed(o));
     const legs = L.travel ? planDay(d).legs.filter(l => l.kind === 'go' || l.needHome) : [];
     const rows = timed.map(o => ({t:o.start, html:`<button class="wrow${o.kind==='work'?' work':''}" style="--c:${o.cat.color}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(d)}"><span class="t">${hm(o.start)}</span><span class="dot"></span><span class="ti">${esc(o.kind==='course' ? (o.ref.short||o.ref.title) + ' · ' + (COURSE_TYPES[o.ref.type]||'') : o.title)}<small>${hm(o.start)}–${hm(o.end)}${placeLabel(o) ? ' · ' + esc(placeLabel(o)) : ''}</small></span></button>`}))
-      .concat(legs.map(l => ({t:l.depart, html:`<div class="wrow go"><span class="t">${hm(l.depart)}</span><span class="dot"></span><span class="ti">${l.kind==='go' ? `Losgehen · ${dur(l.mins)} zu ${esc(l.to.name)}` : `Heimweg · zuhause ${hm(l.arrive)}`}${l.tight ? ' · knapp' : ''}</span></div>`})))
+      .concat(legs.map(l => ({t:l.depart, html:`<div class="wrow go"><span class="t">${hm(l.depart)}</span><span class="dot"></span><span class="ti">${l.kind==='go' ? `Losgehen · ${l.live ? esc(l.live.first) + ' · ' : ''}${dur(l.mins)} zu ${esc(l.to.name)}` : `Heimweg · zuhause ${hm(l.arrive)}`}${l.tight ? ' · knapp' : ''}</span></div>`})))
       .sort((a,b) => a.t - b.t).map(r => r.html).join('');
     const dw = wxDay(d), b = SP[ymd(addDays(d,1))], w = SP[ymd(d)], tint = dayTint(d);
     return `<section class="wday${tint.cls}${sameDay(d,now)?' today':''}" style="${tint.style}">
@@ -3676,12 +3829,12 @@ const DETAIL = {
     openSheet(`<div class="detail">${head(l.kind === 'go' ? `Weg zu ${esc(l.before.title)}` : 'Heimweg')}
       <div class="facts">
         ${fact('weg', `${esc(l.from?.name||'Zuhause')} → ${esc(l.to?.name||'Zuhause')}`, `${mode}${l.est?' · zwischen zwei Orten geschätzt':''}`)}
-        ${fact('uhr', l.kind === 'go' ? `Losgehen ${hm(l.depart)} · Ankunft ${hm(l.arrive)}` : `Ab ${hm(l.depart)} · zuhause ca. ${hm(l.arrive)}`, (l.live ? `${dur(l.mins)} laut Live-Fahrplan, Ankunft ${T.arriveEarly} min vor Beginn` : `${dur(l.mins)} insgesamt${l.base?` · reine Wegzeit ${dur(l.base)}, dazu ${T.bufferPct} % und ${T.minBuffer} min Puffer`:''}${l.rainy?` · ${T.rainExtra} min Regenzuschlag`:''}`))}
+        ${fact('uhr', l.kind === 'go' ? `Losgehen ${hm(l.depart)} · Ankunft ${hm(l.arrive)}` : `Ab ${hm(l.depart)} · zuhause ca. ${hm(l.arrive)}`, (l.live ? `${dur(l.mins)} ${l.live.plan ? 'nach deiner Strecke' : 'laut Live-Fahrplan'}, spätestens ${T.arriveEarly} min vor Beginn da` : `${dur(l.mins)} insgesamt${l.base?` · reine Wegzeit ${dur(l.base)}, dazu ${T.bufferPct} % und ${T.minBuffer} min Puffer`:''}${l.rainy?` · ${T.rainExtra} min Regenzuschlag`:''}`))}
         ${l.tight ? fact('glocke', '<span style="color:var(--warn)">Knapp</span>', `Zwischen dem vorherigen Termin und der Ankunft bleiben nur ${Math.max(0,l.slack)} min.`) : ''}
         ${wxFactFor(l.depart)}
       </div>
       ${l.live ? transitHtml(l.live) : Transit.ok() && l.kind === 'go' ? `<p class="note" style="margin-top:14px">${Transit.hint(l)}</p>` : ''}
-      <p class="note" style="margin-top:14px">Wegzeiten und Puffer änderst du in den Einstellungen unter Orte und Wege.</p></div>`);
+      <div class="sheet-foot">${l.kind === 'go' && l.to && !l.to.home && placeById(l.to.id) ? `<button class="btn" data-act="edit" data-kind="place" data-id="${esc(l.to.id)}">${ic('zug','s')}${routeOk(l.to.route) ? 'Strecke ändern' : 'Bahn und Strecke eintragen'}</button>` : '<span></span>'}</div></div>`);
   },
   sleep(dateStr){
     const P = sleepPlan(), sp = P[dateStr]; if (!sp) return;
@@ -3730,6 +3883,7 @@ const EDITORS = {
         <div class="ovl" data-ovl aria-live="polite"></div>
         <div class="frow"><label class="f"><span>Ort mit Wegzeit</span><select name="placeId">${placeOptions(e.placeId)}</select></label><label class="f"><span>Adresse oder Raum</span><input name="location" value="${esc(e.location)}" placeholder="optional"></label></div>
         ${newPlaceBlock(false, '', '')}
+        <div class="leave" data-leave aria-live="polite"></div>
         <div class="frow"><label class="f"><span>Wiederholen</span><select name="freq">${Object.entries(REPEAT).map(([k,v]) => `<option value="${k}" ${e.repeat?.freq===k?'selected':''}>${v}</option>`).join('')}</select></label><label class="f"><span>Bis (optional)</span><input type="date" name="until" value="${esc(e.repeat?.until||'')}"></label></div>
         <div class="f"><span>Erinnern vorher</span>${remChips('rem', rems)}</div>
         <label class="f"><span>Link</span><input name="link" value="${esc(e.link)}" placeholder="https://"></label>
@@ -3737,7 +3891,7 @@ const EDITORS = {
         ${(e.skip||[]).length ? `<div class="f"><span>Fällt aus am</span><div class="chips">${e.skip.map(sk => `<button type="button" class="chip" data-act="unskip" data-date="${sk}">${fmtShort(parseYMD(sk))} ${ic('x','s')}</button>`).join('')}</div></div>` : ''}
         ${foot(!isNew)}
       </form>`, {kind:'event', id: isNew ? null : e.id, date: opts.date});
-    setTimeout(() => { const f = sheet.card.querySelector('form[data-form=event]'); if (f) { ovlUpdate(f); if (e.title) memUpdate(f); } }, 30);
+    setTimeout(() => { const f = sheet.card.querySelector('form[data-form=event]'); if (f) { ovlUpdate(f); leaveUpdate(f); if (e.title) memUpdate(f); } }, 30);
   },
   deadline(d, opts = {}){
     const isNew = !d;
@@ -3769,13 +3923,14 @@ const EDITORS = {
         <div class="f"><span>Zeitblock</span><div class="chips">${UNI_SLOTS.map(([a,b],i) => `<button type="button" class="chip" data-act="pickSlot" data-a="${a}" data-b="${b}" aria-pressed="${c.start===a&&c.end===b}">${pad(8+i*2)}–${pad(10+i*2)}</button>`).join('')}</div></div>
         <div class="frow"><label class="f"><span>Tag</span><select name="day">${WD_LONG.map((w,i) => `<option value="${i+1}" ${+c.day===i+1?'selected':''}>${w}</option>`).join('')}</select></label><label class="f"><span>Beginn</span><input type="time" name="start" required value="${esc(c.start)}"></label><label class="f"><span>Ende</span><input type="time" name="end" required value="${esc(c.end)}"></label></div>
         <div class="frow"><label class="f"><span>Rhythmus</span><select name="weeks"><option value="all" ${c.weeks==='all'?'selected':''}>Jede Woche</option><option value="odd" ${c.weeks==='odd'?'selected':''}>Ungerade KW</option><option value="even" ${c.weeks==='even'?'selected':''}>Gerade KW</option></select></label><label class="f"><span>Kategorie</span><select name="catId">${catOptions(c.catId)}</select></label></div>
-        ${(() => { const cat = state.categories.find(x => x.id === c.catId), ask = isNew && !(cat && cat.placeId && placeById(cat.placeId)) && !c.placeId; return `<div class="frow"><label class="f"><span>Ort mit Wegzeit</span><select name="placeId">${placeOptions(ask ? '__new' : c.placeId)}</select></label><label class="f"><span>Raum</span><input name="room" value="${esc(c.room)}" placeholder="z. B. H 0105"></label></div>${newPlaceBlock(ask, ask ? 'Uni' : '', cat ? cat.name : '')}`; })()}
+        ${(() => { const cat = state.categories.find(x => x.id === c.catId), ask = isNew && !(cat && cat.placeId && placeById(cat.placeId)) && !c.placeId; return `<div class="frow"><label class="f"><span>Ort mit Wegzeit</span><select name="placeId">${placeOptions(ask ? '__new' : c.placeId)}</select></label><label class="f"><span>Raum</span><input name="room" value="${esc(c.room)}" placeholder="z. B. H 0105"></label></div>${newPlaceBlock(ask, ask ? 'Uni' : '', cat ? cat.name : '')}<div class="leave" data-leave aria-live="polite"></div>`; })()}
         <label class="f"><span>Lehrende</span><input name="lecturer" value="${esc(c.lecturer)}"></label>
         <label class="f"><span>Kursseite</span><input name="link" value="${esc(c.link)}" placeholder="ISIS-Kurs, Discord-Kanal …"></label>
         <label class="f"><span>Notizen</span><textarea name="notes">${esc(c.notes)}</textarea></label>
         ${(c.skip||[]).length ? `<div class="f"><span>Fällt aus am</span><div class="chips">${c.skip.map(sk => `<button type="button" class="chip" data-act="unskip" data-date="${sk}">${fmtShort(parseYMD(sk))} ${ic('x','s')}</button>`).join('')}</div></div>` : ''}
         ${foot(!isNew)}
       </form>`, {kind:'course', id: isNew ? null : c.id});
+    setTimeout(() => { const f = sheet.card && sheet.card.querySelector('form[data-form=course]'); if (f) leaveUpdate(f); }, 30);
   },
   todo(t, isNew){
     openSheet(`${head(isNew ? 'Neues To-do' : 'To-do')}<form class="form" data-form="todoEdit">
@@ -3793,11 +3948,11 @@ const EDITORS = {
   },
   place(p){
     const isNew = !p; p = p || {name:'', minutes:20, mode:'oepnv'};
-    const vb = Transit.ok() ? `<div class="f"><span>Haltestelle oder Adresse für Live-Verbindungen</span><div style="display:flex;gap:8px"><input id="vbbQ" placeholder="z. B. Ernst-Reuter-Platz oder Straße und Hausnummer" value="${esc(p.vbb ? p.vbb.name : '')}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p.vbb ? JSON.stringify(p.vbb) : '')}"><div id="vbbRes" class="chips" style="margin-top:8px">${p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : ''}</div></div>` : '';
+    const vb = p.home ? (Transit.ok() ? `<div class="f"><span>Haltestelle oder Adresse für Live-Verbindungen</span><div style="display:flex;gap:8px"><input id="vbbQ" placeholder="z. B. Ernst-Reuter-Platz oder Straße und Hausnummer" value="${esc(p.vbb ? p.vbb.name : '')}" autocomplete="off" style="flex:1;min-width:0"><button type="button" class="btn sm" data-act="vbbSearch">Suchen</button></div><input type="hidden" name="vbb" value="${esc(p.vbb ? JSON.stringify(p.vbb) : '')}"><div id="vbbRes" class="chips" style="margin-top:8px">${p.vbb ? `<span class="tag accent">${ic('haken','s')} ${esc(p.vbb.name)}</span>` : ''}</div></div>` : '') : vbbBlock(p) + routeFields(p.route, p.mode === 'oepnv');
     openSheet(`${head(isNew ? 'Neuer Ort' : 'Ort bearbeiten')}<form class="form" data-form="place">
       <label class="f"><input class="title" name="name" required placeholder="z. B. TU Berlin, Fitnessstudio" value="${esc(p.name)}" aria-label="Name"></label>
       <div class="frow"><label class="f"><span>Weg von Zuhause (min)</span><input type="number" name="minutes" min="0" max="600" value="${+p.minutes||0}"></label><label class="f"><span>Unterwegs mit</span><select name="mode">${Object.entries(MODES).map(([k,v]) => `<option value="${k}" ${p.mode===k?'selected':''}>${v}</option>`).join('')}</select></label></div>
-      ${p.home ? '' : `<p class="note">Trag die reine Fahrzeit von Tür zu Tür ein, so wie eine Karten-App sie anzeigt. Puffer, Wartezeit und Regen rechnet der Kalender selbst dazu.</p>`}
+      ${p.home ? '' : `<p class="note">Die Minuten gelten für Rad, Fuß und Auto und als grobe Schätzung. Fährst du Bahn oder Bus, trag unten deine Strecke ein, dann rechnet der Kalender mit den echten Abfahrten.</p>`}
       ${vb}
       ${foot(!isNew && !p.home)}</form>`, {kind:'place', id: isNew ? null : p.id});
   },
@@ -3975,7 +4130,8 @@ const SAVE = {
   place(form, fd){
     const ex = sheet.ctx.id && placeById(sheet.ctx.id), isHome = !!(ex && ex.home);
     let vbb = ex && ex.vbb || null; try { const v = fd.get('vbb'); vbb = v ? JSON.parse(v) : null; } catch {}
-    const name = fd.get('name').trim(), isNew = upsert('places', sheet.ctx.id, isHome ? {name, vbb} : {name, minutes: +fd.get('minutes')||0, mode: fd.get('mode'), home:false, vbb});
+    const route = !isHome && fd.get('mode') === 'oepnv' ? readRoute(form) : null;
+    const name = fd.get('name').trim(), isNew = upsert('places', sheet.ctx.id, isHome ? {name, vbb} : {name, minutes: route ? routeBase(route) : +fd.get('minutes')||0, mode: fd.get('mode'), home:false, vbb, route});
     Transit.reset();
     if (isNew) { /* Uni-Ort automatisch der Kategorie Uni zuordnen */
       const p = state.places[state.places.length-1], uni = state.categories.find(c => c.id === 'uni');
@@ -4074,6 +4230,36 @@ const ACTIONS = {
     const r = ui._vbbRes && ui._vbbRes[+el.dataset.i], f = el.closest('form'); if (!r) return;
     f.elements.vbb.value = JSON.stringify(r); f.querySelector('#vbbQ').value = r.name;
     f.querySelector('#vbbRes').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(r.name)}</span>`;
+  },
+  routeAdd(el){
+    const box = el.closest('[data-route]').querySelector('[data-rlegs]'), n = box.querySelectorAll('[data-rleg]').length;
+    if (n >= 3) { toast('Höchstens zwei Umstiege', ''); return; }
+    const prev = box.querySelectorAll('[data-rleg]')[n - 1], to = prev && prev.querySelector('[data-k="to"]').value;
+    box.insertAdjacentHTML('beforeend', routeLegRow({from: to || ''}, n)); box.lastElementChild.querySelector('[data-k="line"]').focus();
+  },
+  routeDel(el){ const f = el.closest('form'); el.closest('[data-rleg]').remove(); leaveSchedule(f); },
+  async routeAuto(el){
+    const f = el.closest('form'), box = f.querySelector('[data-rauto]'), home = placeById('home');
+    let to = null; try { to = f.elements.vbb && f.elements.vbb.value ? JSON.parse(f.elements.vbb.value) : null; } catch {}
+    if (!home || !home.vbb) { box.innerHTML = '<span class="muted" style="font-size:13px">Trag zuerst bei Zuhause deine Haltestelle oder Adresse ein (Einstellungen → Orte und Wege).</span>'; return; }
+    if (!to) { box.innerHTML = '<span class="muted" style="font-size:13px">Such oben zuerst das Ziel als Haltestelle oder Adresse.</span>'; f.querySelector('#vbbQ') && f.querySelector('#vbbQ').focus(); return; }
+    let arr = formStart(f); if (arr) arr = addMin(arr, -(+state.settings.travel.arriveEarly || 0));
+    if (!arr || arr < new Date()) { arr = addDays(startOfDay(new Date()), 1); while (isoDow(arr) > 5) arr = addDays(arr, 1); arr.setHours(9, 0, 0, 0); }
+    box.innerHTML = '<span class="muted" style="font-size:13px">Suche Verbindungen …</span>';
+    try {
+      const js = await Transit.options(home.vbb, to, arr); ui._rOpts = js;
+      const seen = new Set(), uniq = js.filter(j => { const k = j.legs.filter(g => !g.walk).map(g => g.line).join('>'); if (seen.has(k)) return false; seen.add(k); return true; });
+      box.innerHTML = uniq.length ? `<span class="muted" style="font-size:13px;width:100%">Welche nimmst du?</span>` + uniq.slice(0, 4).map(j => `<button type="button" class="chip" data-act="routePick" data-i="${js.indexOf(j)}">${j.legs.filter(g => !g.walk).map(g => lnBadge(g.line, g.product)).join(' ')} <span>${dur(Math.round((j.arrive - j.depart) / 60000))}</span></button>`).join('') : '<span class="muted" style="font-size:13px">Keine Verbindung gefunden.</span>';
+    } catch { box.innerHTML = '<span class="muted" style="font-size:13px">Verbindungen gerade nicht erreichbar. Du kannst die Strecke auch selbst eintragen.</span>'; }
+  },
+  routePick(el){
+    const j = ui._rOpts && ui._rOpts[+el.dataset.i], f = el.closest('form'); if (!j) return;
+    const R = routeFromJourney(j, ui._rOpts), wrap = f.querySelector('[data-route]');
+    f.elements.r_walkTo.value = R.walkTo; f.elements.r_walkFrom.value = R.walkFrom;
+    wrap.querySelector('[data-rlegs]').innerHTML = R.legs.map(routeLegRow).join('');
+    const mf = f.elements.minutes || f.elements.np_min; if (mf) mf.value = routeBase(R);
+    wrap.querySelector('[data-rauto]').innerHTML = `<span class="tag accent">${ic('haken','s')} ${esc(routeLabel(R))} übernommen</span>`;
+    haptic(); leaveUpdate(f);
   },
   async transitNow(){ Transit.reset(); await Transit.refresh(true); render(); },
   pushOn(){
@@ -4652,10 +4838,16 @@ const Transit = {
     const q = new URLSearchParams({...this.params('from', l.from.vbb), ...this.params('to', l.to.vbb), arrival: arriveBy.toISOString(), results: '4', language: 'de', remarks: 'true', pretty: 'false'});
     const r = await fetch(`${this.api}/journeys?${q}`); if (!r.ok) throw new Error('vbb ' + r.status);
     const js = ((await r.json()).journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length);
-    const okJ = js.filter(j => !j.cancelled && j.arrive <= addMin(arriveBy, 1)).sort((a, b) => b.depart - a.depart);
+    const pref = routeLegs(l.to.route).map(g => normLine(g.line)).filter(Boolean), hasPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line))) ? 1 : 0;
+    const okJ = js.filter(j => !j.cancelled && j.arrive <= addMin(arriveBy, 1)).sort((a, b) => (hasPref(b) - hasPref(a)) || (b.depart - a.depart));
     const best = okJ[0] || js.find(j => !j.cancelled) || js[0];
     if (!best) return null;
     return {...best, arriveBy: +arriveBy, fetchedAt: Date.now(), alts: js.filter(j => j !== best).slice(0, 3)};
+  },
+  async options(fromL, toL, arriveBy){
+    const q = new URLSearchParams({...this.params('from', fromL), ...this.params('to', toL), arrival: arriveBy.toISOString(), results: '6', language: 'de', pretty: 'false'});
+    const r = await fetch(`${this.api}/journeys?${q}`); if (!r.ok) throw new Error('vbb ' + r.status);
+    return ((await r.json()).journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length && !j.cancelled && j.legs.some(g => !g.walk));
   },
   async refresh(force){
     if (!this.ok() || this.busy || !state) return; this.busy = true;
@@ -4688,10 +4880,12 @@ const Transit = {
   }
 };
 function transitHtml(lv){
-  const tm = (t, p, d) => `<span class="tm">${hm(new Date(t))}${d > 0 ? `<span class="late">+${d}</span>` : ''}${d > 0 && p ? `<s>${hm(new Date(p))}</s>` : ''}</span>`;
+  const tm = (t, p, d, ap) => `<span class="tm">${ap ? '<span class="ca">ca.</span>' : ''}${hm(new Date(t))}${d > 0 ? `<span class="late">+${d}</span>` : ''}${d > 0 && p ? `<s>${hm(new Date(p))}</s>` : ''}</span>`;
   const leg = g => g.walk
-    ? `<div class="tleg">${tm(g.dep)}<span class="ln walk">${ic('laeufer','s')}</span><span class="tx">Zu Fuß${g.dist ? ` · ${g.dist} m` : ''}<small>bis ${esc(g.to)}</small></span></div>`
-    : `<div class="tleg${g.x ? ' x' : ''}">${tm(g.dep, g.pdep, g.ddel)}<span class="ln" style="--lc:${LINE_COL[g.product] || 'var(--ink)'}">${esc(g.line)}</span><span class="tx">${esc(g.from)}${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}<small>Richtung ${esc(g.dir)} · an ${esc(g.to)} ${hm(new Date(g.arr))}${g.adel > 0 ? ` (+${g.adel})` : ''}</small>${g.x ? '<small style="color:var(--danger)">Fällt aus</small>' : ''}${g.notes.map(n => `<small>${esc(n)}</small>`).join('')}</span></div>`;
+    ? `<div class="tleg">${tm(g.dep)}<span class="ln walk">${ic('laeufer','s')}</span><span class="tx">Zu Fuß${g.mins ? ` · ${g.mins} min` : g.dist ? ` · ${g.dist} m` : ''}<small>bis ${esc(g.to)}</small></span></div>`
+    : `<div class="tleg${g.x ? ' x' : ''}">${tm(g.dep, g.pdep, g.ddel, g.approx)}<span class="ln" style="--lc:${LINE_COL[g.product] || 'var(--ink)'}">${esc(g.line)}</span><span class="tx">${esc(g.from)}${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}<small>${g.dir ? `Richtung ${esc(g.dir)} · ` : ''}${g.approx ? `alle ${g.every} min · ` : ''}an ${g.to ? esc(g.to) + ' ' : ''}${g.approx ? 'ca. ' : ''}${hm(new Date(g.arr))}${g.adel > 0 ? ` (+${g.adel})` : ''}</small>${g.x ? '<small style="color:var(--danger)">Fällt aus</small>' : ''}${g.notes.map(n => `<small>${esc(n)}</small>`).join('')}</span></div>`;
+  if (lv.plan) return `<div class="trip"><div class="trip-h"><b>Deine Verbindung</b><small>${lv.exact ? 'nach deinem Fahrplan' : 'ungefähr'}</small></div>${lv.legs.map(leg).join('')}
+    ${lv.exact ? '' : '<p class="note" style="margin-top:10px">Trag beim Ort eine Abfahrtszeit deiner Linie ein, dann rechnet der Kalender minutengenau. Bis dahin ist eine volle Taktlänge Wartezeit eingeplant.</p>'}</div>`;
   const ago = Math.max(0, Math.round((Date.now() - lv.fetchedAt) / 60000));
   return `<div class="trip"><div class="trip-h"><b>Verbindung live</b><small>${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'} · VBB</small></div>${lv.legs.map(leg).join('')}
     ${lv.alts && lv.alts.length ? `<div class="trip-alt"><span class="muted" style="font-size:13px;width:100%">Andere Verbindungen</span>${lv.alts.map(a => `<span class="tag">${esc(a.first)} ${hm(a.depart)} → ${hm(a.arrive)}${a.cancelled ? ' · fällt aus' : a.delay ? ` · +${a.delay}` : ''}</span>`).join('')}</div>` : ''}
@@ -5109,7 +5303,7 @@ function dayPeek(days){
   const rows = [];
   const its = dayItems(d).filter(o => o.kind !== 'holiday' && layerOk(o)).concat(workFor(d));
   for (const o of its) rows.push({t: o.allDay ? -1 : +o.start, html: `<button class="pk-row${o.kind === 'work' ? ' work' : ''}${!o.allDay && o.end < now ? ' past' : ''}" style="--c:${o.cat.color}" data-act="detail" data-kind="${o.kind}" data-id="${esc(o.id)}" data-date="${ymd(d)}"><span class="tm">${o.allDay ? 'ganzt.' : o.kind === 'deadline' ? hm(o.start) : hm(o.start)}</span><span class="dt"></span><span class="ti">${esc(o.kind === 'course' ? o.ref.title : o.title)}${placeLabel(o) ? `<small>${esc(placeLabel(o))}${o.kind !== 'deadline' && !o.allDay ? ' · bis ' + hm(o.end) : ''}</small>` : (o.kind !== 'deadline' && !o.allDay ? `<small>bis ${hm(o.end)}</small>` : '')}</span></button>`});
-  if (s.layers.travel) plan.legs.forEach((l, i) => { if (!sameDay(l.depart, d)) return; rows.push({t: +l.depart - 1, html: `<button class="pk-row leg${l.tight ? ' tight' : ''}${l.arrive < now ? ' past' : ''}" data-act="travelInfo" data-date="${ymd(d)}" data-i="${i}"><span class="tm">${hm(l.depart)}</span><span class="dt"></span><span class="ti">${l.kind === 'go' ? 'Losgehen nach ' + esc(l.to && l.to.name || '') : 'Heimweg'} · ${l.mins} min</span></button>`}); });
+  if (s.layers.travel) plan.legs.forEach((l, i) => { if (!sameDay(l.depart, d)) return; rows.push({t: +l.depart - 1, html: `<button class="pk-row leg${l.tight ? ' tight' : ''}${l.arrive < now ? ' past' : ''}" data-act="travelInfo" data-date="${ymd(d)}" data-i="${i}"><span class="tm">${hm(l.depart)}</span><span class="dt"></span><span class="ti">${l.kind === 'go' ? 'Losgehen nach ' + esc(l.to && l.to.name || '') + (l.live ? ' · ' + esc(l.live.first) : '') : 'Heimweg'} · ${l.mins} min</span></button>`}); });
   rows.sort((a,b) => a.t - b.t);
   const todos = state.todos.filter(t => !t.done && (today ? (!t.date || parseYMD(t.date) <= startOfDay(now)) : t.date === ymd(d)));
   const hol = dayItems(d).filter(o => o.kind === 'holiday');
@@ -5245,6 +5439,8 @@ function bindEvents(){
       { const mq = p.kind !== 'deadline' && titleMemory(p.title); if (mq) prev.insertAdjacentHTML('beforeend', `<span class="mem-hint">wie beim letzten Mal: ${esc(memSummary(mq))}</span>`); }
     }
     if (t.name === 'allDay') t.closest('form').querySelectorAll('[data-time]').forEach(r => r.hidden = t.checked);
+    if ((t.name === 'mode' || t.name === 'np_mode') && t.form) { const r = t.form.querySelector('[data-route]'); if (r) r.hidden = t.value !== 'oepnv'; }
+    if (t.form && t.form.querySelector('[data-leave]') && (['date','start','end','allDay','placeId','catId','day','np_min','np_mode','np_name','r_walkTo','r_walkFrom'].includes(t.name) || t.closest('[data-route]'))) leaveSchedule(t.form);
     if (t.name === 'placeId') { const b = t.closest('form').querySelector('[data-newplace]'); if (b) { b.hidden = t.value !== '__new'; if (!b.hidden) b.querySelector('[name=np_name]').focus(); } }
     if (t.name === 'colorCustom') t.closest('form').querySelectorAll('[name=color]').forEach(r => r.checked = false);
   });
