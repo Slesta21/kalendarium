@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 26  ·  persönlicher Kalender für alles
+ KALENDARIUM 26.1  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -5757,7 +5757,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '26';
+const APP_VERSION = '26.1';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -8635,6 +8635,9 @@ const Transit = {
     const {data} = await this.get(this.jq(fromL, toL, {[by]: when.toISOString(), results: '6', ...extra}));
     return (data.journeys || []).map(j => this.simplify(j)).filter(j => j.legs.length && !j.cancelled && j.legs.some(g => !g.walk));
   },
+  /* 5 min vor dem Losgehen bis 5 min nach der Ankunft: jede Minute neu */
+  hot(c, dep, arr, now){ const a = c && c.depart ? Math.min(+c.depart, dep || Infinity) : dep, b = c && c.arrive ? Math.max(+c.arrive, arr || 0) : arr;
+    return a && b && now >= a - 5 * 60000 && now <= b + 5 * 60000; },
   async refresh(force){
     if (!this.ok() || this.busy || !state) return; this.busy = true;
     const T = state.settings.travel, now = Date.now(); let changed = false;
@@ -8642,13 +8645,15 @@ const Transit = {
       const t0 = startOfDay(new Date());
       for (const d of [t0, addDays(t0, 1)]) {
         for (const o of dayItems(d).filter(isTimed)) {
-          const arriveBy = addMin(o.start, -(+T.arriveEarly || 0)); if (+arriveBy < now || +arriveBy > now + 30 * 3600000) continue;
+          const arriveBy = addMin(o.start, -(+T.arriveEarly || 0)), c0 = this.cache[o.key], endAt = c0 && c0.arriveBy === +arriveBy ? Math.max(+c0.arrive || 0, +arriveBy) : +arriveBy;
+          if (endAt < now - 5 * 60000 || +arriveBy > now + 30 * 3600000) continue;
           const l0 = planDay(d).legs.find(x => x.kind === 'go' && x.before.key === o.key);
           if (!l0 || !l0.from || !l0.to) continue;
           const baseFrom = l0.from.id === '_here' ? placeById('home') : l0.from, here = sameDay(d, new Date()) && baseFrom && baseFrom.home && Loc.status() === 'away' ? Loc.here() : null;
           const l = {...l0, from: here ? {id:'_here', name:'Dein Standort', vbb: here} : baseFrom};
           if (!l.from.vbb || !l.to.vbb || l.to.mode !== 'oepnv') continue;
-          const c = this.cache[o.key], soon = +arriveBy - now < 3 * 3600000, maxAge = soon ? 90000 : 20 * 60000;
+          const c = this.cache[o.key], soon = +arriveBy - now < 3 * 3600000, maxAge = this.hot(c, +l0.depart, +arriveBy, now) ? 45000 : soon ? 90000 : 20 * 60000;
+          if (c && +arriveBy < now && c.arriveBy === +arriveBy && now - c.fetchedAt < 45000) continue;
           if (!force && c && c.arriveBy === +arriveBy && now - c.fetchedAt < maxAge) continue;
           try { const lv = await this.fetchLeg(l, arriveBy); if (lv) { if (here) { lv.fromHere = true; lv.fromVbb = here; } this.cache[o.key] = lv; changed = true; this.alert(o, lv); } this.err = ''; }
           catch { this.err = 'Live-Verbindungen gerade nicht erreichbar.'; }
@@ -8658,7 +8663,8 @@ const Transit = {
       if (home && home.vbb) for (const d of [t0, addDays(t0, 1)]) for (const hl of planDay(d).legs.filter(x => x.kind === 'home' && x.after && x.from && x.from.vbb && x.from.mode === 'oepnv')) {
         const at0 = hl.after.end; if (+at0 < now - 600000 || +at0 > now + 30 * 3600000) continue;
         const key = 'back:' + hl.after.key, c = this.cache[key], soon = +at0 - now < 3 * 3600000;
-        if (!force && c && c.after === +at0 && now - c.fetchedAt < (soon ? 90000 : 20 * 60000)) continue;
+        if (c && c.after === +at0 && +c.arrive < now - 5 * 60000) continue;
+        if (!force && c && c.after === +at0 && now - c.fetchedAt < (this.hot(c, +hl.depart, +hl.arrive, now) ? 45000 : soon ? 90000 : 20 * 60000)) continue;
         try {
           const js = (await this.options(hl.from.vbb, home.vbb, at0, 'departure', {stopovers: 'true', polylines: 'true', remarks: 'true'})).filter(j => j.depart >= addMin(at0, -1));
           const pref = routeLegs(routeOk(hl.after.ref.routeBack) ? hl.after.ref.routeBack : hl.from.routeBack).flatMap(g => [g.line, ...(g.alt || [])]).map(normLine), isPref = j => pref.length && j.legs.some(g => !g.walk && pref.includes(normLine(g.line)));
@@ -8673,8 +8679,15 @@ const Transit = {
       }
       if (await this.checkHome(force)) changed = true;
     } finally { this.busy = false; }
-    if (changed) { invalidate(); renderSoft(); if (typeof Push !== 'undefined') Push.queue(); }
+    if (changed) { invalidate(); renderSoft(); this.liveSheet(); if (typeof Push !== 'undefined') Push.queue(); }
     this.fillRoutes();
+  },
+  liveSheet(){
+    const b = ui._back, t = document.querySelector('#sheetCard .trip'); if (!b || !t || !sheet.el || sheet.el.hidden) return;
+    const l = planDay(parseYMD(b.date)).legs[+b.i]; if (!l || !l.live || l.live.plan) return;
+    const open = [...t.querySelectorAll('details')].map(d => d.open), w = document.createElement('div'); w.innerHTML = transitHtml(l.live);
+    const n = w.querySelector('.trip'); if (!n) return; n.querySelectorAll('details').forEach((d, i) => { if (open[i]) d.open = true; });
+    n.style.animation = 'none'; t.replaceWith(n); try { stopImgLoadAll(); } catch {}
   },
   /* Für Orte mit Adresse die Strecke ab Zuhause einmal aus dem Fahrplan holen */
   _filled: {},
@@ -8769,7 +8782,7 @@ function transitHtml(lv, opt = {}){
   if (lv.plan) return `<div class="trip" style="${lw}"><div class="trip-h"><b>Deine Verbindung</b><small>${lv.exact ? 'nach Fahrplan' : 'ungefähr'}</small></div>${sum}${L.map(leg).join('')}
     ${lv.exact ? '' : '<p class="note" style="margin-top:10px">Ungefähr gerechnet. Kurz vorher holt die App die echte Verbindung.</p>'}</div>`;
   const ago = Math.max(0, Math.round((Date.now() - lv.fetchedAt) / 60000));
-  return `<div class="trip" style="${lw}"><div class="trip-h"><b>Verbindung live</b><small>${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'}</small></div>${sum}${rec}${L.map(leg).join('')}
+  return `<div class="trip" style="${lw}"><div class="trip-h"><b>Verbindung live</b><small data-ago="${lv.fetchedAt}">${ago ? `vor ${ago} min aktualisiert` : 'gerade aktualisiert'}</small></div>${sum}${rec}${L.map(leg).join('')}
     ${lv.alts && lv.alts.length ? `<div class="trip-alt"><span class="muted" style="font-size:13px;width:100%">Andere Verbindungen</span>${lv.alts.map(a => `<span class="tag">${esc(lineSeq(a))} ${hm(a.depart)} → ${hm(a.arrive)}${a.cancelled ? ' · fällt aus' : a.delay ? ` · +${a.delay}` : ''}</span>`).join('')}</div>` : ''}
     ${opt.noRefresh ? '' : `<div class="trip-alt"><button class="btn sm" data-act="transitNow">${ic('wdh','s')}Aktualisieren</button></div>`}</div>`;
 }
@@ -9656,7 +9669,8 @@ function init(){
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
   if (Native.on()) { setTimeout(() => Native.sync(true), 1500); setInterval(() => Native.sync(), 5 * 60000); document.addEventListener('visibilitychange', () => { if (document.hidden) Native.sync(); }); }
-  if (STANDALONE) { setTimeout(() => Transit.refresh(), 2500); setInterval(() => { if (!document.hidden) Transit.refresh(); }, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Transit.refresh(); }); }
+  setInterval(() => document.querySelectorAll('[data-ago]').forEach(e => { const a = Math.max(0, Math.round((Date.now() - +e.dataset.ago) / 60000)); e.textContent = a ? `vor ${a} min aktualisiert` : 'gerade aktualisiert'; }), 15000);
+  if (STANDALONE) { setTimeout(() => Transit.refresh(), 2500); setInterval(() => { if (!document.hidden) Transit.refresh(); }, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Transit.refresh(); }); }
   if (STANDALONE) { setTimeout(() => Push.sync(), 4000); setInterval(() => { if (!document.hidden) Push.sync(); }, 20*60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Push.queue(); }); }
   let lastMin = new Date().getMinutes(), lastDay = ymd(new Date());
   setInterval(() => {
