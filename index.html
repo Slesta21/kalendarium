@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#F2F1F9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0A0918" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F3F3F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Kalendarium: persönlicher Kalender mit Stundenplan, Fristen, Wegen und Schlafplan.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 31  ·  persönlicher Kalender für alles
+ KALENDARIUM 32  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -77,7 +77,7 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* ================================================================
    §1 CSS-TOKENS
@@ -2290,212 +2290,219 @@ details.sx[open] > summary .sx-t b,details.sx > summary:hover .sx-t b{color:var(
 
 /* 7 Bewegung: Fenster und Meldungen steigen gleich */
 .toast{animation:rise var(--d2) var(--ease)}
-@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-ExtraLight.woff2") format("woff2");font-weight:200;font-display:swap}
-@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-Light.woff2") format("woff2");font-weight:300;font-display:swap}
-@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-SemiBold.woff2") format("woff2");font-weight:600;font-display:swap}
-@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
-@font-face{font-family:"Kal Sans";src:url("fonts/InstrumentSans-Variable.woff2") format("woff2");font-weight:400 700;font-stretch:75% 100%;font-display:swap}
 
 /* =====================================================================
-   §A AURORA-GLAS (v31) · die Persönlichkeit
-   Hinter allem treiben unscharfe Farbwolken, je Bereich in eigenen
-   Farben. Darauf liegen Milchglas-Flächen mit großen Rundungen.
-   Schrift: Bricolage Grotesque (Anzeige, sehr leicht bis kräftig) und
-   Instrument Sans (Bedienung). Zahlen riesig und dünn. Der Faden leuchtet.
+   §B FARBBLÖCKE (v32) · flach, mutig, klar
+   Jeder Bereich hat eine kräftige Vollfarbe. Oben steht sie als großer
+   Block mit Titel, Datum und Faden in Weiß. Darunter liegen ruhige
+   Kacheln ohne Rand und ohne Schatten in einem festen Raster.
+   Schrift: Bricolage Grotesque fett für Titel und Zahlen,
+   Instrument Sans für alles Bedienbare.
    ===================================================================== */
+@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-Medium.woff2") format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-SemiBold.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Kal Display";src:url("fonts/BricolageGrotesque-ExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Kal Sans";src:url("fonts/InstrumentSans-Variable.woff2") format("woff2");font-weight:400 700;font-stretch:75% 100%;font-display:swap}
+
 :root{
   --f-display:"Kal Display", "Bricolage Grotesque", "Kal Sans", system-ui, sans-serif;
   --f-body:"Kal Sans", "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:var(--f-body);
-  --paper:#F2F1F9; --ink:#17142E; --muted:#4A4766; --faint:#7E7B99;
-  --line:rgb(23 20 46 / .09); --sunk:rgb(23 20 46 / .055); --surface:#FBFAFF; --raised:#FFFFFF;
-  --card:rgb(255 255 255 / .58); --card-strong:rgb(255 255 255 / .82); --card-line:rgb(255 255 255 / .75);
-  --card-hover:rgb(255 255 255 / .74);
-  --r-card:28px; --r-lg:24px; --r:16px; --r-sm:12px; --r-ev:14px;
-  --blur-card:28px;
-  --a1:#5B5BF0; --a2:#9B5CF5; --a3:#35A7FF; --a4:#F06BC4;
-  --cloud:.7;
-  --zone-ink:color-mix(in oklab, var(--a1) 70%, var(--ink));
-  --zone-soft:color-mix(in oklab, var(--a1) 16%, transparent);
-  --glass-strong:rgb(251 250 255 / .8);
-  --glass-bar:transparent;
-  --glass-line:rgb(255 255 255 / .7);
-  --accent-soft:color-mix(in oklab, var(--accent) 14%, transparent);
+  --paper:#F3F3F0; --tile:#FFFFFF; --tile-2:#E9E9E5; --ink:#111113; --muted:#55555C; --faint:#8C8C93;
+  --line:#E4E4DF; --sunk:#E9E9E5; --surface:#FFFFFF; --raised:#FFFFFF;
+  --zone:#2547F4; --on-zone:#FFFFFF;
+  --zone-ink:color-mix(in oklab, var(--zone) 82%, var(--ink));
+  --zone-soft:color-mix(in oklab, var(--zone) 13%, var(--tile));
+  --r-tile:20px; --r:14px; --r-sm:10px; --r-lg:20px; --r-ev:12px;
+  --accent-soft:color-mix(in oklab, var(--zone) 13%, var(--tile));
+  --glass-strong:var(--tile); --glass-line:transparent; --shadow:none;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --paper:#0A0918; --ink:#F2F0FF; --muted:#B2AFD2; --faint:#7D7AA3;
-  --line:rgb(255 255 255 / .08); --sunk:rgb(255 255 255 / .06); --surface:#15132B; --raised:#211E3D;
-  --card:rgb(26 23 52 / .5); --card-strong:rgb(22 20 44 / .82); --card-line:rgb(255 255 255 / .09); --card-hover:rgb(36 33 70 / .6);
-  --cloud:.85;
-  --zone-ink:color-mix(in oklab, var(--a1) 52%, white);
-  --zone-soft:color-mix(in oklab, var(--a1) 26%, transparent);
-  --glass-strong:rgb(22 20 44 / .8); --glass-line:rgb(255 255 255 / .09);
-  --accent-soft:color-mix(in oklab, var(--accent) 26%, transparent);
-  color-scheme:dark; } }
+  --paper:#0B0B0C; --tile:#18181B; --tile-2:#232327; --ink:#F4F4F1; --muted:#A6A6AE; --faint:#6E6E76;
+  --line:#26262A; --sunk:#232327; --surface:#18181B; --raised:#232327;
+  --zone-ink:color-mix(in oklab, var(--zone) 62%, white);
+  --zone-soft:color-mix(in oklab, var(--zone) 22%, var(--tile));
+  --accent-soft:color-mix(in oklab, var(--zone) 22%, var(--tile));
+  --glass-strong:var(--tile); color-scheme:dark; } }
 :root[data-theme="dark"]{
-  --paper:#0A0918; --ink:#F2F0FF; --muted:#B2AFD2; --faint:#7D7AA3;
-  --line:rgb(255 255 255 / .08); --sunk:rgb(255 255 255 / .06); --surface:#15132B; --raised:#211E3D;
-  --card:rgb(26 23 52 / .5); --card-strong:rgb(22 20 44 / .82); --card-line:rgb(255 255 255 / .09); --card-hover:rgb(36 33 70 / .6);
-  --cloud:.85;
-  --zone-ink:color-mix(in oklab, var(--a1) 52%, white);
-  --zone-soft:color-mix(in oklab, var(--a1) 26%, transparent);
-  --glass-strong:rgb(22 20 44 / .8); --glass-line:rgb(255 255 255 / .09);
-  --accent-soft:color-mix(in oklab, var(--accent) 26%, transparent);
-  color-scheme:dark; }
-/* Wolkenfarben je Bereich */
-:root[data-zone="kalender"]{--a1:#5B5BF0;--a2:#9B5CF5;--a3:#35A7FF;--a4:#F06BC4}
-:root[data-zone="aufgaben"]{--a1:#F2552C;--a2:#FF2E63;--a3:#FFAA33;--a4:#C2367A}
-:root[data-zone="stundenplan"]{--a1:#00A99D;--a2:#2E7DFF;--a3:#5EE0B8;--a4:#7A6CFF}
-:root[data-zone="schlaf"]{--a1:#8B7CFF;--a2:#5B49C9;--a3:#D69BFF;--a4:#3F6BD8}
-:root[data-zone="wetter"]{--a1:#2F9BFF;--a2:#6E7BFF;--a3:#FFC94D;--a4:#38D3E0}
-:root[data-zone="links"]{--a1:#B35CFF;--a2:#FF5FA8;--a3:#6E7BFF;--a4:#FF9A62}
-:root[data-zone="einstellungen"]{--a1:#7F86A8;--a2:#5F6CFF;--a3:#B6A6FF;--a4:#5BC4C0}
-:root[data-zone="suche"]{--a1:#5B5BF0;--a2:#9B5CF5;--a3:#35A7FF;--a4:#F06BC4}
+  --paper:#0B0B0C; --tile:#18181B; --tile-2:#232327; --ink:#F4F4F1; --muted:#A6A6AE; --faint:#6E6E76;
+  --line:#26262A; --sunk:#232327; --surface:#18181B; --raised:#232327;
+  --zone-ink:color-mix(in oklab, var(--zone) 62%, white);
+  --zone-soft:color-mix(in oklab, var(--zone) 22%, var(--tile));
+  --accent-soft:color-mix(in oklab, var(--zone) 22%, var(--tile));
+  --glass-strong:var(--tile); color-scheme:dark; }
+/* Bereichsfarben */
+:root[data-zone="kalender"],:root[data-zone="suche"]{--zone:#2547F4;--on-zone:#fff}
+:root[data-zone="aufgaben"]{--zone:#EE4B2B;--on-zone:#fff}
+:root[data-zone="stundenplan"]{--zone:#12965A;--on-zone:#fff}
+:root[data-zone="schlaf"]{--zone:#6B4BEF;--on-zone:#fff}
+:root[data-zone="wetter"]{--zone:#FFC21A;--on-zone:#111113}
+:root[data-zone="links"]{--zone:#E23D8B;--on-zone:#fff}
+:root[data-zone="einstellungen"]{--zone:#2B2B30;--on-zone:#fff}
 
-html{background:var(--paper)}
-body{background:transparent !important}
-body{font-family:var(--f-body);letter-spacing:-.003em}
-.aurora{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
-.aurora i{position:absolute;display:block;border-radius:50%;opacity:var(--cloud);will-change:transform;--c:var(--a1);background:radial-gradient(closest-side, var(--c), color-mix(in oklab, var(--c) 72%, transparent) 30%, color-mix(in oklab, var(--c) 32%, transparent) 62%, color-mix(in oklab, var(--c) 10%, transparent) 82%, transparent)}
-.aurora i:nth-child(1){width:84vmax;height:72vmax;left:-28vmax;top:-30vmax;--c:var(--a1);animation:drift1 46s ease-in-out infinite alternate}
-.aurora i:nth-child(2){width:70vmax;height:64vmax;right:-24vmax;top:-20vmax;--c:var(--a2);animation:drift2 58s ease-in-out infinite alternate}
-.aurora i:nth-child(3){width:78vmax;height:60vmax;left:8vmax;bottom:-34vmax;--c:var(--a3);animation:drift3 52s ease-in-out infinite alternate;opacity:calc(var(--cloud) * .8)}
-.aurora i:nth-child(4){width:46vmax;height:46vmax;right:-4vmax;bottom:-6vmax;--c:var(--a4);animation:drift1 64s ease-in-out infinite alternate-reverse;opacity:calc(var(--cloud) * .55)}
-.aurora::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%, transparent 40%, color-mix(in oklab, var(--paper) 30%, transparent))}
-@keyframes drift1{to{transform:translate(9vmax,7vmax) scale(1.12)}}
-@keyframes drift2{to{transform:translate(-10vmax,9vmax) scale(.9)}}
-@keyframes drift3{to{transform:translate(-8vmax,-9vmax) scale(1.15)}}
-@media (prefers-reduced-motion: reduce){ .aurora i{animation:none} }
-:root[data-motion="off"] .aurora i{animation:none}
+html,body{background:var(--paper)}
+body{font-family:var(--f-body)}
 .col::before,.col::after{display:none}
 
-/* --- Milchglas-Karte: die Grundfläche --- */
-.panel,.wide3 > aside,.w-right,.hero,.next,.notices,.scroller,.mo:has(> .mo-d),.yr,.cards,.sx-hero,.sx-stats,.sx-tips,.settings.acc details.sx,.tt-wrap,.citychips + *,.wxhero,.whero,.lpath,.st-deps,.deps,.trip,.leave,.tw,.sem,.toolbar + .cards{
-  background:var(--card);-webkit-backdrop-filter:blur(var(--blur-card)) saturate(1.6);backdrop-filter:blur(var(--blur-card)) saturate(1.6);
-  border:1px solid var(--card-line);border-radius:var(--r-card)}
-.panel{padding:22px 24px}
-.w-right{padding:22px 20px;max-height:calc(100vh - 120px)}
-.w-right .panel{background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0}
-.notices{padding:6px 20px;margin-bottom:var(--s3)}
-.notices > .notice:first-child{border-top:0}
-.notices > .notice:last-child{border-bottom:0}
-.next{padding:20px 22px;border-top:1px solid var(--card-line);border-bottom:1px solid var(--card-line)}
-.hero{padding:26px 28px}
-.scroller{padding:6px;overflow:auto}
-.mo:has(> .mo-d){gap:0;padding:8px;background:var(--card)}
-.mo-h{background:none}
-.mo-d{background:none;border-radius:18px;transition:background-color var(--d1)}
-.mo-d:hover{background:var(--card-hover)}
-.yr{padding:18px}
-.cards{padding:10px}
-.deps,.st-deps,.trip,.leave{padding:14px 18px}
-.trip .trip-h{margin-bottom:6px}
-.lpath{padding:14px 16px 8px}
-.tw{padding:6px 16px}
-
-/* --- Schrift: groß, leicht, mit kräftigen Akzenten --- */
-.top h1{font-family:var(--f-display);font-weight:300;font-size:clamp(30px,3.2vw,44px);letter-spacing:-.035em;line-height:1}
-.top h1 i{font-style:normal;font-weight:700;color:var(--zone-ink)}
-.top .sub{color:var(--muted)}
-.lead{font-family:var(--f-display);font-weight:300;font-size:clamp(21px,2.1vw,27px);letter-spacing:-.025em;line-height:1.28;color:var(--muted)}
-.lead b{font-weight:600;color:var(--ink)}
-.hero .bignum{font-family:var(--f-display);font-weight:200;font-size:clamp(104px,12vw,148px);letter-spacing:-.07em;line-height:.85;color:var(--zone-ink)}
-.hero .daytxt .wd{font-family:var(--f-display);font-weight:600;letter-spacing:-.03em}
-.sheet h2,.panel-h h2,.h2,.sx-h h2{font-family:var(--f-display);font-weight:400;letter-spacing:-.03em}
-.sheet h2{font-size:clamp(26px,3vw,32px)}
-.wk-h .dn,.mo-d .n .d,.days .dn,.whero-t b,.stat .big,.detail .big,.wxhero .t,.wxnow .t,.sx-score b,.lt-big,.next .cd,.next .t{font-family:var(--f-display);font-weight:250;letter-spacing:-.04em}
-.group-h h3,.eyebrow,.side-h,.cmd-sec,.f > span,.tt-head{font-family:var(--f-body);font-weight:600;color:var(--muted)}
-.brand b{font-family:var(--f-display);font-style:normal;font-weight:700;letter-spacing:-.04em;font-size:26px}
-.brand b::after{content:"";display:inline-block;width:7px;height:7px;margin-left:3px;border-radius:50%;background:var(--a1);transition:background-color 1.4s var(--ease)}
-
-/* --- Leisten und Navigation schweben --- */
-.top,:root[data-daypart="nacht"] .top{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:0}
-.top.scrolled{background:color-mix(in oklab, var(--paper) 55%, transparent);-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6)}
-.rail{margin:14px 0 14px 14px;height:calc(100vh - 28px);top:14px;border-radius:var(--r-card);background:var(--card);-webkit-backdrop-filter:blur(var(--blur-card)) saturate(1.6);backdrop-filter:blur(var(--blur-card)) saturate(1.6);border:1px solid var(--card-line)}
-.nav button{border-radius:16px;padding:10px 12px}
-.nav button[aria-current="page"]{background:var(--ink);color:var(--paper)}
-.nav button[aria-current="page"] svg{color:var(--a3)}
-.nav .count{font-family:var(--f-body)}
-.railwx{background:var(--sunk);border:0;border-radius:20px}
+/* --- Der Kopf ist ein Farbblock --- */
+.top,:root[data-daypart="nacht"] .top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--zone);color:var(--on-zone);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;margin:12px 12px 0;border-radius:28px;padding:22px 28px 18px;transition:background-color var(--d3) var(--ease)}
+.top.scrolled{border:0}
+.top h1{font-family:var(--f-display);font-weight:800;font-size:clamp(34px,4vw,52px);letter-spacing:-.04em;line-height:.95;color:var(--on-zone)}
+.top h1 i{font-style:normal;font-weight:800;color:inherit;opacity:.55}
+.top .sub{color:var(--on-zone);opacity:.75;font-weight:500}
+.top .iconbtn{color:var(--on-zone)}
+.top .iconbtn:hover{background:color-mix(in oklab, var(--on-zone) 16%, transparent);color:var(--on-zone)}
+.top .seg{background:color-mix(in oklab, var(--on-zone) 16%, transparent);border:0;padding:3px}
+.top .seg button{color:var(--on-zone);opacity:.85}
+.top .seg button[aria-pressed="true"]{background:var(--on-zone);color:var(--zone);opacity:1}
+.top .pager .btn{background:color-mix(in oklab, var(--on-zone) 16%, transparent);color:var(--on-zone);border:0}
+.top .topcmd{background:color-mix(in oklab, var(--on-zone) 16%, transparent);color:var(--on-zone)}
+.top .topcmd kbd{background:color-mix(in oklab, var(--on-zone) 18%, transparent);color:var(--on-zone);border:0}
+.top .search input{background:color-mix(in oklab, var(--on-zone) 16%, transparent);color:var(--on-zone);border:0}
+.privbtn.on{background:var(--on-zone);color:var(--zone)}
+/* Faden im Block: weiß */
+.top .faden{color:var(--on-zone)}
+.faden .fa,.faden .fz{color:var(--on-zone);opacity:.7}
+.faden .flab{color:var(--on-zone);font-weight:600}
+.faden .flab i{color:var(--on-zone);opacity:.75}
+.ftrack{height:14px}
+.ftrack::before{height:4px;margin-top:-2px;border-radius:2px;background:color-mix(in oklab, var(--on-zone) 22%, transparent)}
+.fdone{height:4px;margin-top:-2px;border-radius:2px;background:var(--on-zone)}
+.fseg{height:10px;margin-top:-5px;border-radius:5px;background:color-mix(in oklab, var(--on-zone) 55%, transparent)!important;opacity:1}
+.fseg.past{opacity:.45}
+.fnow{width:14px;height:14px;margin:-7px 0 0 -7px;background:var(--zone);border:3px solid var(--on-zone);box-sizing:border-box}
+.fnow::after{border-color:var(--on-zone)}
+.faden:hover .ftrack::before{background:color-mix(in oklab, var(--on-zone) 32%, transparent)}
+main{padding-top:20px}
 @media (max-width:860px){
-  .tabbar{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));border-radius:26px;background:var(--card-strong);-webkit-backdrop-filter:blur(26px) saturate(1.7);backdrop-filter:blur(26px) saturate(1.7);border:1px solid var(--card-line);padding:6px 4px}
-  .tabbar button{border-radius:20px;padding:6px 0;color:var(--muted)}
-  .tabbar button[aria-current="page"]{color:var(--ink)}
-  .tabbar button[aria-current="page"] svg{background:var(--ink);color:var(--paper);border-radius:999px;padding:4px 16px}
-  .fab{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
-  main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
-  .panel,.hero,.notices,.next{border-radius:24px}
-  .hero{padding:20px}
+  .top,:root[data-daypart="nacht"] .top{margin:8px 8px 0;border-radius:24px;padding:14px 16px 12px}
+  .top h1{font-size:28px}
+  .top .pager .btn.here{display:none}
+  .top .pager{gap:2px}
+  .top .seg{flex:1 1 calc(100% - 56px);display:flex}
+  .top .seg button{flex:1}
 }
 
-/* --- Knöpfe, Chips, Segmente: weich und hell --- */
-.btn{border-radius:999px;border:1px solid var(--card-line);background:var(--card);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);font-weight:600;padding:10px 18px}
-.btn:hover{background:var(--card-hover);border-color:var(--card-line)}
-.btn.primary{background:var(--ink);color:var(--paper);border-color:transparent}
-.btn.primary:hover{filter:none;background:color-mix(in oklab, var(--ink) 86%, var(--a1))}
-.btn.ghost{background:none;border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
-.btn.sm{padding:7px 14px}
-.iconbtn{border-radius:999px}
-.iconbtn:hover{background:var(--card-hover)}
-.fab{width:60px;height:60px;border-radius:50%;background:linear-gradient(140deg, var(--a1), var(--a2));color:#fff;box-shadow:0 0 0 6px color-mix(in oklab, var(--a1) 16%, transparent)}
-.chip{background:var(--card);border:1px solid var(--card-line);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--ink);padding:7px 14px}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:transparent}
-.seg{background:var(--card);border:1px solid var(--card-line);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);padding:3px}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
-.tag{border-radius:999px;background:var(--sunk);border:0}
-.lnb{border-radius:999px}
-
-/* --- Der Faden leuchtet --- */
-.ftrack{height:14px}
-.ftrack::before{height:3px;margin-top:-1.5px;border-radius:2px;background:var(--sunk)}
-.fdone{height:3px;margin-top:-1.5px;border-radius:2px;background:linear-gradient(90deg, color-mix(in oklab, var(--mood) 30%, transparent), var(--mood));filter:drop-shadow(0 0 6px var(--mood))}
-.fnow{width:12px;height:12px;margin:-6px 0 0 -6px;background:#fff;border:3px solid var(--mood);box-sizing:border-box;filter:drop-shadow(0 0 8px var(--mood))}
-.fseg{height:8px;margin-top:-4px;border-radius:4px}
-.faden .flab{font-weight:600}
-
-/* --- Termine und Raster --- */
-.ev{border-radius:var(--r-ev);background:color-mix(in oklab, var(--c) 24%, var(--card));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid color-mix(in oklab, var(--c) 30%, transparent)}
-.ev:hover{background:color-mix(in oklab, var(--c) 32%, var(--card))}
-.ev.solid{background:linear-gradient(150deg, var(--c), color-mix(in oklab, var(--c) 75%, var(--a2)));border-color:transparent}
-.tt-block{border-radius:18px;background:linear-gradient(150deg, var(--c), color-mix(in oklab, var(--c) 72%, var(--a2)))}
-.days button{border-radius:20px;background:var(--card);border:1px solid var(--card-line)}
-.days button.sel{background:var(--ink);color:var(--paper);border-color:transparent}
-.wk-h.today .dn,.mo-d.today .n .d{background:var(--ink);color:var(--paper)}
+/* --- Kacheln: die Grundfläche --- */
+.panel,.w-right,.hero,.next,.notices,.scroller,.mo:has(> .mo-d),.yr,.cards,.sx-hero,.sx-stats,.sx-tips,.settings.acc details.sx,.lpath,.st-deps,.deps,.trip,.leave,.tw,.sem,.citychips ~ .note{
+  background:var(--tile);border:0;border-radius:var(--r-tile);-webkit-backdrop-filter:none;backdrop-filter:none}
+.panel{padding:20px 22px}
+.w-right{padding:20px;max-height:calc(100vh - 160px)}
+.w-right .panel{background:none;padding:0}
+.notices{padding:4px 20px;margin-bottom:var(--s3)}
+.notices > .notice:first-child{border-top:0}.notices > .notice:last-child{border-bottom:0}
+.next{padding:20px 22px;border:0;background:var(--zone-soft)}
+.hero{padding:24px 26px}
+.scroller{padding:6px}
+.mo:has(> .mo-d){gap:4px;padding:8px;background:var(--tile)}
+.mo-h{background:none;font-weight:600}
+.mo-d{background:var(--paper);border-radius:12px}
+.mo-d:hover{background:var(--tile-2)}
+.mo-d.today{background:var(--zone);color:var(--on-zone)}
+.mo-d.today .n .d{background:none;color:var(--on-zone)}
+.yr{padding:18px}
+.deps,.st-deps,.trip,.leave{padding:14px 18px}
+.lpath{padding:14px 16px 8px}
+.tw{padding:6px 16px}
+.banner{border-bottom:0;padding:0 4px 8px}
 .row-item,.listrow{border-color:var(--line)}
 .panel > .row-item:first-child,.panel > .listrow:first-child{border-top:0}
 
-/* --- Fenster und Meldungen --- */
-.sheet .scrim{background:color-mix(in oklab, var(--paper) 25%, rgb(6 5 20 / .35));-webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2)}
-.sheet .card2{background:var(--glass-strong);border:1px solid var(--card-line);border-radius:32px;-webkit-backdrop-filter:blur(34px) saturate(1.8);backdrop-filter:blur(34px) saturate(1.8)}
-@media (max-width:860px){ .sheet .card2{border-radius:32px 32px 0 0}
-  .sheet .card2::before{content:"";display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:-8px auto 14px} }
-.toast,.toast.rem{border-radius:22px;background:var(--glass-strong);border:1px solid var(--card-line);-webkit-backdrop-filter:blur(30px) saturate(1.7);backdrop-filter:blur(30px) saturate(1.7)}
-.f input,.f select,.f textarea,.rfind-r input,.search input{background:var(--sunk);border:1px solid transparent;border-radius:14px}
-.f input:focus,.f select:focus,.f textarea:focus,.rfind-r input:focus{background:var(--card-strong);border-color:color-mix(in oklab, var(--a1) 45%, transparent);outline:none}
-.settings.acc{border-top:0;display:flex;flex-direction:column;gap:10px}
-details.sx{border-bottom:1px solid var(--card-line);padding:0 18px}
-.sx-ic{border-radius:12px;background:linear-gradient(140deg, color-mix(in oklab, var(--a1) 30%, transparent), color-mix(in oklab, var(--a2) 22%, transparent));color:var(--zone-ink)}
-.banner{border-bottom:0;padding:0 4px 10px}
-
-/* --- Karten gleiten herein --- */
-main.enter > *{animation:glide .55s cubic-bezier(.2,.8,.2,1) both}
-@keyframes glide{from{opacity:0;transform:translateY(18px) scale(.985)}}
-.sheet .card2{animation:sheetglide .42s cubic-bezier(.2,.8,.2,1) both}
-@keyframes sheetglide{from{opacity:0;transform:translateY(28px) scale(.98)}}
-@media (prefers-reduced-motion: reduce){ main.enter > *,.sheet .card2{animation:none} }
-
-/* Feinschliff */
-.settings.acc details.sx{display:block;width:100%;box-sizing:border-box}
-.settings.acc{max-width:820px}
+/* --- Schrift: fett und groß --- */
+.lead{font-family:var(--f-display);font-weight:500;font-size:clamp(20px,2vw,26px);letter-spacing:-.025em;line-height:1.25;color:var(--muted)}
+.lead b{font-weight:800;color:var(--ink)}
+.lead .ln{text-decoration-color:var(--zone)}
+.hero .bignum{font-family:var(--f-display);font-weight:800;font-size:clamp(96px,11vw,140px);letter-spacing:-.06em;line-height:.85;color:var(--zone)}
+.hero .daytxt .wd{font-family:var(--f-display);font-weight:800;letter-spacing:-.035em}
+.hero .eyebrow{color:var(--zone-ink)}
+.sheet h2,.panel-h h2,.h2,.sx-h h2,.group-h h3,.toolbar .h2{font-family:var(--f-display);font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+.group-h h3{font-size:var(--t-lead)}
+.wk-h .dn,.mo-d .n .d,.days .dn,.whero-t b,.stat .big,.detail .big,.wxhero .t,.wxnow .t,.sx-score b,.lt-big,.next .t,.sx-stat b{font-family:var(--f-display);font-weight:800;letter-spacing:-.035em}
+.next .cd{font-family:var(--f-display);font-weight:800;letter-spacing:-.04em;color:var(--zone-ink)}
 .next .cd small,.next small{font-family:var(--f-body);letter-spacing:0;font-weight:500}
-.faden .fa,.faden .fz{color:var(--muted)}
-.nav button{font-size:var(--t-md);white-space:nowrap}
-.hero .bignum{background:linear-gradient(160deg, var(--a1), var(--a2) 55%, var(--a4));-webkit-background-clip:text;background-clip:text;color:transparent}
-.group-h h3,.panel-h h2,.sx-h h2,.toolbar .h2{font-family:var(--f-display);font-weight:500;letter-spacing:-.025em;font-size:var(--t-lead);color:var(--ink)}
-.group-h{margin-top:28px}
-.lead .ln{text-decoration-color:color-mix(in oklab, var(--a2) 70%, transparent)}
-.tmap{border-radius:22px}
+.brand b{font-family:var(--f-display);font-style:normal;font-weight:800;letter-spacing:-.045em;font-size:26px}
+.brand b::after{content:"";display:inline-block;width:8px;height:8px;margin-left:3px;border-radius:2px;background:var(--zone);transition:background-color var(--d3)}
+
+/* --- Navigation: flach, aktive Kachel in Bereichsfarbe --- */
+.rail{background:none;border:0}
+.nav button{border-radius:14px;padding:10px 12px;font-size:var(--t-md);white-space:nowrap}
+.nav button:hover{background:var(--tile)}
+.nav button[aria-current="page"]{background:var(--zone);color:var(--on-zone)}
+.nav button[aria-current="page"] svg{color:var(--on-zone)}
+.railwx{background:var(--tile);border:0;border-radius:var(--r-tile)}
+@media (max-width:860px){
+  .tabbar{background:var(--tile);-webkit-backdrop-filter:none;backdrop-filter:none;border-top:0;border-radius:22px 22px 0 0;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+  .tabbar button{color:var(--muted)}
+  .tabbar button[aria-current="page"]{color:var(--ink)}
+  .tabbar button[aria-current="page"] svg{background:var(--zone);color:var(--on-zone);border-radius:12px;padding:4px 16px}
+  .panel,.hero,.notices,.next{border-radius:18px}
+  .hero{padding:18px}
+}
+
+/* --- Knöpfe, Chips, Segmente --- */
+.btn{border-radius:14px;border:0;background:var(--tile);font-weight:600;padding:10px 16px}
+.btn:hover{background:var(--tile-2);border:0}
+.btn.primary{background:var(--zone);color:var(--on-zone)}
+.btn.primary:hover{filter:none;background:color-mix(in oklab, var(--zone) 88%, var(--ink))}
+.btn.ghost{background:none}
+.btn.ghost:hover{background:var(--tile)}
+.btn.sm{padding:7px 12px;border-radius:12px}
+.iconbtn{border-radius:12px}
+.iconbtn:hover{background:var(--tile)}
+.fab{width:60px;height:60px;border-radius:20px;background:var(--zone);color:var(--on-zone);box-shadow:none}
+.chip{border-radius:12px;background:var(--tile);border:0;color:var(--ink);padding:7px 13px}
+.chip[aria-pressed="true"]{background:var(--zone);color:var(--on-zone)}
+.seg{border-radius:14px;background:var(--tile);border:0;padding:3px}
+.seg button{border-radius:11px}
+.seg button[aria-pressed="true"]{background:var(--zone);color:var(--on-zone)}
+.tag{border-radius:8px;background:var(--tile-2);border:0}
+.lnb{border-radius:8px}
+
+/* --- Termine und Raster: Vollfarbe, Schrift weiß --- */
+.ev{border-radius:var(--r-ev);background:var(--c);color:#fff;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.ev .m,.ev small{color:rgb(255 255 255 / .82)}
+.ev b::before{background:#fff}
+.ev:hover{background:color-mix(in oklab, var(--c) 86%, black)}
+.ev.solid{background:var(--c)}
+.tt-block{border-radius:14px;background:var(--c)}
+.days button{border-radius:16px;background:var(--tile);border:0}
+.days button.sel{background:var(--zone);color:var(--on-zone)}
+.days button.sel .wd,.days button.sel .tmp,.days button.sel .bed{color:inherit}
+.wk-h.today .dn{background:var(--zone);color:var(--on-zone)}
+.wk{background:var(--tile)}
+
+/* --- Fenster und Meldungen: volle Kacheln --- */
+.sheet .scrim{background:rgb(10 10 12 / .5);-webkit-backdrop-filter:none;backdrop-filter:none}
+.sheet .card2{background:var(--tile);border:0;border-radius:28px;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+@media (max-width:860px){ .sheet .card2{border-radius:28px 28px 0 0}
+  .sheet .card2::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--line);margin:-8px auto 14px} }
+.sheet h2{font-size:clamp(26px,3vw,32px)}
+.toast,.toast.rem{background:var(--ink);color:var(--paper);border:0;border-radius:18px;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.toast small{color:color-mix(in oklab, var(--paper) 75%, transparent)}
+.toast > span:first-child{color:var(--zone)}
+.toast .act .btn{color:var(--paper)!important}
+.f input,.f select,.f textarea,.rfind-r input,.search input{background:var(--paper);border:0;border-radius:12px}
+.sheet .f input,.sheet .f select,.sheet .f textarea,.sheet .rfind-r input{background:var(--tile-2)}
+.f input:focus,.f select:focus,.f textarea:focus,.rfind-r input:focus{outline:2px solid var(--zone);outline-offset:0}
+.settings.acc{border-top:0;display:flex;flex-direction:column;gap:8px;max-width:820px}
+.settings.acc details.sx{display:block;width:100%;box-sizing:border-box;border-bottom:0;padding:0 18px}
+.sx-ic{border-radius:10px;background:var(--zone);color:var(--on-zone)}
+details.sx[open] > summary .sx-t b,details.sx > summary:hover .sx-t b{color:var(--ink)}
+.tmap{border-radius:var(--r-tile)}
+.st-hero{border-radius:var(--r-tile)}
+.st-glass{background:var(--tile);-webkit-backdrop-filter:none;backdrop-filter:none;border:0}
+.st-top .iconbtn,.st-top .sheet-back{background:var(--tile);-webkit-backdrop-filter:none;backdrop-filter:none;border:0}
+.st-bg{display:none}
+.st-deps{border:0}
+
+/* --- Bewegung: Kacheln schieben sich herein --- */
+main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes tilein{from{opacity:0;transform:translateY(14px)}}
+@media (prefers-reduced-motion: reduce){ main.enter > *{animation:none} }
+/* In Fenstern und Kacheln heben sich Knöpfe und Chips eine Stufe ab */
+.sheet .btn:not(.primary):not(.ghost),.sheet .chip:not([aria-pressed="true"]),.panel .btn:not(.primary):not(.ghost),.panel .chip:not([aria-pressed="true"]),.w-right .btn:not(.primary):not(.ghost){background:var(--tile-2)}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -2505,7 +2512,6 @@ main.enter > *{animation:glide .55s cubic-bezier(.2,.8,.2,1) both}
 <!-- ================================================================
      §3 MARKUP
      ================================================================ -->
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <div class="app" id="app">
   <aside class="rail" aria-label="Navigation">
     <div class="brand"><b>Kalendarium</b><span id="brandSub"></span></div>
@@ -6217,7 +6223,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '31';
+const APP_VERSION = '32';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
