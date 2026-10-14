@@ -64,7 +64,7 @@ public class Widget extends AppWidgetProvider {
     @Override public void onEnabled(Context c) { updateAll(c); }
     @Override public void onReceive(Context c, Intent i) {
         super.onReceive(c, i);
-        if (TICK.equals(i.getAction())) { refreshLocation(c); updateAll(c); }
+        if (TICK.equals(i.getAction())) { refreshLocation(c); updateAll(c); LiveRefresh.run(c, goAsync()); }
     }
 
     /* ---------- Standort ---------- */
