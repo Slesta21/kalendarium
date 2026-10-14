@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 40  ·  persönlicher Kalender für alles
+ KALENDARIUM 41  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2861,6 +2861,20 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .wr-hint{text-align:center;font-size:13px;opacity:.7;min-height:18px}
 @media (prefers-reduced-motion: reduce){ .wr-s{animation:none} }
 @media (max-width:560px){ .pvt-k b{font-size:21px} .lu-r{grid-template-columns:36px minmax(0,1fr)} .lu-r .bar{grid-column:2} }
+/* §I ISIS, Licht, Wetter (v41) */
+.isis-steps{margin:4px 0 12px;padding-left:20px;display:grid;gap:6px;font-size:14px;color:var(--muted);line-height:1.45}.isis-steps b{color:var(--ink)}
+.isis-in{display:flex;gap:8px;margin:0 0 10px}.isis-in input{flex:1;min-width:0;height:44px;border-radius:12px;border:0;background:var(--tile-2);padding:0 12px;font:inherit;color:var(--ink)}
+.isis .note.warn{color:var(--warn)}
+.isis label.btn{cursor:pointer}
+.en-plot .suns{position:absolute;left:0;right:0;top:-4px;height:16px;pointer-events:none}
+.en-plot .suns span{position:absolute;transform:translateX(-50%);display:flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:var(--warn);background:var(--tile);padding:0 3px;border-radius:6px;font-variant-numeric:tabular-nums}
+.en-plot .suns svg{width:11px;height:11px}
+.en-svg .sun{stroke:var(--warn);stroke-width:1;stroke-dasharray:2 3;vector-effect:non-scaling-stroke;opacity:.7}
+.en-lt{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.en-lt > div{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
+.en-lt .ic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:color-mix(in oklab, var(--warn) 16%, var(--tile));color:var(--warn)}.en-lt .ic svg{width:15px;height:15px}
+.en-lt b{display:block;font-size:14px;font-weight:700}.en-lt small{display:block;font-size:13px;color:var(--muted);line-height:1.45}
+.notice.wayw svg{color:var(--zone-ink)}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6408,7 +6422,7 @@ const Reminders = {
       const how = f ? `${f.line}${f.approx ? '' : ' ' + hm(new Date(f.dep))}${f.ddel > 0 ? ` (+${f.ddel})` : ''}${f.from ? ' ab ' + f.from : ''}${f.plat ? ', Gleis ' + f.plat : ''}` : `${dur(l.mins)} Weg`;
       for (const lead of leads) add(l.depart.getTime() - lead * 60000, `${go ? 'go' : 'back'}:${(go ? l.before : l.after).key}:${lead}`,
         lead <= 3 ? (go ? `Jetzt losgehen, in ${lead} min` : `In ${lead} min los nach Hause`) : (go ? `In ${lead} min losgehen` : `In ${lead} min los nach Hause`),
-        go ? `${how} · für ${nmOf(l.before)}${l.to && l.to.name ? ' · ' + l.to.name : ''}` : `${how} · zuhause ${hm(l.arrive)}`, 'kompass', lead <= 5 ? 5 : 4, (go ? l.before : l.after).ref.vib || V.go);
+        (go ? `${how} · für ${nmOf(l.before)}${l.to && l.to.name ? ' · ' + l.to.name : ''}` : `${how} · zuhause ${hm(l.arrive)}`) + wayNote(l, addDays(d0, k)), 'kompass', lead <= 5 ? 5 : 4, (go ? l.before : l.after).ref.vib || V.go);
     }
     if (state.settings.sleep.on && +state.settings.sleep.remind) { const SP = sleepPlan(); for (let k = 0; k < days; k++) {
       const sp = SP[ymd(addDays(d0, k + 1))];
@@ -6621,7 +6635,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '40';
+const APP_VERSION = '41';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7394,6 +7408,7 @@ const VIEWS = {
         <p class="note">${STANDALONE ? 'Im Termin gibst du nur das Ziel an. Fußwege, Linien, Fahrzeit und Verspätungen holt der Kalender aus dem Fahrplan, die Puffer gelten nur für Wege ohne Fahrplan.' : 'Wegzeit einmal pro Ort eintragen. In der App rechnet der Kalender mit dem echten Fahrplan.'}</p>
       </section>
 
+      ${isisPanel()}
       ${sensePanel()}
       <section class="panel">
         <div class="panel-h"><h2>Schlaf</h2>${sw('sleep.on', S.on, 'Schlafplanung')}</div>
@@ -7552,6 +7567,8 @@ function dayDashboard(d){
   if (bed && bed.exam) notes.push(`<button class="notice" data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('flagge')}<span><b>Morgen ${esc(bed.exam.title)}:</b> ins Bett um ${hm(bed.bed)}, Wecker ${hm(bed.wake)}. Nicht durchlernen, Schlaf festigt das Gelernte.</span></button>`);
   else if (bed && bed.examPrep) notes.push(`<button class="notice" data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('flagge')}<span><b>${esc(bed.examPrep.title)} in ${bed.examPrep.days + 1} Tagen:</b> heute ${hm(bed.bed)} ins Bett, morgen ${hm(bed.wake)} aufstehen. So gewöhnt sich dein Körper an den Prüfungsmorgen.</span></button>`);
   if (today && d.getDate() <= 5) { const pm = new Date(d.getFullYear(), d.getMonth() - 1, 1); notes.push(`<button class="notice" data-act="wrapOpen" data-y="${pm.getFullYear()}" data-m="${pm.getMonth()}">${ic('stern')}<span><b>Dein ${MONTHS[pm.getMonth()]}-Rückblick ist fertig.</b> Schlaf, Rhythmus, Wege und mehr zum Durchwischen.</span></button>`); }
+  if (d >= t0) wayNotices(d).forEach(x => notes.push(x));
+  if (today && new Date().getHours() >= 18) wayNotices(addDays(d, 1)).forEach(x => notes.push(x.replace('<b>', '<b>Morgen: ')));
   if (today && s.sleep.on) { const mc = sleepMorningCard(d); if (mc) notes.unshift(mc); }
   if (today) planDay(addDays(d,1)).warnings.forEach(x => notes.push(`<div class="notice warn">${ic('weg')}<span><b>Morgen:</b> ${esc(x)}</span></div>`));
   if (today && Transit.homeNeed && Transit.homeNeed.lv.depart > now - 120000) { const hn = Transit.homeNeed; notes.unshift(`<button class="notice warn" data-act="homeRoute">${ic('haus')}<span><b>Noch nicht zuhause:</b> Für ${esc(titleOf(hn.o))} um ${hm(hn.o.start)} los um ${hm(hn.lv.depart)} mit ${esc(hn.lv.first)}${hn.lv.delay ? ` (+${hn.lv.delay})` : ''}.</span></button>`); }
@@ -8521,6 +8538,7 @@ const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.setting
 /* Einstellungen als ruhige Liste: jeder Bereich zugeklappt, nur einer offen */
 const SX = [
   ['Erinnerungen', 'glocke', 'Vibration, Live-Banner, Zeiten'],
+  ['ISIS', 'buch', 'Abgaben automatisch als Fristen'],
   ['Orte und Wege', 'ort', 'Zuhause, Uni, Losgehen'],
   ['Schlaf', 'mond', 'Schlafdauer und Aufstehen'],
   ['Handy-Sensoren', 'handy', 'Ladekabel, Lärm, Schritte, Bahn, Wachheitstest'],
@@ -8559,6 +8577,11 @@ const ACTIONS = {
   sleepQ(el){ const f = el.closest('form'); f.elements.q.value = el.dataset.v; f.querySelectorAll('[data-act=sleepQ]').forEach(b => b.setAttribute('aria-pressed', b === el)); },
   sleepRange(el){ ui.sleepRange = +el.dataset.v; render(); },
   sleepUsage(){ try { window.KalNative.usageOpen(); } catch {} toast('Nutzungsdaten erlauben', 'Kalendarium in der Liste antippen und „Zugriff erlauben“ einschalten, dann zurück zur App.'); },
+  isisConnect(){ const v = ((document.getElementById('isisUrl') || {}).value || '').trim();
+    if (!/^https:\/\/\S+$/.test(v)) { toast('Link fehlt', 'Füg den Link aus ISIS ein, er beginnt mit https://'); return; }
+    const C = Isis.cfg(); C.url = v; C.last = null; commit(); Isis.sync(true); },
+  isisSync(){ Isis.sync(true); },
+  isisOff(){ const C = Isis.cfg(); C.url = ''; C.last = null; commit(); toast('ISIS getrennt', 'Die bisherigen Fristen bleiben.'); },
   noiseStart(el){ if (!Sens.micOk()) { Sens.call('askMic'); toast('Mikrofon erlauben', 'Danach noch einmal tippen. Gemessen wird nur die Lautstärke, nichts wird aufgenommen.'); return; }
     const ok = Sens.call('noiseStart', +el.dataset.until); toast(ok ? 'Nachtmessung läuft' : 'Hat nicht geklappt', ok ? 'Leg das Handy neben das Bett, am besten ans Ladekabel. Morgens siehst du das Ergebnis bei „Letzte Nacht“.' : 'Das Mikrofon ist nicht erlaubt.'); setTimeout(render, 900); },
   noiseStop(){ Sens.call('noiseStop'); setTimeout(render, 600); },
@@ -9769,6 +9792,8 @@ function energyCard(d, compact){
   g += `<path class="ar" d="${line} L${W} ${H - bot} L0 ${H - bot} Z"/><path class="ln" d="${line}"/>`;
   busy.forEach(o => { g += `<rect class="bz" x="${X(Math.max(+o.start, x0))}" y="${H - bot + 4}" width="${Math.max(2, X(Math.min(+o.end, x1)) - X(Math.max(+o.start, x0))).toFixed(1)}" height="5" rx="2.5"/>`; });
   let lb = ''; for (let h = Math.ceil(E.wake.getHours() + 1); h <= 30; h += 3) { const t = addMin(d, h * 60); if (t > addMin(E.bed, -20)) break; lb += `<span style="left:${(X(+t) / W * 100).toFixed(2)}%">${String(h % 24).padStart(2, '0')}</span>`; }
+  const SN = typeof sunHere === 'function' ? sunHere(d) : null; let suns = '';
+  if (SN) for (const [t, n] of [[SN.rise, 'Sonnenaufgang'], [SN.set, 'Sonnenuntergang']]) if (t > E.wake && t < E.bed) { g += `<line class="sun" x1="${X(+t)}" x2="${X(+t)}" y1="${top - 6}" y2="${H - bot}"/>`; suns += `<span style="left:${(X(+t) / W * 100).toFixed(2)}%" title="${n}">${ic('sonne', 's')}${hm(t)}</span>`; }
   let nowDot = '';
   if (isToday && now > E.wake && now < E.bed) { g += `<line class="nw" x1="${X(+now)}" x2="${X(+now)}" y1="${top - 6}" y2="${H - bot}"/>`; nowDot = `<i class="dot" style="left:${(X(+now) / W * 100).toFixed(2)}%;top:${Y(E.lv(now))}px"></i>`; }
   const span = w => w ? `${hm(w.a)}–${hm(w.b)}` : '';
@@ -9781,7 +9806,8 @@ function energyCard(d, compact){
   return `<section class="en-card${compact ? ' compact' : ''}">
     <div class="en-h"><span class="lbl">${ic('sonne', 's')}${lbl}</span><span class="r">${stepsChip}<span class="form ${E.form[0]}">${E.form[1]}</span></span></div>
     <p>Am wachsten <b>${span(E.hi)}</b>${E.lo ? `, Tief um <b>${hm(E.lo.a)}</b>` : ''}.${E.form[0] === 'low' ? ' Nach den letzten Nächten ist dein Schlafdruck hoch, plane Schweres in die wache Zeit und Leichtes ins Tief.' : ''}</p>
-    <div class="en-plot"><svg class="en-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wachheit über den Tag, am höchsten ${span(E.hi)}">${g}</svg>${nowDot}<div class="hrs">${lb}</div></div>
+    <div class="en-plot"><svg class="en-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wachheit über den Tag, am höchsten ${span(E.hi)}">${g}</svg>${nowDot}<div class="suns">${suns}</div><div class="hrs">${lb}</div></div>
+    ${(() => { const LT = typeof lightTips === 'function' ? lightTips(d) : []; const L2 = compact ? LT.slice(0, 1) : LT; return L2.length ? `<div class="en-lt">${L2.map(x => `<div><span class="ic">${ic(x.ic, 's')}</span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></div>`).join('')}</div>` : ''; })()}
     ${rows ? `<div class="en-ws">${rows}</div>` : ''}
     ${isToday ? `<div class="en-pvt">${pv}<button class="btn sm" data-act="pvtOpen">${ic('uhr', 's')}Wachheit testen, 60 s</button></div>` : ''}
     ${compact ? '' : `<small class="en-src">Berechnet aus deinen letzten 7 Nächten, deiner inneren Uhr und der Tageszeit (Drei-Prozess-Modell nach Borbély und Åkerstedt)${state.pvtCal ? `, angepasst an ${state.pvtCal.n} Wachheitstests` : ''}. Lern- und Arbeitsblöcke für Fristen legt der Kalender bevorzugt in die wache Zeit.</small>`}
@@ -10146,6 +10172,182 @@ function sensePanel(){
     ].join('') + '<p class="note">Alles bleibt auf deinem Handy. Es wird nichts aufgenommen und nichts verschickt.</p>';
   }
   return `<section class="panel"><div class="panel-h"><h2>Handy-Sensoren</h2></div><div class="sens">${body}</div></section>`;
+}
+/* ================================================================
+   §I ISIS-ABGABEN, LICHT-TIPP, WETTER AUF DEINEM WEG (v41)
+   ================================================================ */
+/* ---------- Abruf über die Android-App (umgeht die Sperre des Browsers) ---------- */
+const NFetch = {
+  n: 0, cb: {},
+  on(){ return Native.has('fetch'); },
+  text(url){ return new Promise((res, rej) => { const id = 'f' + (++this.n); this.cb[id] = {res, rej};
+    setTimeout(() => { if (this.cb[id]) { delete this.cb[id]; rej(new Error('Zeitüberschreitung')); } }, 35000);
+    try { window.KalNative.fetchText(url, id); } catch (e) { delete this.cb[id]; rej(e); } }); }
+};
+window.__kalFetch = (id, ok, text) => { const c = NFetch.cb[id]; if (!c) return; delete NFetch.cb[id]; ok ? c.res(text) : c.rej(new Error(text || 'Fehler')); };
+
+/* ---------- ISIS (Moodle) → Fristen ----------
+   Moodle exportiert den Kalender als ICS-Abo. Abgaben heißen dort
+   „… ist fällig“ / „… is due“, Tests „… schließt“ / „… closes“.
+   Jede Abgabe wird eine Frist, verknüpft über die UID; erledigt-Haken,
+   Unteraufgaben und eigene Titel bleiben beim Abgleich erhalten. */
+const ISIS_DUE = /\s*(ist fällig|is due|fällig|schließt|closes|endet|ends|abgabetermin|fälligkeit)\s*\.?\s*$/i;
+const Isis = {
+  cfg(){ return (state.settings.isis = Object.assign({url: '', effort: 2, last: null}, state.settings.isis || {})); },
+  parse(text){
+    const raw = String(text).replace(/\r\n[ \t]/g, '').replace(/\n[ \t]/g, '').split(/\r?\n/), out = []; let cur = null;
+    const un = s => s.replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
+    for (const line of raw) {
+      if (line === 'BEGIN:VEVENT') { cur = {}; continue; }
+      if (line === 'END:VEVENT') { if (cur) out.push(cur); cur = null; continue; }
+      if (!cur) continue; const i = line.indexOf(':'); if (i < 0) continue;
+      const name = line.slice(0, i).split(';')[0], val = line.slice(i + 1);
+      if (name === 'SUMMARY') cur.title = un(val); else if (name === 'UID') cur.uid = val; else if (name === 'CATEGORIES') cur.cat = un(val);
+      else if (name === 'DESCRIPTION') cur.desc = un(val); else if (name === 'URL') cur.url = val;
+      else if (name === 'DTSTART') cur.start = parseICSDate(val); else if (name === 'DTEND') cur.end = parseICSDate(val);
+    }
+    return out;
+  },
+  catId(){ return state.categories.find(c => c.id === 'abgabe') ? 'abgabe' : (state.categories.find(c => c.id === 'uni') || state.categories[0]).id; },
+  apply(text){
+    const evs = this.parse(text), now = Date.now(), C = this.cfg(); let added = 0, changed = 0, seen = 0;
+    if (!evs.length && !/BEGIN:VCALENDAR/.test(text)) throw new Error('Das ist keine Kalenderdatei. Prüf den Link.');
+    for (const v of evs) {
+      if (!v.title || !v.start || !v.uid) continue;
+      if (!ISIS_DUE.test(v.title) && !/(assign|quiz|abgabe)/i.test(v.uid + ' ' + (v.url || ''))) continue;
+      const due = v.start.date; if (+due < now - 14 * 86400000 || +due > now + 200 * 86400000) continue;
+      seen++;
+      const base = v.title.replace(ISIS_DUE, '').replace(/^[„"'»«‚]+|[“"'»«‘]+$/g, '').trim() || v.title;
+      const courseId = matchCourse(base + ' ' + (v.cat || '')), course = courseId && state.courses.find(c => c.id === courseId);
+      const title = course && !base.toLowerCase().includes((course.short || course.title).toLowerCase()) ? `${base} (${course.short || course.title})` : v.cat && !course ? `${base} (${v.cat})` : base;
+      const obj = {date: ymd(due), time: v.start.allDay ? '23:59' : hm(due)};
+      const ex = state.deadlines.find(d => d.extId === v.uid);
+      if (ex) {
+        let ch = false;
+        if (ex.date !== obj.date || ex.time !== obj.time) { Object.assign(ex, obj); ch = true; }
+        if (ex.title === ex.extTitle && ex.title !== title) { ex.title = title; ch = true; }
+        ex.extTitle = title; if (ch) changed++;
+      } else {
+        state.deadlines.push({id: uid(), title, catId: this.catId(), courseId: courseId || '', ...obj, priority: 2, done: false, subtasks: [], reminders: null, link: v.url || '', notes: 'Aus ISIS', extId: v.uid, extTitle: title, src: 'isis', effort: +C.effort || 0});
+        added++;
+      }
+    }
+    C.last = {at: Date.now(), n: seen, added, changed, err: null};
+    return {added, changed, seen};
+  },
+  async sync(manual){
+    const C = this.cfg(); if (!C.url) { if (manual) toast('Kein ISIS-Link', 'Trag ihn in den Einstellungen unter ISIS ein.'); return; }
+    if (this.busy) return; this.busy = true;
+    try {
+      let text;
+      if (NFetch.on()) text = await NFetch.text(C.url);
+      else { const r = await fetch(C.url); if (!r.ok) throw new Error('HTTP ' + r.status); text = await r.text(); }
+      const r = this.apply(text); invalidate(); commit();
+      if (manual || r.added || r.changed) toast(r.added || r.changed ? 'ISIS abgeglichen' : 'ISIS ist aktuell', r.added || r.changed ? `${r.added} neue ${r.added === 1 ? 'Abgabe' : 'Abgaben'}${r.changed ? `, ${r.changed} geändert` : ''}` : `${r.seen} Abgaben, nichts Neues`, {sym: 'flagge'});
+    } catch (e) {
+      C.last = {...(C.last || {}), at: Date.now(), err: NFetch.on() ? (e.message || 'Fehler') : 'browser'}; Store.schedule();
+      if (manual) toast('ISIS nicht erreichbar', NFetch.on() ? `${e.message || 'Fehler'}. Prüf den Link.` : 'Im Browser blockiert ISIS den Abruf. In der Android-App klappt es automatisch, hier kannst du die Datei hochladen.');
+      if (manual) render();
+    }
+    this.busy = false;
+  },
+  auto(){ const C = this.cfg(); if (C.url && (!C.last || Date.now() - C.last.at > 3 * 3600000)) this.sync(false); }
+};
+function isisPanel(){
+  const C = Isis.cfg(), L = C.last, n = state.deadlines.filter(d => d.src === 'isis' && !d.done && d.date >= ymd(new Date())).length;
+  const st = !C.url ? '' : L && L.err ? `<p class="note warn">${L.err === 'browser' ? 'Im Browser blockiert ISIS den direkten Abruf. In der Android-App wird automatisch abgeglichen; hier kannst du die Kalenderdatei aus ISIS hochladen.' : `Letzter Abruf fehlgeschlagen: ${esc(L.err)}`}</p>`
+    : L ? `<p class="note">Zuletzt abgeglichen ${dayLabel(new Date(L.at)) === 'Heute' ? 'heute' : esc(fmtShort(new Date(L.at)))} um ${hm(new Date(L.at))}. ${n} offene ${n === 1 ? 'Abgabe' : 'Abgaben'} aus ISIS.</p>` : '';
+  return `<section class="panel">
+    <div class="panel-h"><h2>ISIS</h2>${C.url ? `<button class="btn sm" data-act="isisSync">${ic('wdh', 's')}Jetzt abgleichen</button>` : ''}</div>
+    <div class="isis">
+      ${C.url ? `<div class="row"><div class="l"><b>Verbunden</b><small>Neue Abgaben kommen automatisch als Fristen, alle 3 Stunden und beim Öffnen der App.</small></div><button class="btn sm ghost" data-act="isisOff">Trennen</button></div>${st}`
+      : `<ol class="isis-steps"><li>In ISIS oben auf <b>Kalender</b>, unten <b>Kalender importieren oder exportieren</b>, dann <b>Kalender exportieren</b>.</li><li>Bei Ereignisse <b>Alle Kurse</b>, bei Zeitspanne <b>Kürzlich und demnächst</b> wählen.</li><li>Auf <b>Kalender-URL abrufen</b> tippen, den Link kopieren und hier einfügen.</li></ol>
+        <div class="isis-in"><input type="url" id="isisUrl" placeholder="https://isis.tu-berlin.de/calendar/export_execute.php?…" autocomplete="off"><button class="btn primary sm" data-act="isisConnect">Verbinden</button></div>`}
+      <div class="row"><div class="l"><b>Aufwand pro Abgabe</b><small>Dafür legt der Kalender Arbeitsblöcke in deine wache Zeit. 0 = keine Blöcke.</small></div><span><input type="number" data-set="isis.effort" value="${+C.effort || 0}" min="0" max="20" step="0.5" aria-label="Aufwand pro Abgabe"> h</span></div>
+      <div class="row"><div class="l"><b>Kalenderdatei hochladen</b><small>Falls der Abruf nicht klappt: die .ics-Datei aus ISIS herunterladen und hier auswählen.</small></div><label class="btn sm">${ic('hoch', 's')}Datei<input type="file" id="isisFile" accept=".ics,text/calendar" hidden></label></div>
+      <p class="note">Der Link ist wie ein Passwort für deinen ISIS-Kalender. Er bleibt in deiner App gespeichert und wird nur an ISIS geschickt.</p>
+    </div></section>`;
+}
+
+/* ---------- Sonne und Licht ----------
+   Sonnenauf- und -untergang nach dem NOAA-Näherungsverfahren.
+   Tageslicht draußen hat 1 000 bis 100 000 Lux, drinnen meist 100 bis 500.
+   Licht am Morgen verschiebt die innere Uhr nach vorn, helles Licht am
+   Abend nach hinten (Khalsa 2003; Chang 2015). */
+function sunTimes(date, lat, lon){
+  const rad = Math.PI / 180, d = startOfDay(date), J = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12) / 86400000 + 2440587.5;
+  const n = Math.round(J - 2451545 + 0.0008), Js = n - lon / 360, M = ((357.5291 + 0.98560028 * Js) % 360 + 360) % 360;
+  const C = 1.9148 * Math.sin(M * rad) + 0.02 * Math.sin(2 * M * rad) + 0.0003 * Math.sin(3 * M * rad), L = (M + C + 180 + 102.9372) % 360;
+  const Jt = 2451545 + Js + 0.0053 * Math.sin(M * rad) - 0.0069 * Math.sin(2 * L * rad), dec = Math.asin(Math.sin(L * rad) * Math.sin(23.44 * rad));
+  const cosH = (Math.sin(-0.833 * rad) - Math.sin(lat * rad) * Math.sin(dec)) / (Math.cos(lat * rad) * Math.cos(dec)); if (cosH < -1 || cosH > 1) return null;
+  const H = Math.acos(cosH) / rad, toD = j => new Date((j - 2440587.5) * 86400000);
+  return {rise: toD(Jt - H / 360), set: toD(Jt + H / 360)};
+}
+function sunHere(d){ const h = typeof Loc !== 'undefined' && Loc.homeL ? Loc.homeL() : null; return sunTimes(d, h ? h.latitude : 52.52, h ? h.longitude : 13.405); }
+function lightTips(d){
+  if (!state.settings.sleep.on) return [];
+  d = startOfDay(d); const S = sunHere(d), E = energyDay(d); if (!S || !E) return [];
+  const now = new Date(), isToday = sameDay(d, now), out = [], sh = _enCache.shift || 0, late = sh > 0.4, early = sh < -0.4;
+  const legs = planDay(d).legs, go = legs.find(l => l.kind === 'go'), free = freeSlots(d);
+  const outside = (a, b) => { const w = wxAt(new Date((+a + +b) / 2)); return w && w.cloud >= 70 ? ' Auch bei Wolken ist es draußen 10- bis 50-mal heller als drinnen.' : ''; };
+  /* Morgen */
+  if (!isToday || now < addMin(E.wake, 180)) {
+    if (go && +go.depart < +addMin(E.wake, 150)) {
+      if (go.depart >= S.rise) out.push({ic: 'sonne', t: `Dein Weg um ${hm(go.depart)} ist im Hellen`, s: `Das zählt als Morgenlicht${late ? ' und hilft dir als eher spätem Typ, abends früher müde zu werden' : ''}. Wenn es geht, ein Stück zu Fuß oder draußen auf die Bahn warten.${outside(go.depart, go.arrive)}`});
+      else { const slot = free.find(([a, b]) => b > S.rise && +a < +at(ymd(d), '12:30') && (b - Math.max(+a, +S.rise)) >= 15 * 60000);
+        out.push({ic: 'sonne', t: `Sonnenaufgang erst ${hm(S.rise)}`, s: `Dein Weg um ${hm(go.depart)} ist noch dunkel. Mach morgens gleich helles Licht an${slot ? ` und geh in der Pause ab ${hm(new Date(Math.max(+slot[0], +S.rise)))} kurz raus` : ''}, dann wirst du schneller wach.`}); }
+    } else if (E.wake < S.rise) out.push({ic: 'sonne', t: `Sonnenaufgang erst ${hm(S.rise)}`, s: `Du stehst vorher auf. Mach direkt helles Licht an und geh, wenn es hell ist, 15 Minuten raus.`});
+    else out.push({ic: 'sonne', t: 'In der ersten Stunde raus', s: `Sonnenaufgang ${hm(S.rise)}. 15 bis 30 Minuten Tageslicht bald nach dem Aufstehen stellen deine innere Uhr${late ? ' nach vorn, gut für dich als eher späten Typ' : ''}.${outside(E.wake, addMin(E.wake, 60))}`});
+  }
+  /* Nachmittag: Sonne geht früh unter */
+  const setH = S.set.getHours() + S.set.getMinutes() / 60;
+  if (setH < 18.5 && (!isToday || now < S.set)) { const slot = free.find(([a, b]) => b > addMin(S.set, -120) && a < addMin(S.set, -20) && b - a >= 20 * 60000);
+    out.push({ic: 'sonne', t: `Sonnenuntergang ${hm(S.set)}`, s: slot ? `Für Tageslicht heute: zwischen ${hm(new Date(Math.max(+slot[0], +addMin(S.set, -120))))} und ${hm(addMin(S.set, -20))} bist du frei.` : `Viel Tageslicht bleibt heute nicht. Nutz jede Pause draußen.`}); }
+  /* Abend */
+  const tn = sleepPlan()[ymd(addDays(d, 1))];
+  if (tn && (!isToday || now < tn.bed)) out.push({ic: 'mond', t: `Ab ${hm(addMin(tn.bed, -120))} Licht dimmen`, s: `Warmes, gedimmtes Licht in den 2 Stunden vor ${hm(tn.bed)}. Helles Licht am Abend verschiebt die innere Uhr nach hinten${early ? '' : ' und macht das Einschlafen schwerer'}.`});
+  return out.slice(0, 3);
+}
+
+/* ---------- Wetter auf deinem Weg ----------
+   Nur die Zeit, die du wirklich draußen bist: Fußwege und Warten an der
+   Haltestelle (laut Live-Fahrplan), sonst die ersten 10 Minuten des Weges. */
+function wayWeather(d){
+  const out = []; if (typeof WX === 'undefined' || !WX.cur()) return out;
+  for (const l of planDay(d).legs) {
+    if (l.kind !== 'go' && l.kind !== 'home') continue;
+    const win = [];
+    if (l.live && l.live.legs) { l.live.legs.forEach((g, i) => { if (g.walk) win.push([+new Date(g.dep), +new Date(g.arr), 'zu Fuß']); else if (i && l.live.legs[i - 1].walk) { const a = +new Date(l.live.legs[i - 1].arr), b = +new Date(g.dep); if (b - a > 60000) win.push([a, Math.min(b, a + 15 * 60000), 'warten']); } }); }
+    if (!win.length) win.push([+l.depart, +l.depart + 10 * 60000, 'zu Fuß']);
+    const mins = Math.round(win.reduce((s, w) => s + (w[1] - w[0]), 0) / 60000); if (mins < 2) continue;
+    const ws = win.map(w => wxAt(new Date((w[0] + w[1]) / 2))).filter(Boolean); if (!ws.length) continue;
+    const rainP = Math.max(...ws.map(w => +w.precip || 0)), rain = Math.max(...ws.map(w => +w.rain || 0)), feel = Math.min(...ws.map(w => w.feel ?? w.temp)), temp = Math.max(...ws.map(w => w.temp)), thunder = ws.some(w => w.thunder), gust = Math.max(...ws.map(w => parseInt(w.gusts) || 0));
+    const it = [], approx = ws.some(w => w.approx);
+    if (thunder) it.push({k: 'gewitter', t: 'Gewitter'});
+    if (rainP >= (approx ? 70 : 50) || rain >= 0.3) it.push({k: 'regen', t: `Regen ${Math.round(rainP)} %`});
+    if (feel <= 1) it.push({k: 'kalt', t: `gefühlt ${Math.round(feel)}°`});
+    if (temp >= 28) it.push({k: 'heiss', t: `${Math.round(temp)}°`});
+    if (gust >= 55) it.push({k: 'sturm', t: `Böen ${gust} km/h`});
+    out.push({l, go: l.kind === 'go', at: l.depart, mins, it, approx});
+  }
+  return out;
+}
+const WAY_TIP = {regen: 'Schirm mitnehmen', gewitter: 'Gewitter möglich, lieber drinnen warten', kalt: 'warm anziehen', heiss: 'Wasser mitnehmen', sturm: 'Schirm bringt nichts, Kapuze'};
+function wayNotices(d){
+  const W = wayWeather(d).filter(w => w.it.length); if (!W.length) return [];
+  const nm = l => l.kind === 'go' ? (l.before.kind === 'course' ? l.before.ref.short || l.before.ref.title : l.before.title) : 'nach Hause';
+  const now = Date.now(), up = W.filter(w => +w.l.arrive > now); if (!up.length) return [];
+  const tips = [...new Set(up.flatMap(w => w.it.map(i => WAY_TIP[i.k])))];
+  const lines = up.slice(0, 3).map(w => `${w.go ? 'Weg zu ' : 'Rückweg '}${w.go ? esc(PV(nm(w.l), w.l.before.cat)) : ''} um ${hm(w.at)}: ${w.it.map(i => i.t).join(', ')}, ${w.mins} min draußen`);
+  const later = up.find(w => !w.go) && !up.find(w => w.go && w.it.some(i => i.k === 'regen')) && up.some(w => !w.go && w.it.some(i => i.k === 'regen')) && up.some(w => w.go);
+  return [`<div class="notice wayw">${ic('wetter')}<span><b>${esc(tips[0])}${tips.length > 1 ? `, ${esc(tips.slice(1).join(', '))}` : ''}${later ? ' (schon morgens einpacken)' : ''}:</b> ${lines.join(' · ')}.</span></div>`];
+}
+/* Kurzer Zusatz für die Losgeh-Erinnerung */
+function wayNote(l, d){
+  try { const W = wayWeather(d), mine = W.find(w => w.l === l || (+w.at === +l.depart)); const later = W.filter(w => +w.at > +l.depart);
+    const t = []; if (mine) mine.it.forEach(i => t.push(WAY_TIP[i.k]));
+    if (l.kind === 'go' && later.some(w => w.it.some(i => i.k === 'regen')) && !t.includes(WAY_TIP.regen)) t.push('Schirm für den Rückweg');
+    return t.length ? ' · ' + [...new Set(t)].join(', ') : ''; } catch { return ''; }
 }
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
@@ -11636,6 +11838,7 @@ function bindEvents(){
       commit(); return;
     }
     if (t.id === 'occNote' && t.dataset.key) { const v = t.value.trim(); if (v === (state.notes[t.dataset.key] || '')) return; if (v) state.notes[t.dataset.key] = v; else delete state.notes[t.dataset.key]; Store.schedule(); toast('Notiz gespeichert', ''); return; }
+    if (t.id === 'isisFile' && t.files[0]) { try { const r = Isis.apply(await t.files[0].text()); invalidate(); commit(); toast('ISIS importiert', `${r.added} neu, ${r.changed} geändert`); } catch (e) { toast('Import hat nicht geklappt', e.message || ''); } return; }
     if (t.id === 'icsFile' && t.files[0]) { const r = importICS(await t.files[0].text()); closeSheet(); toast('Import abgeschlossen', `${r.added} neu, ${r.updated} aktualisiert`); commit(); }
     if (t.id === 'backupFile' && t.files[0]) { try { state = migrate(JSON.parse(await t.files[0].text())); applyTheme(); toast('Sicherung geladen', ''); commit(); } catch { toast('Datei nicht lesbar', 'Wähle eine Sicherung aus dieser App.'); } }
   });
@@ -11680,6 +11883,7 @@ function init(){
   setInterval(() => Reminders.check(), 20000);
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
+  setTimeout(() => Isis.auto(), 6000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Isis.auto(); });
   if (Native.has('sense')) { setInterval(() => { if (!document.hidden) TripAuto.tick(); }, 30000); setTimeout(() => TripAuto.tick(), 5000); window.addEventListener('kalresume', () => { TripAuto.tick(); SleepAuto.run(true); }); window.addEventListener('kalperm', () => setTimeout(render, 300)); }
   if (Native.has('sleep')) { setTimeout(() => SleepAuto.run(true), 2500); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => SleepAuto.run(), 600); }); }
   if (Native.on()) { setTimeout(() => Native.sync(true), 1500); setInterval(() => Native.sync(), 5 * 60000); document.addEventListener('visibilitychange', () => { if (document.hidden) Native.sync(); }); }
