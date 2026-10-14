@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 41  ·  persönlicher Kalender für alles
+ KALENDARIUM 42  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2875,6 +2875,12 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .en-lt .ic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:color-mix(in oklab, var(--warn) 16%, var(--tile));color:var(--warn)}.en-lt .ic svg{width:15px;height:15px}
 .en-lt b{display:block;font-size:14px;font-weight:700}.en-lt small{display:block;font-size:13px;color:var(--muted);line-height:1.45}
 .notice.wayw svg{color:var(--zone-ink)}
+
+/* Lern- und Arbeitszeit (v42): getönte Fläche mit gestricheltem Rand, klar anders als Fristen und Termine */
+.ev.work,.ev.work.solid{background:color-mix(in oklab, var(--c) 16%, var(--tile));color:var(--ink);outline:1.5px dashed var(--c);outline-offset:-1.5px;box-shadow:none}
+.ev.work b,.ev.work .m,.ev.work .mono{color:var(--ink)}
+.ev.work .wm{color:var(--c);opacity:.5}
+.wrow.work{background:color-mix(in oklab, var(--c) 12%, transparent);outline:1.5px dashed color-mix(in oklab, var(--c) 70%, transparent);outline-offset:-1.5px}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6635,7 +6641,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '41';
+const APP_VERSION = '42';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7657,6 +7663,17 @@ function deadlineRemaining(d){
   const subs = d.subtasks || [], frac = subs.length ? subs.filter(x => x.done).length / subs.length : 0;
   return Math.max(0, Math.round((+d.effort||0) * 60 * (1 - frac) - (+d.focusMin||0)));
 }
+/* Fristen (Flagge, Kategoriefarbe) und die Zeit, in der man daran arbeitet,
+   sehen bewusst verschieden aus: eigene Kategorie „Lern- und Arbeitszeit“
+   in Schiefer mit Feder, für Klausuren mit Buch. Farbe in Einstellungen → Kategorien änderbar. */
+const WORK_DEF = {id: 'arbeit', name: 'Lern- und Arbeitszeit', color: '#4E5D73', symbol: 'feder'};
+function ensureWorkCat(){ let c = state.categories.find(x => x.id === 'arbeit'); if (!c) { c = {...WORK_DEF}; state.categories.push(c); } return c.id; }
+function workCat(exam){ const c = state.categories.find(x => x.id === 'arbeit') || WORK_DEF; return exam ? {...c, symbol: 'buch'} : c; }
+function migrateWorkCat(){
+  let n = 0;
+  for (const e of state.events || []) if (/^(Lernen|Arbeiten): /.test(e.title || '') && e.catId !== 'arbeit' && !e.workCatKeep) { const dl = state.deadlines.find(d => e.title.endsWith(d.title)); if (dl && e.catId === dl.catId) { e.catId = ensureWorkCat(); n++; } }
+  if (n) commit();
+}
 function workPlan(){
   if (_workCache) return _workCache;
   const res = {}, short = [], now = new Date(), t0 = startOfDay(now), used = {};
@@ -7687,7 +7704,7 @@ function workPlan(){
           }
           if (!best) break;
           const st = best.st, en = addMin(st, best.len);
-          (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:st, end:en, allDay:false, cat:catById(T.d.catId), ref:T.d, key:`w:${T.d.id}:${+st}`, placeId:'', bb:0, ba:0, energy: best.v});
+          (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:st, end:en, allDay:false, cat:workCat(T.exam), ref:T.d, key:`w:${T.d.id}:${+st}`, placeId:'', bb:0, ba:0, energy: best.v});
           (used[k] = used[k] || []).push([st, addMin(en, 15)]);
           quota -= best.len; remaining -= best.len;
           fr = subtractIntervals(fr, [[addMin(st, -15), addMin(en, 15)]]).map(([a,b]) => [roundUp15(a), b]).filter(([a,b]) => b - a >= 30*60000);
@@ -7702,7 +7719,7 @@ function workPlan(){
           const len = Math.min(90, Math.max(30, quota), Math.floor((b - st)/60000/15)*15);
           if (len < 30) break;
           const en = addMin(st, len);
-          (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:st, end:en, allDay:false, cat:catById(T.d.catId), ref:T.d, key:`w:${T.d.id}:${+st}`, placeId:'', bb:0, ba:0});
+          (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:st, end:en, allDay:false, cat:workCat(T.exam), ref:T.d, key:`w:${T.d.id}:${+st}`, placeId:'', bb:0, ba:0});
           (used[k] = used[k] || []).push([st, addMin(en, 15)]);
           quota -= len; remaining -= len; st = addMin(en, 15);
         }
@@ -8834,7 +8851,7 @@ const ACTIONS = {
   focusStop(){ Focus.stop(); },
   saveNote(el){ const t = document.getElementById('occNote'); if (!t) return; const v = t.value.trim(); if (v) state.notes[el.dataset.key] = v; else delete state.notes[el.dataset.key]; Store.schedule(); toast('Notiz gespeichert', ''); },
   pinWork(el){ const d = state.deadlines.find(x => x.id === el.dataset.id), blocks = (workPlan()[el.dataset.date] || []).filter(w => w.id === el.dataset.id); if (!d || !blocks.length) return; pushUndo();
-    blocks.forEach(b => state.events.push({id:uid(), title:(d.exam ? 'Lernen: ' : 'Arbeiten: ') + d.title, catId:d.catId, placeId:'none', date:ymd(b.start), allDay:false, start:hm(b.start), end:hm(b.end), bufferBefore:0, bufferAfter:0, location:'', notes:'', link:'', repeat:{freq:'none', interval:1, until:''}, skip:[], reminders:null}));
+    blocks.forEach(b => state.events.push({id:uid(), title:(d.exam ? 'Lernen: ' : 'Arbeiten: ') + d.title, catId:ensureWorkCat(), placeId:'none', date:ymd(b.start), allDay:false, start:hm(b.start), end:hm(b.end), bufferBefore:0, bufferAfter:0, location:'', notes:'', link:'', repeat:{freq:'none', interval:1, until:''}, skip:[], reminders:null}));
     d.focusMin = (+d.focusMin||0); d.effort = Math.max(0, (+d.effort||0) - blocks.reduce((a,b) => a + (b.end-b.start)/3600000, 0));
     closeSheet(); toast('Fest eingetragen', `${blocks.length} Block${blocks.length>1?'e':''} als Termin`, undoOpt); commit(); },
   resolveConflict(el){ const e = state.events.find(x => x.id === el.dataset.id); if (!e) return; const len = minutesOf(e.end) - minutesOf(e.start), nf = nextFree(len > 0 ? len : 60, at(e.date, e.start), e.id);
@@ -11883,6 +11900,7 @@ function init(){
   setInterval(() => Reminders.check(), 20000);
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
+  setTimeout(() => { try { migrateWorkCat(); } catch {} }, 1500);
   setTimeout(() => Isis.auto(), 6000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Isis.auto(); });
   if (Native.has('sense')) { setInterval(() => { if (!document.hidden) TripAuto.tick(); }, 30000); setTimeout(() => TripAuto.tick(), 5000); window.addEventListener('kalresume', () => { TripAuto.tick(); SleepAuto.run(true); }); window.addEventListener('kalperm', () => setTimeout(render, 300)); }
   if (Native.has('sleep')) { setTimeout(() => SleepAuto.run(true), 2500); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => SleepAuto.run(), 600); }); }
