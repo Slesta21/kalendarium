@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 47  ·  persönlicher Kalender für alles
+ KALENDARIUM 48  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2904,7 +2904,7 @@ html.wr-open,html.wr-open body{overflow:hidden}
 @media (max-width:560px){ .where{grid-template-columns:40px minmax(0,1fr)} .where .src{grid-column:2;text-align:left;margin-top:-6px} }
 
 .lt-shift{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:600;color:var(--zone-ink);margin-top:6px}.lt-shift svg{width:14px;height:14px}
-</style>
+.lt-ride{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--accent-soft, rgba(14,116,144,.12));font-size:13px}.lt-ride svg{flex:none;margin-top:2px}.lt-ride b{display:block}.lt-ride small{display:block;opacity:.8}</style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
 <body>
@@ -6670,7 +6670,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '47';
+const APP_VERSION = '48';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -10493,6 +10493,7 @@ const Where = {
     if (H && distM(p.ll, [H.latitude, H.longitude]) <= Math.max(120, p.acc + 50)) return {k: 'home', ic: 'haus', t: 'Zuhause', s: leg && leg.kind === 'go' && now < +leg.depart ? `Losgehen in ${dur(Math.max(1, Math.round((+leg.depart - now) / 60000)))}` : '', src, leg};
     for (const pl of state.places) { const q = pl.vbb; if (pl.home || !q || q.latitude == null) continue;
       if (distM(p.ll, [q.latitude, q.longitude]) <= Math.max(150, p.acc + 60)) return {k: 'place', ic: 'ort', t: `${Priv.on() ? 'An einem deiner Orte' : 'Bei ' + pl.name}`, s: cur ? `${PV(nm(cur), cur.cat)} läuft bis ${hm(cur.end)}` : '', src}; }
+    const rc = typeof TrainMatch !== 'undefined' ? rideChip() : null; if (rc) return {...rc, src: src + ' · Fahrzeug erkannt', leg};
     const t = fromTrip(false); if (t) return {...t, src, leg};
     if (v != null && v > 18) return {k: 'ride', ic: 'zug', t: 'In einem Fahrzeug', s: `etwa ${Math.round(v)} km/h`, src, leg};
     if (v != null && v >= 2.5) return {k: 'walk', ic: 'laeufer', t: 'Zu Fuß unterwegs', s: '', src, leg};
@@ -10676,7 +10677,7 @@ const Loc = {
       this.pos = {lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy}; this.at = Date.now(); (this.hist = this.hist || []).push({lat: this.pos.lat, lon: this.pos.lon, acc: this.pos.acc, at: this.at}); if (this.hist.length > 20) this.hist.shift(); try { Where.paint(); } catch {} this.err = ''; try { mapMe(); } catch {}
       const st = this.status(); if (st !== this.last) { const prev = this.last; this.last = st; this.changed(prev, st); }
     }, e => { this.err = e.code === 1 ? 'denied' : 'na'; if (ask && e.code === 1) toast('Standort nicht erlaubt', 'Gib Kalendarium in den Browser-Einstellungen Zugriff auf den Standort.'); renderSoft(); },
-    {enableHighAccuracy: true, maximumAge: 15000, timeout: 30000});
+    {enableHighAccuracy: true, maximumAge: 5000, timeout: 30000});
   },
   stop(){ if (this.watch != null) try { navigator.geolocation.clearWatch(this.watch); } catch {} this.watch = null; },
   changed(prev, st){
@@ -11115,6 +11116,128 @@ function tripStatus(lv, now = Date.now()){
   return {head: 'Angekommen', sub: ''};
 }
 /* Position laut Plan zur Uhrzeit: zwischen Halten nach Fahrzeit verteilt */
+/* ================================================================
+   §M GENAU AUF DER STRECKE, BAHN ERKENNEN (v48)
+   1. Kartenabgleich: Dein GPS-Punkt wird auf die echte Linie der Fahrt
+      (Polylinie aus dem Fahrplan, sonst Halt zu Halt) projiziert. Aus der
+      Strecke zwischen zwei Halten ergibt sich, welche Zeit laut Plan genau
+      an deiner Stelle gilt: sekundengenaue Abweichung und nächster Halt.
+   2. Fahrzeugabgleich: Der Fahrplan-Server meldet, wo gerade welche Bahn
+      oder welcher Bus ist (Radar). Fährt dieselbe Fahrt zweimal hintereinander
+      direkt bei dir, gilt sie als erkannt. Dann kommen ihre Halte mit
+      Echtzeit, und weicht sie von der geplanten ab, wird sie übernommen.
+   ================================================================ */
+const geoXY = (ll, ref) => [(ll[1] - ref[1]) * 111320 * Math.cos(ref[0] * Math.PI / 180), (ll[0] - ref[0]) * 110540];
+function geoProject(xy, cum, P, sMin = 0){
+  let best = null;
+  for (let i = 0; i < xy.length - 1; i++) {
+    if (cum[i + 1] < sMin) continue;
+    const A = xy[i], B = xy[i + 1], dx = B[0] - A[0], dy = B[1] - A[1], L2 = dx * dx + dy * dy;
+    const u = L2 ? Math.max(0, Math.min(1, ((P[0] - A[0]) * dx + (P[1] - A[1]) * dy) / L2)) : 0;
+    const d = Math.hypot(P[0] - (A[0] + u * dx), P[1] - (A[1] + u * dy));
+    if (!best || d < best.d) best = {d, s: cum[i] + u * Math.sqrt(L2)};
+  }
+  return best || {d: Infinity, s: 0};
+}
+function routeOf(lv){
+  const sig = lv.legs.map(g => (g.dep || '') + (g.arr || '') + ((g.stops || []).length)).join('|');
+  if (lv._route !== undefined && lv._route && lv._route.sig === sig) return lv._route;
+  const pts = tripPoints(lv), path = [];
+  lv.legs.forEach((g, i) => { const prev = lv.legs[i - 1], next = lv.legs[i + 1];
+    let seg = g.poly && g.poly.length >= 2 ? g.poly : [];
+    if (!seg.length) { const a = g.fromLL || (prev && prev.toLL), b = g.toLL || (next && next.fromLL); seg = [a, ...(g.stops || []).map(v => v.ll), b].filter(Boolean); }
+    for (const q of seg) { const l = path[path.length - 1]; if (!l || l[0] !== q[0] || l[1] !== q[1]) path.push(q); } });
+  if (path.length < 2 || pts.length < 2) return null;
+  const ref = path[0], xy = path.map(p => geoXY(p, ref)), cum = [0];
+  for (let i = 1; i < xy.length; i++) cum.push(cum[i - 1] + Math.hypot(xy[i][0] - xy[i - 1][0], xy[i][1] - xy[i - 1][1]));
+  let sMin = 0; const anchors = pts.map(p => { const pr = geoProject(xy, cum, geoXY(p.ll, ref), sMin); sMin = Math.max(0, pr.s - 30); return {s: pr.s, t0: p.t0, t1: p.t1, name: p.name}; });
+  for (let i = 1; i < anchors.length; i++) if (anchors[i].s < anchors[i - 1].s) anchors[i].s = anchors[i - 1].s;
+  const R = {ref, xy, cum, anchors, sig};
+  try { Object.defineProperty(lv, '_route', {value: R, enumerable: false, configurable: true, writable: true}); } catch {}
+  return R;
+}
+/* Wo auf der Fahrt liegt ein Punkt? i = Index in tripPoints, frac = Anteil bis zum nächsten, tExp = Planzeit an dieser Stelle */
+function tripMatch(lv, ll){
+  const R = routeOf(lv); if (!R) return null;
+  const pr = geoProject(R.xy, R.cum, geoXY(ll, R.ref)), A = R.anchors;
+  let i = 0; while (i < A.length - 1 && A[i + 1].s <= pr.s) i++;
+  const a = A[i], b = A[i + 1]; let frac = 0, tExp = null;
+  if (b) {
+    if (b.s - pr.s < 60 && b.s > a.s) { i++; }
+    else if (pr.s - a.s >= 60) { const span = b.s - a.s; frac = span > 0 ? Math.max(0, Math.min(1, (pr.s - a.s) / span)) : 0; tExp = a.t1 + (b.t0 - a.t1) * frac; }
+  }
+  return {i, frac, d: pr.d, s: pr.s, tExp, stop: A[i]};
+}
+function matchPace(lv, ll, now){
+  const m = tripMatch(lv, ll); if (!m || m.d > 250) return null;
+  if (m.tExp != null) return (now - m.tExp) / 60000;
+  const st = m.stop; return now < st.t0 ? (now - st.t0) / 60000 : now > st.t1 ? (now - st.t1) / 60000 : 0;
+}
+
+const TrainMatch = {
+  cand: {}, ride: null, busy: false, last: 0,
+  live(){ const r = this.ride; return r && Date.now() - r.seen < 3 * 60000 ? r : null; },
+  async tick(force){
+    if (this.busy || document.hidden || !Transit.ok()) return; const now = Date.now(); if (!force && now - this.last < 20000) return;
+    const p = Where.pos(); if (!p || p.acc > 80) return; const v = Where.speed(), leg = Where.leg(now);
+    if (this.ride && now - this.ride.seen > 4 * 60000) this.ride = null;
+    if (!this.ride && !leg && (v == null || v < 12)) return;
+    if (!this.ride && v != null && v < 8) return;
+    this.busy = true; this.last = now;
+    try {
+      const d = 0.006, la = p.ll[0], lo = p.ll[1], dLo = d / Math.cos(la * Math.PI / 180);
+      const {data} = await Transit.get(() => `/radar?north=${(la + d).toFixed(5)}&west=${(lo - dLo).toFixed(5)}&south=${(la - d).toFixed(5)}&east=${(lo + dLo).toFixed(5)}&results=60&duration=30&frames=1&polylines=false&language=de`, 8000);
+      const mv = (Array.isArray(data) ? data : data.movements || []).map(m => ({id: m.tripId, line: m.line && m.line.name, product: m.line && m.line.product, dir: m.direction, ll: m.location ? [m.location.latitude, m.location.longitude] : null})).filter(m => m.id && m.ll);
+      const near = mv.map(m => ({...m, dist: distM(m.ll, p.ll)})).filter(m => m.dist <= 250 + p.acc).sort((a, b) => a.dist - b.dist);
+      for (const k in this.cand) this.cand[k].score *= 0.5;
+      if (this.ride) { if (near.some(m => m.id === this.ride.id)) { this.ride.seen = now; this.ride.lost = 0; } else if (++this.ride.lost >= 2 && (v == null || v < 8)) this.ride = null; }
+      near.slice(0, 4).forEach((m, i) => { const c = this.cand[m.id] || (this.cand[m.id] = {...m, score: 0, hits: 0}); c.score += (i === 0 ? 2 : 1) * Math.max(0, 1 - m.dist / (300 + p.acc)); c.hits++; Object.assign(c, {dist: m.dist, at: now, ll: m.ll, line: m.line, dir: m.dir, product: m.product}); });
+      const planned = leg && leg.live && leg.live.legs ? leg.live.legs.filter(g => !g.walk).map(g => normLine(g.line)) : [];
+      const best = Object.values(this.cand).filter(c => now - c.at < 90000).map(c => ({...c, sc: c.score + (planned.includes(normLine(c.line)) ? 0.5 : 0)})).sort((a, b) => b.sc - a.sc)[0];
+      if (best && best.hits >= 2 && best.sc >= 1.2 && (v == null || v >= 8 || (this.ride && this.ride.id === best.id))) await this.confirm(best, leg);
+      for (const k in this.cand) if (now - this.cand[k].at > 120000) delete this.cand[k];
+    } catch {}
+    this.busy = false;
+  },
+  async confirm(c, leg){
+    const now = Date.now(), same = this.ride && this.ride.id === c.id;
+    if (!same || now - this.ride.fetched > 60000) {
+      let trip = null; try { const {data} = await Transit.get(() => `/trips/${encodeURIComponent(c.id)}?stopovers=true&polyline=false&remarks=false&language=de`, 8000); trip = data.trip || data; } catch {}
+      const stops = trip && trip.stopovers ? trip.stopovers.map(s => ({name: s.stop && s.stop.name, id: s.stop && s.stop.id, ll: llOf(s.stop), arr: s.arrival || s.plannedArrival, dep: s.departure || s.plannedDeparture,
+        delay: s.arrivalDelay != null ? Math.round(s.arrivalDelay / 60) : s.departureDelay != null ? Math.round(s.departureDelay / 60) : null})).filter(s => s.ll) : same ? this.ride.stops : [];
+      this.ride = {lost: 0, id: c.id, line: c.line, product: c.product, dir: c.dir || (trip && trip.direction) || '', stops, fetched: now, seen: now};
+      if (!same) { this.adopt(leg); try { renderSoft(); } catch {} }
+    } else this.ride.seen = now;
+    try { Where.paint(); } catch {}
+  },
+  /* Nächster Halt aus dem Fahrtverlauf und deiner Position */
+  next(){
+    const r = this.live(); if (!r || !r.stops.length) return null; const p = Where.pos(), now = Date.now();
+    let iN = -1, dN = Infinity; if (p) r.stops.forEach((s, i) => { const d = distM(p.ll, s.ll); if (d < dN) { dN = d; iN = i; } });
+    let k = r.stops.findIndex(s => +new Date(s.arr || s.dep) > now - 30000); if (k < 0) k = r.stops.length - 1;
+    let at = null;
+    if (iN >= 0 && dN < 150) { at = r.stops[iN]; k = Math.min(r.stops.length - 1, iN + 1); }
+    else if (iN >= 0 && p) { const a = r.stops[iN], b = r.stops[iN + 1]; if (b && distM(p.ll, b.ll) < distM(a.ll, b.ll)) k = iN + 1; else k = Math.max(k, iN); }
+    return {...r.stops[k], at};
+  },
+  /* Erkannte Fahrt ist nicht die geplante: übernehmen (mit Rückgängig) */
+  async adopt(leg){
+    if (!this.ride || !leg || leg.kind !== 'go' || !leg.live || !leg.live.legs) return; const key = leg.before && leg.before.key; if (!key || Transit.over[key]) return;
+    if (leg.live.legs.some(x => !x.walk && x.hafasTrip === this.ride.id)) return;
+    const cur = leg.live.legs.find(x => !x.walk && x.fromId && +new Date(x.arr) > Date.now()); const dest = leg.to && leg.to.vbb; if (!cur || !dest) return;
+    try { const {st, list} = await Transit.caughtOptions(cur, dest); const x = list.find(o => o.j.legs.some(y => !y.walk && y.hafasTrip === this.ride.id)); if (x) TripAuto.apply(key, st, x, x.earlier ? 'früher' : 'später'); } catch {}
+  }
+};
+
+/* Kurzer Text für die Anzeige „Wo bist du“, wenn ein Fahrzeug erkannt ist */
+function rideChip(){
+  const r = TrainMatch.live(); if (!r) return null; const nx = TrainMatch.next();
+  const lbl = r.line ? r.line : 'Bahn', dir = r.dir ? ` Richtung ${r.dir}` : '';
+  const t = nx ? new Date(nx.arr || nx.dep) : null;
+  const s = nx ? `${nx.at ? `gerade ${nx.at.name} · ` : ''}nächster Halt ${nx.name}${t && !isNaN(t) ? ' ' + hm(t) : ''}${nx.delay > 0 ? ` (+${nx.delay})` : ''}` : '';
+  return {k: 'train', ic: 'zug', t: `In der ${lbl}${dir}`, s, ride: true};
+}
+function rideLine(){ const c = rideChip(); return c ? `<span class="lt-ride">${ic('zug', 's')}<span><b>Erkannt: ${esc(c.t.replace(/^In der /, ''))}</b>${c.s ? `<small>${esc(c.s)}</small>` : ''}</span></span>` : ''; }
 function tripTimeline(lv){
   const P = [], t = x => x == null ? null : +new Date(x);
   lv.legs.forEach((g, i) => {
@@ -11137,7 +11260,8 @@ function tripSoll(lv, now = Date.now()){
 }
 /* Vergleich mit dem Standort: vor oder hinter dem Plan */
 function tripPace(lv, pos, now = Date.now()){
-  if (!pos) return null; const P = tripTimeline(lv); if (P.length < 2) return null;
+  if (!pos) return null; const mp = matchPace(lv, pos, now); if (mp != null) return Math.round(mp);
+  const P = tripTimeline(lv); if (P.length < 2) return null;
   let best = null;
   for (let i = 0; i < P.length; i++) {
     const d = distM(pos, P[i].ll); if (!best || d < best.d) best = {d, t0: P[i].t0, t1: P[i].t1};
@@ -11159,6 +11283,8 @@ function tripPoints(lv){
 }
 /* Wo ist man gerade? Standort, sonst eigene Angabe, sonst Plan. pos = Index, frac = Anteil bis zum nächsten */
 function tripWhere(lv, pts, now = Date.now(), cal = null, noGps = false){
+  const wp = !noGps && typeof Where !== 'undefined' ? Where.pos() : null;
+  if (wp && (!cal || now - cal.at > 4 * 60000)) { const m = tripMatch(lv, wp.ll); if (m && m.d < 220 + Math.min(120, wp.acc || 0)) return {i: Math.min(m.i, pts.length - 1), frac: m.frac, src: 'gps', d: m.d}; }
   if (!noGps && Loc.pos && (!cal || now - cal.at > 4 * 60000)) {
     const me = [Loc.pos.lat, Loc.pos.lon]; let best = null;
     pts.forEach((p, i) => { const d = distM(me, p.ll); if (!best || d < best.d) best = {d, i, frac: 0}; const q = pts[i + 1]; if (!q) return;
@@ -11313,10 +11439,10 @@ const LiveTrip = {
     if (!lv) { box.innerHTML = `<span class="muted">${navigator.onLine === false ? 'Du bist offline.' : 'Gerade keine Live-Daten. Neuer Versuch in einer Minute.'}</span>`; return; }
     const left = Math.max(0, Math.round((+new Date(lv.arrive) - now) / 60000)), f = lv.legs.find(g => !g.walk), st = tripStatus(lv, now);
     box.innerHTML = `<span class="lt-sub">Ankunft</span><span class="lt-big">${hm(new Date(lv.arrive))}</span><span class="lt-sub">${left ? `noch ${dur(left)}` : 'gleich da'}${f && f.ddel > 0 ? ` · ${esc(f.line)} +${f.ddel} min` : ''}${Loc.pos ? '' : ' · ohne Standort'}</span>${this.rerouted ? '<span class="lt-note">Neu berechnet ab deinem Standort</span>' : ''}`;
-    const pace0 = Loc.pos ? tripPace(lv, [Loc.pos.lat, Loc.pos.lon], now) : null, pace = this.cal && now - this.cal.at < 20 * 60000 && (pace0 == null || now - this.cal.at < 4 * 60000) ? this.cal.pace : pace0, pk = this.pickLeg(), started = now >= +new Date(lv.depart) - 10 * 60000;
+    const wpos = Where.pos(), pace0 = wpos ? tripPace(lv, wpos.ll, now) : null, pace = this.cal && now - this.cal.at < 20 * 60000 && (pace0 == null || now - this.cal.at < 4 * 60000) ? this.cal.pace : pace0, pk = this.pickLeg(), started = now >= +new Date(lv.depart) - 10 * 60000;
     const paceT = pace == null ? '' : Math.abs(pace) <= 1 ? '<span class="lt-pace ok">Du bist im Plan</span>' : pace > 0 ? `<span class="lt-pace late">Du bist ca. ${pace} min hinter dem Plan</span>` : `<span class="lt-pace early">Du bist ca. ${-pace} min vor dem Plan</span>`;
     const nb = document.querySelector('[data-ltnow]'); nb.hidden = false;
-    nb.innerHTML = `<span class="lt-k">Jetzt laut Plan</span><b>${esc(st.head)}</b>${st.sub ? `<small>${esc(st.sub)}</small>` : ''}${paceT}${sh ? `<span class="lt-shift">${ic('uhr', 's')}Zeiten von dir um ${Math.abs(sh.min)} min ${sh.min < 0 ? 'vorgezogen' : 'verschoben'}<button type="button" class="btn ghost sm" data-act="shiftUndo">Zurücksetzen</button></span>` : ''}
+    nb.innerHTML = `<span class="lt-k">Jetzt laut Plan</span><b>${esc(st.head)}</b>${st.sub ? `<small>${esc(st.sub)}</small>` : ''}${paceT}${rideLine()}${sh ? `<span class="lt-shift">${ic('uhr', 's')}Zeiten von dir um ${Math.abs(sh.min)} min ${sh.min < 0 ? 'vorgezogen' : 'verschoben'}<button type="button" class="btn ghost sm" data-act="shiftUndo">Zurücksetzen</button></span>` : ''}
       <div class="lt-acts">${pk && started && st.head !== 'Angekommen' ? `<button type="button" class="btn sm" data-act="ltPick">${ic('zug','s')}Frühere Bahn erwischt</button>` : ''}${lv.over ? `<button type="button" class="btn ghost sm" data-act="overUndo">${ic('zurueck','s')}Rückgängig</button>` : ''}</div>`;
     const pb = document.querySelector('[data-ltpath]'); if (pb) pb.innerHTML = this.pathHtml(lv, now);
     const el0 = document.querySelector('[data-livemap]');
@@ -12073,7 +12199,7 @@ function init(){
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
   setTimeout(() => { try { migrateWorkCat(); } catch {} }, 1500);
-  setInterval(() => { if (!document.hidden) try { Where.paint(); } catch {} }, 20000);
+  setInterval(() => { if (!document.hidden) { try { TrainMatch.tick(); } catch {} try { Where.paint(); } catch {} } }, 20000);
   setTimeout(() => Isis.auto(), 6000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Isis.auto(); });
   if (Native.has('sense')) { setInterval(() => { if (!document.hidden) TripAuto.tick(); }, 30000); setTimeout(() => TripAuto.tick(), 5000); window.addEventListener('kalresume', () => { TripAuto.tick(); SleepAuto.run(true); }); window.addEventListener('kalperm', () => setTimeout(render, 300)); }
   if (Native.has('sleep')) { setTimeout(() => SleepAuto.run(true), 2500); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => SleepAuto.run(), 600); }); }
