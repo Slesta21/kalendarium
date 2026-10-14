@@ -20,7 +20,7 @@ public class Bridge {
     }
 
     /* Was diese App-Version kann, damit die Web-App passend reagiert */
-    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep,sense"; }
+    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep,sense,fetch"; }
 
     /* Startbildschirm-Widget mit den nächsten Terminen füttern */
     @JavascriptInterface public void widget(String json) { Widget.save(ctx, json); }
@@ -68,6 +68,26 @@ public class Bridge {
             act.runOnUiThread(() -> act.startActivity(Intent.createChooser(s, "Rückblick teilen")));
             return true;
         } catch (Exception e) { return false; }
+    }
+
+    /* Text von einer https-Adresse holen (z. B. ISIS-Kalender), ohne die Sperre des Browsers. Antwort kommt über window.__kalFetch */
+    @JavascriptInterface public void fetchText(String url, String id) {
+        new Thread(() -> {
+            String res; boolean ok = false;
+            try {
+                if (url == null || !url.startsWith("https://")) throw new Exception("Nur https-Adressen");
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                c.setConnectTimeout(12000); c.setReadTimeout(20000); c.setInstanceFollowRedirects(true);
+                c.setRequestProperty("User-Agent", "Kalendarium-App");
+                int code = c.getResponseCode();
+                java.io.InputStream in = code < 400 ? c.getInputStream() : c.getErrorStream();
+                java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream(); byte[] buf = new byte[16384]; int n;
+                while (in != null && (n = in.read(buf)) > 0 && bo.size() < 4_000_000) bo.write(buf, 0, n);
+                res = bo.toString("UTF-8"); ok = code < 400; if (!ok) res = "HTTP " + code;
+            } catch (Exception e) { res = String.valueOf(e.getMessage()); }
+            final String js = "window.__kalFetch && window.__kalFetch(" + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(res) + ")";
+            act.runOnUiThread(() -> { try { ((MainActivity) act).web.evaluateJavascript(js, null); } catch (Exception ignored) { } });
+        }).start();
     }
 
     @JavascriptInterface public void vibrateNamed(String id) { Notify.vibrate(ctx, Notify.pattern(id)); }
