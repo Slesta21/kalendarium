@@ -148,7 +148,7 @@ public class Sense extends JobService {
         } catch (Exception ignored) { }
     }
     static void savePoint(Context c, Location l) {
-        append(c, "trace", new JSONArray().put(l.getTime()).put(Math.round(l.getLatitude() * 1e5) / 1e5).put(Math.round(l.getLongitude() * 1e5) / 1e5).put(Math.round(l.getAccuracy())));
+        try { append(c, "trace", new JSONArray().put(l.getTime()).put(Math.round(l.getLatitude() * 1e5) / 1e5).put(Math.round(l.getLongitude() * 1e5) / 1e5).put(Math.round(l.getAccuracy()))); } catch (Exception ignored) { }
         Widget.savePos(c, l.getLatitude(), l.getLongitude(), l.getTime());
     }
 
