@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 50  ·  persönlicher Kalender für alles
+ KALENDARIUM 51  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2920,6 +2920,17 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .lx-bars b{font-size:13px;font-variant-numeric:tabular-nums}
 .lx-bars small{font-size:12px;color:var(--muted);font-weight:700}
 .en-h .lxc{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--tile-2);color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+.oa{display:flex;flex-direction:column;gap:10px}
+.oa-lead{margin:0 0 4px;font-size:15px;line-height:1.45;color:var(--muted)}
+.oa-lead b{color:var(--ink)}
+.oa-opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;border:0;border-radius:var(--r-tile);background:var(--tile-2);color:var(--ink);font:inherit;cursor:pointer}
+.oa-opt:first-of-type{background:var(--accent);color:var(--on-accent)}
+.oa-opt:first-of-type small{color:inherit;opacity:.85}
+.oa-opt .ic{display:grid;place-items:center;width:36px;height:36px;border-radius:999px;background:color-mix(in oklab, currentColor 14%, transparent);flex:none}
+.oa-opt .ic svg{width:18px;height:18px}
+.oa-opt b{display:block;font-size:15px}
+.oa-opt small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.oa-opt.ghost{background:transparent;border:1.5px solid var(--line)}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6687,7 +6698,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '50';
+const APP_VERSION = '51';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -8964,6 +8975,7 @@ const ACTIONS = {
   ltCaught(el){ LiveTrip.caught(el.dataset.i); },
   overUndo(){ LiveTrip.undo(); },
   lightToggle(){ try { window.KalNative.lightSet(!window.KalNative.lightOn()); } catch {} Lite._c = null; render(); },
+  offAns(el){ Offplan.answer(el.dataset.v); },
   liveTrip(el){ LiveTrip.open(el.dataset.home ? {home: true} : {date: el.dataset.date, i: el.dataset.i}); },
   async stopInfo(el){
     const d = el.dataset, lat = parseFloat(d.lat), lon = parseFloat(d.lon), has = !isNaN(lat) && !isNaN(lon), name = d.name || 'Haltestelle';
@@ -10700,8 +10712,9 @@ const Offplan = {
   near(p, pl){ const v = pl && pl.vbb; if (!p || !v || v.latitude == null) return null; return distM(p.ll, [v.latitude, v.longitude]) <= Math.max(250, (p.acc || 0) + 120); },
   started(c, p, now){ if (!c || !c.legs || !p) return false; if (typeof TrainMatch !== 'undefined' && TrainMatch.live()) return true; return now >= +c.depart - 3 * 60000 && distToTrip(c, p.ll) < 250; },
   /* Weg ab Standort statt ab dem geplanten Ort? Liefert den Startpunkt oder null */
-  from(pl, depart, c){
+  from(pl, depart, c, key){
     const p = this.pos(), now = Date.now(); if (!p || !pl || pl.id === '_here') return null;
+    if (key && this.skip && this.skip(key)) return null;
     if (+depart - now > 3 * 3600000 || +depart < now - 20 * 60000) return null;
     if (c && c.fromHere && c.fromVbb && this.started(c, p, now)) return c.fromVbb;
     if (this.near(p, pl) !== false) return null;
@@ -10717,7 +10730,7 @@ const Offplan = {
   },
   /* Einmal Bescheid geben, wenn der Weg zum ersten Mal ab Standort gilt */
   tell(o, pl, lv){
-    const k = o.key + '|' + ymd(new Date()); if (this.told[k]) return; this.told[k] = 1;
+    const k = o.key + '|' + ymd(new Date()); if (this.told[k]) return; this.told[k] = 1; if (Date.now() - (this.openAt || 0) < 25000) return;
     const nm = o.kind === 'course' ? (o.ref.short || o.ref.title) : o.title, f = lv.legs && lv.legs.find(g => !g.walk);
     toast(`Du bist nicht ${pl.home ? 'zuhause' : Priv.on() ? 'am geplanten Ort' : 'bei ' + pl.name}`, `Weg zu ${PV(nm, o.cat)} jetzt ab deinem Standort: los um ${hm(new Date(lv.depart))}${f ? ` mit ${lineLabel(f)}` : ''}, an ${hm(new Date(lv.arrive))}.`, {sym: 'ort', ttl: 9000});
   },
@@ -10738,6 +10751,46 @@ const Offplan = {
     this.sig = sig; this.at = now; Transit.refresh();
   }
 };
+/* ---------- Beim Öffnen fragen (v51) ----------
+   Bist du nicht am geplanten Ort, fragt die App beim Öffnen direkt nach:
+   von hier aus los, vorher zurück zum geplanten Ort, oder heute nicht mehr
+   fragen. Bis zur Antwort gilt schon der Weg ab deinem Standort. */
+Object.assign(Offplan, {
+  openAt: Date.now(),
+  ans: (() => { try { const o = JSON.parse(localStorage.getItem('kal-offans') || '{}') || {}, d = ymd(new Date()); for (const k in o) if (!o[k] || o[k].day !== d) delete o[k]; return o; } catch { return {}; } })(),
+  saveAns(){ try { localStorage.setItem('kal-offans', JSON.stringify(this.ans)); } catch {} },
+  skip(key){
+    const d = ymd(new Date()); if (this.ans['*'] && this.ans['*'].day === d) return true;
+    const a = this.ans[key], p = this.pos(); if (!a || a.day !== d || a.v !== 'plan') return false;
+    return !p || distM(p.ll, a.ll) < 500;
+  },
+  keyOf(l){ return l.kind === 'go' ? l.before.key : 'back:' + l.after.key; },
+  opened(){ this.openAt = Date.now(); clearTimeout(this._askT); this._askT = setTimeout(() => this.ask(), 4500); setTimeout(() => this.ask(), 10000); },
+  ask(){
+    if (document.hidden || !state || (sheet.el && !sheet.el.hidden)) return;
+    const l = this.active(), p = this.pos(); if (!l || !p) return;
+    const key = this.keyOf(l), a = this.ans[key], d = ymd(new Date());
+    if (a && a.day === d && distM(p.ll, a.ll) < 400) return;
+    const pl = l.kind === 'go' ? (l.live.planFrom ? (placeById(l.live.planFrom.id) || l.live.planFrom) : null) : l.from;
+    const far = pl && pl.vbb ? distM(p.ll, [pl.vbb.latitude, pl.vbb.longitude]) : null, fmtD = m => m < 1000 ? Math.round(m / 10) * 10 + ' m' : (m / 1000).toFixed(1).replace('.', ',') + ' km';
+    const o = l.kind === 'go' ? l.before : null, nm = o ? (o.kind === 'course' ? (o.ref.short || o.ref.title) : o.title) : '';
+    const f = l.live.legs && l.live.legs.find(g => !g.walk), plName = !pl ? 'am geplanten Ort' : pl.home ? 'zuhause' : Priv.on() ? 'am geplanten Ort' : 'bei ' + pl.name;
+    this._ask = {key, ll: p.ll};
+    openSheet(`${head('Bist du woanders?')}<div class="oa">
+      <p class="oa-lead">Du bist gerade nicht ${esc(plName)}${far != null ? ` (${fmtD(far)} entfernt)` : ''}. ${o ? `Als Nächstes: <b>${esc(PV(nm, o.cat))}</b> um ${hm(o.start)}.` : 'Dein Plan war der Heimweg von dort.'}</p>
+      <button class="oa-opt" data-act="offAns" data-v="here"><span class="ic">${ic('ort', 's')}</span><span><b>Von hier aus los</b><small>Los um ${hm(l.depart)}${f ? ` mit ${esc(lineLabel(f))}` : ''}, ${l.kind === 'home' ? 'zuhause' : 'da'} um ${hm(l.arrive)}</small></span></button>
+      ${pl && !pl.home ? `<button class="oa-opt" data-act="offAns" data-v="plan"><span class="ic">${ic('wdh', 's')}</span><span><b>Ich gehe vorher zurück</b><small>Dann gilt der Plan ab ${esc(Priv.on() ? 'dem geplanten Ort' : pl.name)}</small></span></button>` : pl && pl.home ? `<button class="oa-opt" data-act="offAns" data-v="plan"><span class="ic">${ic('haus', 's')}</span><span><b>Ich gehe vorher nach Hause</b><small>Dann gilt der Plan ab zuhause</small></span></button>` : ''}
+      <button class="oa-opt ghost" data-act="offAns" data-v="never"><span class="ic">${ic('glocke', 's')}</span><span><b>Heute nicht mehr fragen</b><small>Wege gelten dann wie geplant</small></span></button>
+    </div>`, {kind: 'offask'});
+  },
+  answer(v){
+    const q = this._ask; closeSheet(); if (!q) return; const d = ymd(new Date());
+    if (v === 'never') this.ans['*'] = {v, day: d, ll: q.ll}; else this.ans[q.key] = {v, day: d, ll: q.ll};
+    this.saveAns(); this._ask = null;
+    if (v !== 'here') { Transit.refresh(); toast(v === 'never' ? 'Heute keine Fragen mehr' : 'Alles klar, Plan bleibt', 'Die Wege gelten ab dem geplanten Ort.', {ttl: 3500}); }
+    else toast('Weg ab hier', 'Losgehzeit, Erinnerung und Widget sind angepasst.', {sym: 'ort', ttl: 3500});
+  }
+});
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
@@ -11087,8 +11140,8 @@ const Transit = {
           if (!l0 || !l0.from || !l0.to) continue;
           const c = this.cache[o.key], cOk = c && c.arriveBy === +arriveBy ? c : null;
           const baseFrom = l0.from.id === '_here' ? (cOk && cOk.planFrom ? (placeById(cOk.planFrom.id) || cOk.planFrom) : placeById('home')) : l0.from;
-          const op = sameDay(d, new Date()) && baseFrom && !this.over[o.key] ? Offplan.from(baseFrom, l0.depart, cOk) : null;
-          const here = op || (sameDay(d, new Date()) && baseFrom && baseFrom.home && Loc.status() === 'away' ? Loc.here() : null), stale = !!(op || (cOk && cOk.offplan)) && Offplan.stale(cOk, op);
+          const op = sameDay(d, new Date()) && baseFrom && !this.over[o.key] ? Offplan.from(baseFrom, l0.depart, cOk, o.key) : null;
+          const here = op || (sameDay(d, new Date()) && baseFrom && baseFrom.home && !Offplan.skip(o.key) && Loc.status() === 'away' ? Loc.here() : null), stale = !!(op || (cOk && cOk.offplan)) && Offplan.stale(cOk, op);
           const l = {...l0, from: here ? {id:'_here', name:'Dein Standort', vbb: here} : baseFrom};
           if (!l.from.vbb || !l.to.vbb || l.to.mode !== 'oepnv') continue;
           const soon = +arriveBy - now < 3 * 3600000, maxAge = this.hot(c, +l0.depart, +arriveBy, now) ? 45000 : soon ? 90000 : 20 * 60000;
@@ -11103,7 +11156,7 @@ const Transit = {
       if (home && home.vbb) for (const d of [t0, addDays(t0, 1)]) for (const hl of planDay(d).legs.filter(x => x.kind === 'home' && x.after && x.from && x.from.vbb && x.from.mode === 'oepnv')) {
         const at0 = hl.after.end; if (+at0 < now - 3 * 3600000 || +at0 > now + 30 * 3600000) continue;
         const key = 'back:' + hl.after.key, c = this.cache[key], soon = +at0 - now < 3 * 3600000, cH = c && c.after === +at0 ? c : null;
-        const opH = sameDay(d, new Date()) && now > +at0 - 15 * 60000 && !this.over[key] ? Offplan.from(hl.from, new Date(Math.max(now, +at0)), cH) : null, staleH = !!(opH || (cH && cH.offplan)) && Offplan.stale(cH, opH);
+        const opH = sameDay(d, new Date()) && now > +at0 - 15 * 60000 && !this.over[key] ? Offplan.from(hl.from, new Date(Math.max(now, +at0)), cH, key) : null, staleH = !!(opH || (cH && cH.offplan)) && Offplan.stale(cH, opH);
         if (+at0 < now - 600000 && !opH && !(cH && cH.offplan)) continue;
         if (!staleH && c && c.after === +at0 && +c.arrive < now - 5 * 60000) continue;
         if (!force && !staleH && c && c.after === +at0 && now - c.fetchedAt < (this.hot(c, +hl.depart, +hl.arrive, now) ? 45000 : soon ? 90000 : 20 * 60000)) continue;
@@ -11118,7 +11171,7 @@ const Transit = {
             const better = isPref(best) && quicker && best.arrive - quicker.arrive >= 3 * 60000 ? {label: lineSeq(quicker), gain: Math.round((best.arrive - quicker.arrive) / 60000), kind: 'früher zuhause'} : null;
             if (this.hot(best, +best.depart, +best.arrive, now)) Delay.observe(best);
             this.cache[key] = {...best, after: +at0, fetchedAt: now, alts: groupJourneys(js.filter(j => segKey(j) !== segKey(best))).map(gr => gr.js[0]).slice(0, 3), better, switched: !!pref.length && !isPref(best), pref: pref.join('/'), ...(opH ? {fromHere: true, fromVbb: opH, offplan: true} : {})}; changed = true;
-            if (opH && !(cH && cH.offplan)) toast('Heimweg ab deinem Standort', `Nächste Verbindung: los um ${hm(new Date(best.depart))}, zuhause um ${hm(new Date(best.arrive))}.`, {sym: 'haus', ttl: 8000});
+            if (opH && !(cH && cH.offplan) && Date.now() - (Offplan.openAt || 0) > 25000) toast('Heimweg ab deinem Standort', `Nächste Verbindung: los um ${hm(new Date(best.depart))}, zuhause um ${hm(new Date(best.arrive))}.`, {sym: 'haus', ttl: 8000});
           }
         } catch {}
       }
@@ -12438,6 +12491,7 @@ function init(){
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
   setTimeout(() => { try { migrateWorkCat(); } catch {} }, 1500);
+  Offplan.opened(); document.addEventListener('visibilitychange', () => { if (!document.hidden) Offplan.opened(); });
   setInterval(() => { if (!document.hidden) { try { TrainMatch.tick(); } catch {} try { Offplan.tick(); } catch {} try { Where.paint(); } catch {} } }, 20000);
   setTimeout(() => Isis.auto(), 6000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Isis.auto(); });
   if (Native.has('sense')) { setInterval(() => { if (!document.hidden) TripAuto.tick(); }, 30000); setTimeout(() => TripAuto.tick(), 5000); window.addEventListener('kalresume', () => { TripAuto.tick(); SleepAuto.run(true); }); window.addEventListener('kalperm', () => setTimeout(render, 300)); }
