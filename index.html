@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 44  ·  persönlicher Kalender für alles
+ KALENDARIUM 45  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -6004,11 +6004,13 @@ const Priv = {
   }
 };
 const PV = (text, cat, fb) => Priv.t(text, cat, fb);
+/* Fristen, die angezeigt werden dürfen: im Privatmodus keine */
+const visDeadlines = () => Priv.on() && !Priv._keepDl ? [] : state.deadlines;
 let _occCache = new Map(), _planCache = new Map(), _sleepCache = null;
 function invalidate(){ _occCache = new Map(); _planCache = new Map(); _sleepCache = null; _workCache = null; }
 let _workCache = null;
 function occurrences(from, to, opts = {}){
-  const ck = `${+from}|${+to}|${opts.deadlines!==false}|${opts.extras!==false}`;
+  const ck = `${+from}|${+to}|${opts.deadlines!==false}|${opts.extras!==false}|${Priv._keepDl ? 'k' : ''}`;
   if (_occCache.has(ck)) return _occCache.get(ck);
   const out = [];
   for (const e of state.events) expandEvent(e, from, to, out);
@@ -6032,7 +6034,7 @@ function occurrences(from, to, opts = {}){
       }
     }
   }
-  if (Priv.on()) for (let i = 0; i < out.length; i++) out[i] = Priv.mask(out[i]);
+  if (Priv.on()) { if (!Priv._keepDl) for (let i = out.length - 1; i >= 0; i--) if (out[i].kind === 'deadline') out.splice(i, 1); for (let i = 0; i < out.length; i++) out[i] = Priv.mask(out[i]); }
   out.sort((a,b) => (b.allDay - a.allDay) || a.start - b.start);
   _occCache.set(ck, out);
   return out;
@@ -6424,6 +6426,7 @@ const Reminders = {
   },
   /* Alle Erinnerungen zwischen from und to (ms), für die App und für Push */
   plan(from, to){
+    if (Priv.on() && !Priv._keepDl) { Priv._keepDl = true; try { return this.plan(from, to); } finally { Priv._keepDl = false; } }
     const V = state.settings.vib || {}, out = [], add = (t, key, title, body, sym, prio, vib) => { if (t > from && t <= to) out.push({at:t, key, title, body, sym, prio, vib: vib || V.event || 'doppelt'}); };
     for (const o of occurrences(new Date(from - 60000), new Date(to + 8*86400000))) {
       if (o.allDay) continue;
@@ -6651,10 +6654,10 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '44';
+const APP_VERSION = '45';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
-const openDeadlines = () => state.deadlines.filter(d => !d.done);
+const openDeadlines = () => visDeadlines().filter(d => !d.done);
 const overdueCount = () => { const n = new Date(); return openDeadlines().filter(d => at(d.date, d.time||'23:59') < n).length; };
 
 function renderNav(){
@@ -7284,7 +7287,7 @@ const VIEWS = {
   /* ---------- FRISTEN & TO-DOS ---------- */
   aufgaben(){
     const now = new Date(), t0 = startOfDay(now);
-    const list = state.deadlines.filter(d => ui.fcat === 'all' || d.catId === ui.fcat);
+    const list = visDeadlines().filter(d => ui.fcat === 'all' || d.catId === ui.fcat);
     const groups = [
       {id:'over', label:'Überfällig', f:d => !d.done && at(d.date,d.time||'23:59') < now},
       {id:'today', label:'Heute', f:d => !d.done && at(d.date,d.time||'23:59') >= now && sameDay(parseYMD(d.date), now)},
@@ -7293,7 +7296,7 @@ const VIEWS = {
       {id:'done', label:'Erledigt', f:d => d.done}
     ];
     const sorted = list.slice().sort((a,b) => at(a.date,a.time||'23:59') - at(b.date,b.time||'23:59') || (b.priority||1)-(a.priority||1));
-    const chips = [`<button class="chip" data-act="fcat" data-v="all" aria-pressed="${ui.fcat==='all'}">Alle</button>`].concat(state.categories.filter(c => state.deadlines.some(d => d.catId === c.id)).map(c => `<button class="chip" style="--c:${c.color}" data-act="fcat" data-v="${esc(c.id)}" aria-pressed="${ui.fcat===c.id}"><span class="sw"></span>${esc(c.name)}</button>`)).join('');
+    const chips = [`<button class="chip" data-act="fcat" data-v="all" aria-pressed="${ui.fcat==='all'}">Alle</button>`].concat(state.categories.filter(c => visDeadlines().some(d => d.catId === c.id)).map(c => `<button class="chip" style="--c:${c.color}" data-act="fcat" data-v="${esc(c.id)}" aria-pressed="${ui.fcat===c.id}"><span class="sw"></span>${esc(c.name)}</button>`)).join('');
     const body = groups.map(g => {
       if (g.id === 'done' && !ui.showDone) return '';
       let items = sorted.filter(g.f); if (!items.length) return '';
@@ -7305,7 +7308,7 @@ const VIEWS = {
       <div>
         <div class="toolbar"><h2 class="h2">Fristen</h2><div class="chips"><button class="chip" data-act="toggleShowDone" aria-pressed="${ui.showDone}">Erledigte</button><button class="btn primary sm" data-act="newDeadline">${ic('plus','s')}Frist</button></div></div>
         <div class="chips" style="margin-bottom:14px">${chips}</div>
-        ${body || emptyArt('flagge', 'Keine offenen Fristen.', 'Abgaben, Kündigungen, Anmeldungen, Rechnungen: alles mit Datum gehört hierher.')}
+        ${Priv.on() ? emptyArt('augezu', 'Fristen sind im Privatmodus ausgeblendet.', 'Erinnerungen kommen weiter. Zum Anzeigen den Privatmodus oben ausschalten.') : body || emptyArt('flagge', 'Keine offenen Fristen.', 'Abgaben, Kündigungen, Anmeldungen, Rechnungen: alles mit Datum gehört hierher.')}
       </div>
       <div>
         <div style="margin-bottom:36px">${habitsPanel(startOfDay(new Date()))}</div>
@@ -7514,7 +7517,7 @@ const VIEWS = {
     const sec = (t, html) => html ? `<div class="group-h"><h3>${t}</h3></div><section class="panel" style="padding:4px 18px">${html}</section>` : '';
     const row = (sym, color, title, sub, attrs) => `<div class="row-item"><span style="color:${color};display:flex">${sy(sym)}</span><div class="main" ${attrs}><div class="ti"><span>${esc(title)}</span></div><div class="sm">${sub}</div></div><span></span></div>`;
     const res = sec('Termine', state.events.filter(e => hit(e.title, e.location, e.notes)).map(e => row(catById(e.catId).symbol, catById(e.catId).color, e.title, `<span class="num">${fmtShort(parseYMD(e.date))}${e.allDay?'':' · '+e.start}</span>`, `data-act="edit" data-kind="event" data-id="${e.id}"`)).join(''))
-      + sec('Fristen', state.deadlines.filter(d => hit(d.title, d.notes, ...(d.subtasks||[]).map(s=>s.text))).map(d => deadlineRow(d, now)).join(''))
+      + sec('Fristen', visDeadlines().filter(d => hit(d.title, d.notes, ...(d.subtasks||[]).map(s=>s.text))).map(d => deadlineRow(d, now)).join(''))
       + sec('To-dos', state.todos.filter(t => hit(t.text)).map(todoRow).join(''))
       + sec('Kurse', state.courses.filter(c => hit(c.title, c.short, c.room, c.lecturer)).map(c => row(catById(c.catId).symbol, catById(c.catId).color, c.title, `${WD_LONG[c.day-1]} ${c.start} · ${esc(c.room)}`, `data-act="edit" data-kind="course" data-id="${c.id}"`)).join(''))
       + sec('Geburtstage', state.birthdays.filter(b => hit(b.name)).map(b => row('geschenk', 'var(--gold)', b.name, `${Number(b.date.slice(3))}. ${MONTHS[+b.date.slice(0,2)-1]}`, `data-act="edit" data-kind="birthday" data-id="${b.id}"`)).join(''))
@@ -7550,7 +7553,7 @@ function weekHero(days){
   const top = Object.values(per).sort((a,b) => b.m - a.m).slice(0, 4);
   const sp = sleepPlan(), beds = days.map(d => sp[ymd(addDays(d,1))]).filter(Boolean);
   const avg = beds.length ? beds.reduce((a,b) => { let m = b.bed.getHours()*60 + b.bed.getMinutes(); if (m < 720) m += 1440; return a + m; }, 0) / beds.length : null;
-  const dls = state.deadlines.filter(d => !d.done && d.date >= ymd(days[0]) && d.date <= ymd(days[days.length-1]));
+  const dls = visDeadlines().filter(d => !d.done && d.date >= ymd(days[0]) && d.date <= ymd(days[days.length-1]));
   const wm = work.reduce((a,w) => a + (w.end - w.start)/60000, 0);
   const now = new Date(), cur = days.some(d => sameDay(d, now));
   return `<section class="whero">
@@ -7765,7 +7768,7 @@ function workPlan(){
   res._short = short;
   return (_workCache = res);
 }
-const workFor = d => { const w = state.settings.layers.work ? (workPlan()[ymd(d)] || []) : []; return Priv.on() ? w.map(x => ({...x, ref: new Proxy(x.ref, {get: (t, k) => k === 'title' ? Priv.dl(catById(t.catId)) : Priv.MASK.has(k) && typeof t[k] === 'string' ? '' : t[k]})})) : w; };
+const workFor = d => { const w = state.settings.layers.work ? (workPlan()[ymd(d)] || []) : []; return Priv.on() ? w.map(x => ({...x, title: 'Aufgabe', ref: new Proxy(x.ref, {get: (t, k) => k === 'title' || k === 'short' ? 'Aufgabe' : Priv.MASK.has(k) && typeof t[k] === 'string' ? '' : t[k]})})) : w; };
 const layerOk = o => !(o.kind === 'course' && !state.settings.layers.courses);
 /* Nächste freie Zeit für einen Termin (für Konflikte) */
 function nextFree(durMin, from, ignoreId){
@@ -7804,7 +7807,7 @@ function weekReview(days){
   for (const o of items) { const m = (o.end - o.start)/60000; per[o.cat.id] = per[o.cat.id] || {cat:o.cat, m:0}; per[o.cat.id].m += m; total += m; }
   const rows = Object.values(per).sort((a,b) => b.m - a.m), max = Math.max(1, ...rows.map(r => r.m));
   const ds = days[0], de = addDays(days[days.length-1], 1);
-  const dls = state.deadlines.filter(d => { const x = at(d.date, d.time||'23:59'); return x >= ds && x < de; });
+  const dls = visDeadlines().filter(d => { const x = at(d.date, d.time||'23:59'); return x >= ds && x < de; });
   const sp = sleepPlan(), beds = days.map(d => sp[ymd(addDays(d,1))]).filter(Boolean);
   const avgSleep = beds.length ? beds.reduce((a,b) => a + b.sleepMin, 0) / beds.length : 0;
   const avgBedMin = beds.length ? beds.reduce((a,b) => { let m = b.bed.getHours()*60 + b.bed.getMinutes(); if (m < 12*60) m += 1440; return a + m; }, 0) / beds.length : 0;
@@ -11695,7 +11698,7 @@ function cmdItems(q){
   }
   if (ql.length >= 2) {
     const t0 = startOfDay(new Date()); let n = 0; const lim = () => n++ < 10;
-    for (const d of state.deadlines) if (has(d.title, d.notes) && lim()) add('Fristen', d.title, `${d.done ? 'erledigt · ' : ''}${dayLabel(parseYMD(d.date))} ${d.time || '23:59'}`, catById(d.catId).symbol, () => DETAIL.deadline(d.id), catById(d.catId).color);
+    for (const d of visDeadlines()) if (has(d.title, d.notes) && lim()) add('Fristen', d.title, `${d.done ? 'erledigt · ' : ''}${dayLabel(parseYMD(d.date))} ${d.time || '23:59'}`, catById(d.catId).symbol, () => DETAIL.deadline(d.id), catById(d.catId).color);
     for (const e of state.events) if (has(e.title, e.location, e.notes) && lim()) add('Termine', e.title, `${dayLabel(parseYMD(e.date))}${e.allDay ? '' : ' · ' + e.start}${e.repeat && e.repeat.freq !== 'none' ? ' · wiederholt' : ''}`, catById(e.catId).symbol, () => ACTIONS.detail({dataset:{kind:'event', id:e.id, date:e.date}}), catById(e.catId).color);
     for (const c of state.courses) if (has(c.title, c.short, c.room, c.lecturer) && lim()) add('Stundenplan', c.title, `${WD_SHORT[(+c.day||1)-1]} ${c.start}–${c.end}${c.room ? ' · ' + c.room : ''}`, catById(c.catId).symbol, () => { const x = addDays(startOfWeek(t0, 1), (+c.day||1) - 1); ACTIONS.detail({dataset:{kind:'course', id:c.id, date:ymd(x < t0 ? addDays(x, 7) : x)}}); }, catById(c.catId).color);
     for (const t of state.todos) if (has(t.text) && lim()) add('To-dos', t.text, t.done ? 'erledigt' : t.date ? dayLabel(parseYMD(t.date)) : 'offen', 'haken', () => { ui.view = 'aufgaben'; ui.search = ''; render(); });
