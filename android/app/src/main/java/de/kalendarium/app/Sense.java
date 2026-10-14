@@ -120,8 +120,9 @@ public class Sense extends JobService {
             if (items != null) for (int i = 0; i < items.length(); i++) {
                 JSONObject o = items.getJSONObject(i);
                 long d = o.optLong("depart", 0), a = o.optLong("arrive", 0); if (d == 0 || a == 0) continue;
-                long s = d - 15 * 60000L, e = a + 10 * 60000L;
-                long t = now >= s && now < e ? now + 60000L : now < s ? s : 0;
+                long s = d - 50 * 60000L, e = a + 10 * 60000L;
+                /* bis 15 min vor dem Losgehen alle 3 min (ob du am geplanten Ort bist), danach jede Minute */
+                long t = now >= s && now < e ? now + (now < d - 15 * 60000L ? 180000L : 60000L) : now < s ? s : 0;
                 if (t > 0 && (next == 0 || t < next)) next = t;
             }
             AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
@@ -151,6 +152,7 @@ public class Sense extends JobService {
     static void savePoint(Context c, Location l) {
         try { append(c, "trace", new JSONArray().put(l.getTime()).put(Math.round(l.getLatitude() * 1e5) / 1e5).put(Math.round(l.getLongitude() * 1e5) / 1e5).put(Math.round(l.getAccuracy()))); } catch (Exception ignored) { }
         Widget.savePos(c, l.getLatitude(), l.getLongitude(), l.getTime());
+        Reroute.check(c, l.getLatitude(), l.getLongitude(), l.getAccuracy());
     }
 
     /* ---------- App-Nutzung ---------- */
