@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 43  ·  persönlicher Kalender für alles
+ KALENDARIUM 44  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -6651,7 +6651,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '43';
+const APP_VERSION = '44';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7686,58 +7686,81 @@ function migrateWorkCat(){
   for (const e of state.events || []) if (/^(Lernen|Arbeiten): /.test(e.title || '') && e.catId !== 'lernzeit' && !e.workCatKeep) { const dl = state.deadlines.find(d => e.title.endsWith(d.title)); if ((dl && e.catId === dl.catId) || e.catId === 'arbeit') { e.catId = ensureWorkCat(); n++; } }
   if (n) commit();
 }
+/* Lern- und Arbeitsblöcke (v44)
+   · Aufgaben bis 1 h kommen am Stück in einen Block, nie aufgeteilt.
+     Der Tag wird so gewählt, dass die Arbeit verteilt ist: wenig schon
+     geplante Arbeit, nicht erst am Abgabetag, gern in wacher Zeit.
+   · Längere Aufgaben werden über die Tage bis zur Frist verteilt
+     (mindestens 1 h pro Tag, Blöcke bis 90 min, keine Reste unter 30 min).
+   · Pro Tag höchstens „work.maxDay“ Stunden (Standard 4 h). Reicht das
+     nicht, wird in einem zweiten Durchgang ohne Grenze aufgefüllt.
+   · Innerhalb des Tages entscheidet die Energiekurve (wacheste Zeit). */
 function workPlan(){
   if (_workCache) return _workCache;
-  const res = {}, short = [], now = new Date(), t0 = startOfDay(now), used = {};
+  const res = {}, short = [], now = new Date(), t0 = startOfDay(now), used = {}, load = {};
+  const dayCap = Math.max(1, +((state.settings.work || {}).maxDay) || 4) * 60;
   const tasks = state.deadlines.filter(d => !d.done && +d.effort > 0).map(d => ({d, due: at(d.date, d.time||'23:59'), need: deadlineRemaining(d), exam: !!d.exam, prio: +d.priority || 2}))
-    .filter(x => x.need > 0 && x.due > now).sort((a,b) => (b.exam - a.exam) || a.due - b.due);
+    .filter(x => x.need > 0 && x.due > now).sort((a, b) => a.due - b.due || (b.exam - a.exam));
+  const slotsOf = (d, T) => {
+    const k = ymd(d), sp = sleepPlan(), wk = sp[k], bd = sp[ymd(addDays(d, 1))], lo = wk ? addMin(wk.wake, 60) : null, hi = bd ? addMin(bd.bed, -30) : null;
+    let free = subtractIntervals(freeSlots(d), used[k] || []).map(([a, b]) => [lo && a < lo ? lo : a, hi && b > hi ? hi : b]).filter(([a, b]) => b - a >= 30 * 60000);
+    if (sameDay(d, T.due)) free = free.map(([a, b]) => [a, new Date(Math.min(b, addMin(T.due, -60)))]).filter(([a, b]) => b > a);
+    return free.map(([a, b]) => [roundUp15(a), b]).filter(([a, b]) => b - a >= 30 * 60000);
+  };
+  const best = (d, T, len, exact) => {
+    const E = state.settings.sleep.on ? energyDay(d) : null; let b = null;
+    for (const [a, z] of slotsOf(d, T)) for (let st = a; z - st >= 30 * 60000; st = addMin(st, 15)) {
+      const L = Math.min(len, Math.floor((z - st) / 60000 / 15) * 15); if (L < (exact ? len : 30)) break;
+      let v = null, s;
+      if (E) { let sc = 0, n = 0; for (let t = +st + 7.5 * 60000; t < +st + L * 60000; t += 15 * 60000) { sc += E.lv(new Date(t)); n++; } v = sc / n; s = v + L / 900; }
+      else s = (T.prio === 1 ? 1 : -1) * (+st) / 1e13 + L / 900;
+      if (!b || s > b.s) b = {st, len: L, v, s};
+    }
+    return b;
+  };
+  const put = (d, T, b) => {
+    const k = ymd(d), en = addMin(b.st, b.len);
+    (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:b.st, end:en, allDay:false, cat:workCat(T.exam), ref:T.d, key:`w:${T.d.id}:${+b.st}`, placeId:'', bb:0, ba:0, energy: b.v});
+    (used[k] = used[k] || []).push([addMin(b.st, -15), addMin(en, 15)]);
+    load[k] = (load[k] || 0) + b.len;
+  };
   for (const T of tasks) {
     const lastDay = startOfDay(T.due.getHours() < 12 ? addDays(T.due, -1) : T.due);
     let first = addDays(startOfDay(T.due), -(T.exam ? 14 : 7)); if (first < t0) first = t0;
-    const days = []; for (let d = new Date(first); d <= lastDay; d = addDays(d,1)) days.push(new Date(d));
-    let remaining = T.need;
-    for (let i = 0; i < days.length && remaining > 0; i++) {
-      const d = days[i], left = days.length - i, k = ymd(d);
-      let quota = T.exam ? Math.max(30, Math.ceil(remaining / left / 30) * 30) : remaining;
-      quota = Math.min(quota, T.exam ? 180 : 150, remaining);
-      const sp = sleepPlan(), wk = sp[k], bd = sp[ymd(addDays(d,1))];
-      const lo = wk ? addMin(wk.wake, 60) : null, hi = bd ? addMin(bd.bed, -30) : null;
-      let free = subtractIntervals(freeSlots(d), used[k] || []).map(([a,b]) => [lo && a < lo ? lo : a, hi && b > hi ? hi : b]).filter(([a,b]) => b - a >= 30*60000);
-      if (sameDay(d, T.due)) free = free.map(([a,b]) => [a, new Date(Math.min(b, addMin(T.due, -60)))]).filter(([a,b]) => b > a);
-      const E = state.settings.sleep.on ? energyDay(d) : null;
-      if (E) {
-        let fr = free.map(([a,b]) => [roundUp15(a), b]).filter(([a,b]) => b - a >= 30*60000);
-        while (quota > 0) {
-          let best = null;
-          for (const [a,b] of fr) for (let st = a; b - st >= 30*60000; st = addMin(st, 15)) {
-            const len = Math.min(90, Math.max(30, quota), Math.floor((b - st)/60000/15)*15); if (len < 30) break;
-            let sc = 0, n = 0; for (let t = +st + 7.5*60000; t < +st + len*60000; t += 15*60000) { sc += E.lv(new Date(t)); n++; }
-            const v = sc / n; if (!best || v + len / 900 > best.sc) best = {st, len, sc: v + len / 900, v};
-          }
-          if (!best) break;
-          const st = best.st, en = addMin(st, best.len);
-          (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:st, end:en, allDay:false, cat:workCat(T.exam), ref:T.d, key:`w:${T.d.id}:${+st}`, placeId:'', bb:0, ba:0, energy: best.v});
-          (used[k] = used[k] || []).push([st, addMin(en, 15)]);
-          quota -= best.len; remaining -= best.len;
-          fr = subtractIntervals(fr, [[addMin(st, -15), addMin(en, 15)]]).map(([a,b]) => [roundUp15(a), b]).filter(([a,b]) => b - a >= 30*60000);
-        }
-        free = [];
+    const days = []; for (let d = new Date(first); d <= lastDay; d = addDays(d, 1)) days.push(new Date(d));
+    if (!days.length) days.push(new Date(t0));
+    if (T.need <= 60) {
+      /* am Stück, am besten verteilten Tag */
+      const len = Math.max(30, Math.ceil(T.need / 15) * 15); let pick = null;
+      for (const cap of [true, false]) {
+        days.forEach((d, i) => { const k = ymd(d); if (cap && (load[k] || 0) + len > dayCap) return; const b = best(d, T, len, true); if (!b) return;
+          const sc = (b.v ?? 0.6) - (load[k] || 0) / 150 - (sameDay(d, T.due) ? 0.6 : 0) - i * 0.04; if (!pick || sc > pick.sc) pick = {d, b, sc}; });
+        if (pick) break;
       }
-      free.sort((x,y) => T.prio === 1 ? y[0] - x[0] : x[0] - y[0]);
-      for (const [a,b] of free) {
-        if (quota <= 0) break;
-        let st = roundUp15(a);
-        while (quota > 0 && (b - st) >= 30*60000) {
-          const len = Math.min(90, Math.max(30, quota), Math.floor((b - st)/60000/15)*15);
-          if (len < 30) break;
-          const en = addMin(st, len);
-          (res[k] = res[k] || []).push({kind:'work', id:T.d.id, title:(T.exam ? 'Lernen: ' : 'Arbeiten: ') + T.d.title, start:st, end:en, allDay:false, cat:workCat(T.exam), ref:T.d, key:`w:${T.d.id}:${+st}`, placeId:'', bb:0, ba:0});
-          (used[k] = used[k] || []).push([st, addMin(en, 15)]);
-          quota -= len; remaining -= len; st = addMin(en, 15);
-        }
+      if (pick) put(pick.d, T, pick.b); else short.push({d: T.d, missing: T.need});
+      continue;
+    }
+    /* länger als 1 h: über die Tage verteilen */
+    let remaining = T.need; const n = days.length;
+    for (let pass = 0; pass < 2 && remaining > 0; pass++) {
+      /* Tage mit wenig geplanter Arbeit zuerst, bei Gleichstand der frühere */
+      const order = days.map((d, i) => ({d, i})).sort((x, y) => (load[ymd(x.d)] || 0) - (load[ymd(y.d)] || 0) || x.i - y.i);
+      for (let j = 0; j < order.length && remaining > 0; j++) {
+      const d = order[j].d, k = ymd(d), left = n - j;
+      let quota = pass ? remaining : Math.max(60, Math.ceil(remaining / left / 30) * 30);
+      quota = Math.min(quota, T.exam ? 180 : 150, remaining);
+      if (!pass) quota = Math.min(quota, Math.max(0, dayCap - (load[k] || 0)));
+      if (quota <= 0) continue;
+      if (remaining - quota > 0 && remaining - quota < 30) quota = remaining;
+      let guard = 0;
+      while (quota > 0 && remaining > 0 && guard++ < 6) {
+        const want = Math.max(30, Math.min(90, quota, Math.ceil(remaining / 15) * 15)), b = best(d, T, want, false); if (!b) break;
+        put(d, T, b); quota -= b.len; remaining = Math.max(0, remaining - b.len);
+        if (quota > 0 && quota < 30) break;
+      }
       }
     }
-    if (remaining > 0) short.push({d:T.d, missing:remaining});
+    if (remaining > 0) short.push({d: T.d, missing: remaining});
   }
   res._short = short;
   return (_workCache = res);
@@ -8492,6 +8515,7 @@ const SAVE = {
   deadline(form, fd){
     const subs = [...form.querySelectorAll('.subrow')].map(r => ({ id: r.querySelector('[data-sub-text]').dataset.subId || uid(), text: r.querySelector('[data-sub-text]').value.trim(), done: r.querySelector('[data-sub-done]').checked })).filter(s => s.text);
     const o = { title: fd.get('title').trim(), date: fd.get('date'), time: fd.get('time') || '23:59', catId: fd.get('catId'), courseId: fd.get('courseId'), priority: +fd.get('priority') || 2, subtasks: subs, reminders: readRems(fd), link: fd.get('link').trim(), notes: fd.get('notes'), done: !!fd.get('done'), effort: Math.max(0, +fd.get('effort') || 0), exam: !!fd.get('exam') };
+    const old = sheet.ctx.id && state.deadlines.find(x => x.id === sheet.ctx.id); if (old && old.src === 'isis' && +o.effort !== +old.effort) o.effortManual = true;
     const isNew = upsert('deadlines', sheet.ctx.id, o); closeSheet(); toast(isNew ? 'Frist angelegt' : 'Frist gespeichert', o.title); commit();
   },
   course(form, fd){
@@ -10256,6 +10280,7 @@ const Isis = {
         let ch = false;
         if (ex.date !== obj.date || ex.time !== obj.time) { Object.assign(ex, obj); ch = true; }
         if (ex.title === ex.extTitle && ex.title !== title) { ex.title = title; ch = true; }
+        if (!ex.effortManual && +ex.effort !== (+C.effort || 0)) { ex.effort = +C.effort || 0; ch = true; }
         ex.extTitle = title; if (ch) changed++;
       } else {
         state.deadlines.push({id: uid(), title, catId: this.catId(), courseId: courseId || '', ...obj, priority: 2, done: false, subtasks: [], reminders: null, link: v.url || '', notes: 'Aus ISIS', extId: v.uid, extTitle: title, src: 'isis', effort: +C.effort || 0});
@@ -10293,7 +10318,8 @@ function isisPanel(){
       ${C.url ? `<div class="row"><div class="l"><b>Verbunden</b><small>Neue Abgaben kommen automatisch als Fristen, alle 3 Stunden und beim Öffnen der App.</small></div><button class="btn sm ghost" data-act="isisOff">Trennen</button></div>${st}`
       : `<ol class="isis-steps"><li>In ISIS oben auf <b>Kalender</b>, unten <b>Kalender importieren oder exportieren</b>, dann <b>Kalender exportieren</b>.</li><li>Bei Ereignisse <b>Alle Kurse</b>, bei Zeitspanne <b>Kürzlich und demnächst</b> wählen.</li><li>Auf <b>Kalender-URL abrufen</b> tippen, den Link kopieren und hier einfügen.</li></ol>
         <div class="isis-in"><input type="url" id="isisUrl" placeholder="https://isis.tu-berlin.de/calendar/export_execute.php?…" autocomplete="off"><button class="btn primary sm" data-act="isisConnect">Verbinden</button></div>`}
-      <div class="row"><div class="l"><b>Aufwand pro Abgabe</b><small>Dafür legt der Kalender Arbeitsblöcke in deine wache Zeit. 0 = keine Blöcke.</small></div><span><input type="number" data-set="isis.effort" value="${+C.effort || 0}" min="0" max="20" step="0.5" aria-label="Aufwand pro Abgabe"> h</span></div>
+      <div class="row"><div class="l"><b>Aufwand pro Abgabe</b><small>Gilt sofort für alle Abgaben aus ISIS, außer für die, bei denen du den Aufwand selbst geändert hast. 0 = keine Blöcke.</small></div><span><input type="number" data-set="isis.effort" value="${+C.effort || 0}" min="0" max="20" step="0.5" aria-label="Aufwand pro Abgabe"> h</span></div>
+      <div class="row"><div class="l"><b>Höchstens pro Tag</b><small>So viel Lern- und Arbeitszeit plant der Kalender höchstens an einem Tag ein. Aufgaben bis 1 h kommen am Stück, längere werden über die Tage verteilt.</small></div><span><input type="number" data-set="work.maxDay" value="${+((state.settings.work || {}).maxDay) || 4}" min="1" max="10" step="0.5" aria-label="Höchstens pro Tag"> h</span></div>
       <div class="row"><div class="l"><b>Kalenderdatei hochladen</b><small>Falls der Abruf nicht klappt: die .ics-Datei aus ISIS herunterladen und hier auswählen.</small></div><label class="btn sm">${ic('hoch', 's')}Datei<input type="file" id="isisFile" accept=".ics,text/calendar" hidden></label></div>
       <p class="note">Der Link ist wie ein Passwort für deinen ISIS-Kalender. Er bleibt in deiner App gespeichert und wird nur an ISIS geschickt.</p>
     </div></section>`;
@@ -11863,6 +11889,8 @@ function bindEvents(){
       if (t.type === 'number' && isNaN(v)) return;
       if (t.type === 'text') v = v.trim();
       setPath(t.dataset.set, v);
+      if (t.dataset.set === 'isis.effort') { let n = 0; for (const d of state.deadlines) if (d.src === 'isis' && !d.effortManual && +d.effort !== v) { d.effort = v; n++; } invalidate(); if (n) toast('Aufwand übernommen', `${n} ${n === 1 ? 'Aufgabe' : 'Aufgaben'} aus ISIS jetzt mit ${String(v).replace('.', ',')} h, die Blöcke sind neu geplant.`); }
+      if (t.dataset.set === 'work.maxDay') invalidate();
       if (t.dataset.set === 'accent') applyTheme();
       if (t.dataset.set === 'travel.delayMode') { invalidate(); if (typeof Transit !== 'undefined' && Transit.ok()) { Transit.reset(); Transit.refresh(true); } }
       commit(); return;
