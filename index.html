@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 39  ·  persönlicher Kalender für alles
+ KALENDARIUM 40  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2801,6 +2801,66 @@ main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
 .sl3-ph{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:13px;color:var(--muted)}
 .sl3-ph svg{width:15px;height:15px;color:var(--zone-ink)}.sl3-ph b{color:var(--ink)}
 .sl3-tonight p.ph{display:flex;gap:6px;align-items:flex-start}.sl3-tonight p.ph svg{width:15px;height:15px;flex:none;margin-top:2px;color:var(--zone-ink)}
+/* §H Handy-Sensoren (v40) */
+.en-h .r{display:flex;align-items:center;gap:6px}
+.en-h .stp{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--tile-2);color:var(--muted);font-variant-numeric:tabular-nums}
+.en-pvt{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;font-size:13px;color:var(--muted)}
+.en-pvt b{color:var(--ink)}.en-pvt .btn{background:var(--tile-2)}
+.pvt{display:flex;flex-direction:column;gap:14px}
+.pvt-pad{height:min(46vh,340px);border-radius:24px;background:var(--zone);color:var(--on-zone);display:grid;place-items:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer;font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+:root[data-zone="kalender"] .pvt-pad,:root .pvt-pad{background:#6B4BEF;color:#fff}
+.pvt-pad span.big{font-size:clamp(56px,14vw,96px);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.pvt-pad span.fs{color:#FFC21A}
+.pvt-bar{height:6px;border-radius:3px;background:var(--tile-2);overflow:hidden}.pvt-bar i{display:block;height:100%;width:0;background:#6B4BEF}
+.pvt-res{display:flex;flex-direction:column;gap:12px}
+.pvt-k{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pvt-k > div{background:var(--tile-2);border-radius:14px;padding:12px}
+.pvt-k span{display:block;font-size:12px;color:var(--muted);font-weight:600}.pvt-k b{display:block;font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.03em}
+.pvt-k small{font-size:12px;color:var(--muted)}.pvt-k small.gut{color:var(--ok)}.pvt-k small.low{color:var(--danger)}
+.pvt-res p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}.pvt-res p b{color:var(--ink)}
+.nz{display:flex;flex-direction:column;gap:4px}
+.nz-h{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}.nz-h svg{width:15px;height:15px;color:var(--zone-ink)}.nz-h b{color:var(--ink)}
+.nz > svg{width:100%;height:46px;display:block}
+.nz rect.b{fill:color-mix(in oklab, var(--zone) 35%, var(--tile-2))}.nz rect.lo{fill:var(--danger)}
+.nz line.th{stroke:var(--faint);stroke-dasharray:3 3;stroke-width:1;vector-effect:non-scaling-stroke}
+.nz-x{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.nz-run{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}.nz-run b{color:var(--ink)}
+.nz-run .dot{width:9px;height:9px;border-radius:50%;background:var(--danger);animation:sl2pulse 2s ease-in-out infinite}
+.sl3-tonight .btn:not(.ghost){background:var(--tile);align-self:flex-start;padding-left:12px}
+.sl3-form .remchips label.guess span{outline:1.5px dashed var(--faint);outline-offset:-1.5px;color:var(--muted)}
+.lu{display:flex;flex-direction:column;gap:2px;padding-top:8px;padding-bottom:12px}
+.lu-r{display:grid;grid-template-columns:36px minmax(0,1fr) minmax(90px,30%);gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.lu-r .sym{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--c);color:#fff}
+.lu-r b{display:block;font-weight:700}.lu-r small{display:block;font-size:13px;color:var(--muted)}
+.lu-r .apps{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.lu-r .apps span{font-size:12px;padding:3px 8px;border-radius:999px;background:var(--tile-2);color:var(--muted)}.lu-r .apps b{display:inline;color:var(--ink)}
+.lu-r .bar{position:relative;height:22px;border-radius:7px;background:var(--tile-2);overflow:hidden}
+.lu-r .bar i{position:absolute;inset:0 auto 0 0;background:var(--c);opacity:.85}
+.lu-r .bar span{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.sens .sens-r{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:center}
+.sens-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--tile-2);color:var(--ink)}.sens-ic svg{width:16px;height:16px}
+.sens-ok{font-size:12px;font-weight:700;color:var(--ok);white-space:nowrap}
+.wr-tile{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#111113;color:#fff}
+.wr-tile b{display:block;font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:-.03em}.wr-tile small{color:rgba(255,255,255,.7);font-size:14px}
+.wr-tile .act{display:flex;gap:8px;flex-wrap:wrap}.wr-tile .btn{background:rgba(255,255,255,.12);color:#fff}.wr-tile .btn.primary{background:#fff;color:#111113}
+/* Rückblick */
+html.wr-open,html.wr-open body{overflow:hidden}
+.wr{position:fixed;inset:0;z-index:200;background:var(--wb);color:var(--wf);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 14px) 22px calc(env(safe-area-inset-bottom,0px) + 24px);transition:background .45s cubic-bezier(.2,.8,.2,1);user-select:none;-webkit-user-select:none}
+.wr[hidden]{display:none}
+.wr-prog{display:flex;gap:4px}.wr-prog i{flex:1;height:4px;border-radius:2px;background:color-mix(in oklab, var(--wf) 28%, transparent)}.wr-prog i.done,.wr-prog i.cur{background:var(--wf)}
+.wr-x{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 26px);background:none;border:0;color:var(--wf);width:44px;height:44px;display:grid;place-items:center;cursor:pointer}.wr-x svg{width:22px;height:22px}
+.wr-s{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;max-width:640px;width:100%;margin:0 auto;animation:wrin .55s cubic-bezier(.2,.8,.2,1) both}
+@keyframes wrin{from{opacity:0;transform:translateY(24px) scale(.98)}}
+.wr-k{font-weight:700;font-size:18px;opacity:.85}
+.wr-big{font-family:var(--f-display);font-weight:800;font-size:clamp(72px,20vw,150px);letter-spacing:-.06em;line-height:.88;font-variant-numeric:tabular-nums;word-break:break-word}
+.wr-u{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,5vw,30px);letter-spacing:-.02em;opacity:.9}
+.wr-s p{font-size:18px;line-height:1.45;margin:14px 0 0;opacity:.9;max-width:34ch}
+.wr-bars{width:100%;max-width:520px;height:auto;margin:18px 0 0}.wr-bars rect{fill:var(--wf);opacity:.92}
+.wr-sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px}
+.wr-sum div{background:var(--c);color:var(--f);border-radius:16px;padding:12px 14px}.wr-sum span{display:block;font-size:12px;font-weight:700;opacity:.85}.wr-sum b{font-family:var(--f-display);font-weight:800;font-size:24px;letter-spacing:-.03em}
+.wr-share{margin-top:16px;align-self:flex-start;background:#fff;color:#111113}
+.wr-hint{text-align:center;font-size:13px;opacity:.7;min-height:18px}
+@media (prefers-reduced-motion: reduce){ .wr-s{animation:none} }
+@media (max-width:560px){ .pvt-k b{font-size:21px} .lu-r{grid-template-columns:36px minmax(0,1fr)} .lu-r .bar{grid-column:2} }
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6190,7 +6250,7 @@ function planDay(date){
     if (loc && loc.id === pl.id) { prev = o; freeAt = o.end; locO = o; continue; }
     const tr = between(loc, pl, arriveBy), own = o.ref && o.ref.fromId && routeOk(o.ref.route) && loc && loc.id === o.ref.fromId ? o.ref.route : null,
       lv = Transit.liveFor(o.key, arriveBy) || (own ? routeTrip({name: pl.name, route: own}, arriveBy) : loc && loc.home && pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null);
-    const depart = lv ? lv.depart : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
+    const depart = lv ? new Date(+lv.depart - walkExtra(lv) * 60000) : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
     const tight = !!(freeAt && depart < freeAt);
     legs.push({kind:'go', from: lv && lv.fromHere ? {id:'_here', name:'Dein Standort', vbb: lv.fromVbb} : loc, to:pl, depart, arrive, mins, base:tr.base, rainy:lv ? false : tr.rainy, est:tr.est, tight, slack: tight ? Math.round((arriveBy - freeAt)/60000) : null, before:o, live:lv || null});
     loc = pl; freeAt = o.end; prev = o; locO = o;
@@ -6561,7 +6621,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '39';
+const APP_VERSION = '40';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7100,6 +7160,7 @@ const VIEWS = {
       ${tn ? `<div class="tt"><div><small>Ins Bett</small><b>${hm(tn.bed)}</b></div><i>${ic('weiter')}</i><div><small>Wecker</small><b>${hm(tn.wake)}</b></div></div>
       <p>${fmtH(tn.sleepMin)} Schlaf${tn.short ? ', weniger als dein Bedarf' : ''}. Ab <b>${hm(wd)}</b> Bildschirm weg und Licht dimmen.</p>
       ${(() => { const nw = new Date(); if (!(nw > addMin(tn.bed, -150) && nw < addMin(tn.bed, 180))) return ''; const m = phoneLastHour(); return m == null ? '' : `<p class="ph">${ic('handy', 's')}<span>In der letzten Stunde <b>${m} min</b> am Handy.${m >= 20 ? ' Leg es weg, dann schläfst du schneller ein.' : ''}</span></p>`; })()}
+      ${noiseCtl(tn)}
       <button class="btn sm ghost" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">Warum diese Zeit</button>` : `<p>Kein Plan für heute Nacht. Schalte die Schlafplanung in den Einstellungen ein.</p>`}
     </section>`;
     const setup = SleepAuto.avail() && S.detect !== false && !SleepAuto.ok() ? `<section class="sl2-tile sl2-setup"><span class="ic">${ic('handy')}</span><div><b>Nicht mehr eintragen</b><small>Kalendarium kann aus der Zeit, in der dein Handy nachts unbenutzt war, erkennen, wann du geschlafen hast. Dafür braucht die App den Zugriff auf Nutzungsdaten. Nichts verlässt dein Handy.</small><div class="act"><button class="btn sm primary" data-act="sleepUsage">Erlauben</button><button class="btn sm ghost" data-act="sleepDetectOff">Lieber selbst eintragen</button></div></div></section>` : '';
@@ -7146,7 +7207,7 @@ const VIEWS = {
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
     const en = energyCard(t0, false), exT = examTile();
-    return `<div class="sl2 sl3">${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${how}</div>`;
+    return `<div class="sl2 sl3">${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${wrapTile()}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7240,6 +7301,7 @@ const VIEWS = {
       <div class="toolbar"><h2 class="h2">Kurse</h2><div class="chips"><button class="btn sm" data-act="importIcsPrompt">${ic('hoch','s')}ICS importieren</button><button class="btn primary sm" data-act="newCourse">${ic('plus','s')}Kurs</button></div></div>
       ${courses.length ? `<div class="cards">${courses.map(c => { const cat = catById(c.catId); return `<button class="card" style="--c:${cat.color}" data-act="edit" data-kind="course" data-id="${c.id}"><span class="sym">${sy(cat.symbol)}</span><span style="min-width:0"><b>${esc(PV(c.title, cat))}</b><small>${WD_SHORT[c.day-1]} <span class="num">${esc(c.start)}–${esc(c.end)}</span> · ${COURSE_TYPES[c.type]||c.type}${c.weeks!=='all'?` · ${c.weeks==='odd'?'ungerade':'gerade'} KW`:''}${c.room?` · ${esc(PV(c.room, null, ''))}`:''}</small></span></button>`; }).join('')}</div>`
         : emptyArt('buch', 'Noch keine Kurse.', 'Tippe auf einen freien Block oder importiere den Stundenplan als ICS aus MOSES.')}
+      ${typeof Sens !== 'undefined' && Sens.on() ? lectureTile() : ''}
       <p class="note" style="margin-top:16px">Jeder Block dauert 2 Stunden: 90 min Lehrveranstaltung mit je 15 min Puffer. Freie Blöcke antippen, um dort einen Kurs anzulegen. Kurse fallen an Feiertagen und in vorlesungsfreien Zeiten automatisch aus.</p>`;
   },
 
@@ -7332,6 +7394,7 @@ const VIEWS = {
         <p class="note">${STANDALONE ? 'Im Termin gibst du nur das Ziel an. Fußwege, Linien, Fahrzeit und Verspätungen holt der Kalender aus dem Fahrplan, die Puffer gelten nur für Wege ohne Fahrplan.' : 'Wegzeit einmal pro Ort eintragen. In der App rechnet der Kalender mit dem echten Fahrplan.'}</p>
       </section>
 
+      ${sensePanel()}
       <section class="panel">
         <div class="panel-h"><h2>Schlaf</h2>${sw('sleep.on', S.on, 'Schlafplanung')}</div>
         <div class="row"><div class="l"><b>Schlafdauer</b></div><span>${numIn('sleep.hours', S.hours, 5, 11, .5, 'Schlafdauer')} h</span></div>
@@ -7488,6 +7551,7 @@ function dayDashboard(d){
   if (bed && bed.short) notes.push(`<button class="notice warn" data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('mond')}<span><b>Kurze Nacht:</b> Nach ${esc(bed.late.title)} bleiben nur ${dur(bed.sleepMin)} Schlaf.</span></button>`);
   if (bed && bed.exam) notes.push(`<button class="notice" data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('flagge')}<span><b>Morgen ${esc(bed.exam.title)}:</b> ins Bett um ${hm(bed.bed)}, Wecker ${hm(bed.wake)}. Nicht durchlernen, Schlaf festigt das Gelernte.</span></button>`);
   else if (bed && bed.examPrep) notes.push(`<button class="notice" data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('flagge')}<span><b>${esc(bed.examPrep.title)} in ${bed.examPrep.days + 1} Tagen:</b> heute ${hm(bed.bed)} ins Bett, morgen ${hm(bed.wake)} aufstehen. So gewöhnt sich dein Körper an den Prüfungsmorgen.</span></button>`);
+  if (today && d.getDate() <= 5) { const pm = new Date(d.getFullYear(), d.getMonth() - 1, 1); notes.push(`<button class="notice" data-act="wrapOpen" data-y="${pm.getFullYear()}" data-m="${pm.getMonth()}">${ic('stern')}<span><b>Dein ${MONTHS[pm.getMonth()]}-Rückblick ist fertig.</b> Schlaf, Rhythmus, Wege und mehr zum Durchwischen.</span></button>`); }
   if (today && s.sleep.on) { const mc = sleepMorningCard(d); if (mc) notes.unshift(mc); }
   if (today) planDay(addDays(d,1)).warnings.forEach(x => notes.push(`<div class="notice warn">${ic('weg')}<span><b>Morgen:</b> ${esc(x)}</span></div>`));
   if (today && Transit.homeNeed && Transit.homeNeed.lv.depart > now - 120000) { const hn = Transit.homeNeed; notes.unshift(`<button class="notice warn" data-act="homeRoute">${ic('haus')}<span><b>Noch nicht zuhause:</b> Für ${esc(titleOf(hn.o))} um ${hm(hn.o.start)} los um ${hm(hn.lv.depart)} mit ${esc(hn.lv.first)}${hn.lv.delay ? ` (+${hn.lv.delay})` : ''}.</span></button>`); }
@@ -8459,6 +8523,7 @@ const SX = [
   ['Erinnerungen', 'glocke', 'Vibration, Live-Banner, Zeiten'],
   ['Orte und Wege', 'ort', 'Zuhause, Uni, Losgehen'],
   ['Schlaf', 'mond', 'Schlafdauer und Aufstehen'],
+  ['Handy-Sensoren', 'handy', 'Ladekabel, Lärm, Schritte, Bahn, Wachheitstest'],
   ['Darstellung', 'stift', 'Name, Farbe, Hell oder Dunkel'],
   ['Stil', 'stern', 'Schrift, Farbton, Dichte'],
   ['Kategorien', 'kreis', 'Farben und Symbole'],
@@ -8494,6 +8559,16 @@ const ACTIONS = {
   sleepQ(el){ const f = el.closest('form'); f.elements.q.value = el.dataset.v; f.querySelectorAll('[data-act=sleepQ]').forEach(b => b.setAttribute('aria-pressed', b === el)); },
   sleepRange(el){ ui.sleepRange = +el.dataset.v; render(); },
   sleepUsage(){ try { window.KalNative.usageOpen(); } catch {} toast('Nutzungsdaten erlauben', 'Kalendarium in der Liste antippen und „Zugriff erlauben“ einschalten, dann zurück zur App.'); },
+  noiseStart(el){ if (!Sens.micOk()) { Sens.call('askMic'); toast('Mikrofon erlauben', 'Danach noch einmal tippen. Gemessen wird nur die Lautstärke, nichts wird aufgenommen.'); return; }
+    const ok = Sens.call('noiseStart', +el.dataset.until); toast(ok ? 'Nachtmessung läuft' : 'Hat nicht geklappt', ok ? 'Leg das Handy neben das Bett, am besten ans Ladekabel. Morgens siehst du das Ergebnis bei „Letzte Nacht“.' : 'Das Mikrofon ist nicht erlaubt.'); setTimeout(render, 900); },
+  noiseStop(){ Sens.call('noiseStop'); setTimeout(render, 600); },
+  askMic(){ Sens.call('askMic'); },
+  askSteps(){ Sens.call('askSteps'); },
+  pvtOpen(){ PVT.abort(); PVT.open(); },
+  wrapOpen(el){ closeSheet(); Wrap.open(+el.dataset.y, +el.dataset.m); },
+  wrapClose(){ Wrap.close(); },
+  wrapShare(){ Wrap.share(); },
+  tripAutoUndo(){ const k = ui._tripAutoKey; if (!k) return; Transit.clearOver(k); delete Transit.cache[k]; invalidate(); toast('Wieder die geplante Verbindung', ''); Transit.refresh(true).then(() => renderSoft()).catch(() => renderSoft()); },
   sleepDetectOn(){ state.settings.sleep.detect = true; commit(); SleepAuto.run(true); render(); },
   sleepDetectNow(){ const n = SleepAuto.run(true); render(); const st = SleepAuto.stat; const w = SleepAuto.why[ymd(new Date())]; toast(n ? `${n} ${n === 1 ? 'Nacht' : 'Nächte'} erkannt` : 'Nichts Neues', n ? 'Im Protokoll unter „vom Handy erkannt“.' : st && !st.ev ? 'Android liefert noch keine Bildschirmzeiten.' : w ? `Letzte Nacht: ${w}` : 'Alle Nächte der letzten Tage sind schon eingetragen.'); },
   sleepDetectOff(){ state.settings.sleep.detect = false; commit(); toast('Erkennung aus', 'Du kannst sie in den Einstellungen unter Schlaf wieder einschalten.'); },
@@ -9342,7 +9417,16 @@ function sleepPatterns(D){
       P(bad ? 'warn' : 'good', 'handy', bad ? 'Handy vor dem Schlafen kostet dich Schlaf' : 'Handy vor dem Schlafen: bei dir kaum Unterschied', `Im Schnitt ${dur(Math.round(avg))} am Handy in der letzten Stunde vor dem Hinlegen. Nach Abenden mit 20 min oder mehr: ${bits.length ? bits.join(' · ') : 'kaum Unterschied'}, verglichen mit Abenden unter 10 min. Gemessen aus ${pr.length} Nächten.${bad ? ' Probier, das Handy 30 min vor der Bettzeit wegzulegen.' : ''}`, vzPair(sAvg(hi.map(n => n.dur)) / 60, sAvg(lo.map(n => n.dur)) / 60, '20+ min', '<10 min'));
     } else P('', 'handy', `${dur(Math.round(avg))} am Handy vor dem Schlafen`, `Durchschnitt der letzten Stunde vor dem Hinlegen aus ${pr.length} Nächten. Für einen Vergleich braucht die App noch Abende mit viel und mit wenig Handy.`);
   }
-  const noisy = D.base.filter(n => n.woke === 'geraeusch' || (n.tags || []).includes('laerm'));
+  if (typeof Sens !== 'undefined' && Sens.on() && Sens.stepsOk()) { const St = Sens.get('steps', +startOfDay(new Date()) - 31 * 86400000, Date.now());
+    const sn = D.base.map(n => ({n, s: stepsFrom(St, addDays(n.d, -1))})).filter(x => x.s != null && x.s > 300);
+    if (sn.length >= 6) { const srt = sn.map(x => x.s).sort((a, b) => a - b), q1 = srt[Math.floor(srt.length / 3)], q2 = srt[Math.floor(srt.length * 2 / 3)], hi = sn.filter(x => x.s >= q2).map(x => x.n), lo = sn.filter(x => x.s <= q1).map(x => x.n), avgS = sAvg(srt);
+      if (hi.length >= 3 && lo.length >= 3) { const ddur = sAvg(hi.map(n => n.dur)) - sAvg(lo.map(n => n.dur)), don = sAvg(hi.map(n => n.b)) - sAvg(lo.map(n => n.b)), qh = hi.filter(n => n.q), ql = lo.filter(n => n.q), dq = qh.length >= 2 && ql.length >= 2 ? sAvg(qh.map(n => n.q)) - sAvg(ql.map(n => n.q)) : null;
+        const bits = [Math.abs(ddur) >= 10 ? `${fmtDelta(ddur)} Schlaf` : '', Math.abs(don) >= 15 ? `${dur(Math.round(Math.abs(don)))} ${don > 0 ? 'später' : 'früher'} eingeschlafen` : '', dq != null && Math.abs(dq) >= 0.3 ? `Erholung ${dq > 0 ? '+' : '−'}${Math.abs(dq).toFixed(1).replace('.', ',')}` : ''].filter(Boolean), good = ddur > 10 || (dq != null && dq > 0.3);
+        P(good ? 'good' : '', 'laeufer', good ? 'Schritte und Schlaf: Bewegung hilft dir' : 'Schritte und Schlaf', `Im Schnitt ${Math.round(avgS).toLocaleString('de-DE')} Schritte am Tag. Nach Tagen mit über ${(Math.round(q2 / 100) * 100).toLocaleString('de-DE')} Schritten${bits.length ? ': ' + bits.join(' · ') : ' schläfst du ähnlich'}, verglichen mit Tagen unter ${(Math.round(q1 / 100) * 100).toLocaleString('de-DE')}.`, vzPair(sAvg(hi.map(n => n.dur)) / 60, sAvg(lo.map(n => n.dur)) / 60, 'aktiv', 'ruhig')); } } }
+  { const PT = (state.pvt || []).filter(x => x.n >= 5), sh = [], lg = [];
+    for (const x of PT) { const n = D.all.find(y => y.date === ymd(new Date(x.at))); if (!n) continue; if (n.dur < 390) sh.push(x.med); else if (n.dur >= 450) lg.push(x.med); }
+    if (sh.length >= 2 && lg.length >= 2 && sAvg(sh) - sAvg(lg) > 15) P('warn', 'uhr', `Nach kurzen Nächten ${Math.round(sAvg(sh) - sAvg(lg))} ms langsamer`, `Deine Wachheitstests: nach Nächten unter 6,5 h im Schnitt ${Math.round(sAvg(sh))} ms, nach 7,5 h und mehr ${Math.round(sAvg(lg))} ms. Müdigkeit merkt man selbst oft kaum, die Reaktionszeit zeigt sie.`); }
+  const noisy = D.base.filter(n => n.woke === 'geraeusch' || (n.tags || []).includes('laerm') || (n.noise && n.noise.woke > 0));
   if (noisy.length >= 2) { const rest = D.base.filter(n => !noisy.includes(n)), dd = rest.length >= 3 ? sAvg(noisy.map(n => n.dur)) - sAvg(rest.map(n => n.dur)) : 0, qn = sAvg(noisy.filter(n => n.q).map(n => n.q)), qr = sAvg(rest.filter(n => n.q).map(n => n.q));
     P('warn', 'glocke', `Geräusche wecken dich (${noisy.length}× in 4 Wochen)`, `${dd < -10 ? `In diesen Nächten schläfst du ${dur(Math.round(-dd))} kürzer. ` : ''}Lärm weckt auch dann, wenn man es morgens nicht mehr weiß. Hilft oft: Ohrstöpsel aus Schaumstoff, gleichmäßiges Rauschen (Ventilator, White Noise), Fenster zu bei Straßenlärm, Handy auf „Nicht stören“.`, qn != null && qr != null && noisy.filter(n => n.q).length >= 2 ? vzPair(qn, qr, 'mit', 'ohne') : ''); }
   const PL = sleepPlan(), up = []; for (let k = 1; k <= 7; k++) { const x = PL[ymd(addDays(t0, k))]; if (x && x.short) up.push(`${dayLabel(addDays(t0, k - 1))} nur ${dur(x.sleepMin)}`); }
@@ -9469,7 +9553,9 @@ const SleepAuto = {
     if (len < 180 || len > 16 * 60) return this.fail(date, 'Die erkannte Pause war unrealistisch lang oder kurz.');
     delete this.why[date];
     const pre = Math.round(U.reduce((a, u) => a + Math.max(0, Math.min(u[1], +off) - Math.max(u[0], +off - 3600000)), 0) / 60000);
-    return {pre, bed: hm(off), wake: hm(onT), waso: Math.round(waso / 60000 / 5) * 5, wakes: i1 - i0 - 1, off: +off, on: +onT};
+    let plug = null, nz = null;
+    if (typeof Sens !== 'undefined' && Sens.on()) { try { plug = plugNear(+off); nz = noiseSummary(noiseNight(Math.min(+off, plug || +off) - 15 * 60000, +onT + 10 * 60000, U), +onT); } catch {} }
+    return {pre, plugT: plug, plug: plug ? hm(new Date(plug)) : null, noise: nz, bed: hm(off), wake: hm(onT), waso: Math.round(waso / 60000 / 5) * 5, wakes: i1 - i0 - 1, off: +off, on: +onT};
   },
   stat: null,
   run(force){
@@ -9479,13 +9565,13 @@ const SleepAuto = {
     const t0 = startOfDay(new Date()); let n = 0; state.sleepLog = state.sleepLog || [];
     for (let k = 6; k >= 0; k--) {
       const date = ymd(addDays(t0, -k)), ex = state.sleepLog.find(x => x.date === date);
-      if (ex && !ex.ex && !ex.auto) { if (ex.pre == null) { let r0 = null; try { r0 = this.night(date); } catch {} if (r0) { ex.pre = r0.pre; if (ex.wakes == null) ex.wakes = r0.wakes; n++; } } this.why[date] = 'Von dir selbst eingetragen, das hat Vorrang.'; continue; }
+      if (ex && !ex.ex && !ex.auto) { if (ex.pre == null || (ex.noise === undefined && typeof Sens !== 'undefined' && Sens.on())) { let r0 = null; try { r0 = this.night(date); } catch {} if (r0) { if (ex.pre == null) ex.pre = r0.pre; if (ex.wakes == null) ex.wakes = r0.wakes; ex.noise = r0.noise || null; if (r0.plug) ex.plug = r0.plug; n++; } } this.why[date] = 'Von dir selbst eingetragen, das hat Vorrang.'; continue; }
       let r; try { r = this.night(date); } catch { r = null; }
       if (!r) continue;
       /* heute: sobald du nach 4 Uhr wieder am Handy warst; ein späterer Lauf korrigiert die Zeiten, falls du danach weitergeschlafen hast */
       if (k === 0 && new Date(r.on).getHours() < 4) { this.why[date] = 'Du warst vor 4 Uhr am Handy, die App wartet, ob du danach weiterschläfst.'; continue; }
-      const o = {bed: r.bed, wake: r.wake, bedRaw: true, waso: r.waso, wakes: r.wakes, pre: r.pre, src: 'handy', auto: true};
-      if (ex && !ex.ex) { if (ex.bed === o.bed && ex.wake === o.wake && ex.waso === o.waso && ex.pre === o.pre) continue; Object.assign(ex, o); }
+      const o = {bed: r.bed, wake: r.wake, bedRaw: true, waso: r.waso, wakes: r.wakes, pre: r.pre, inBed: r.plugT && r.plugT < r.off ? r.plug : null, plug: r.plug, noise: r.noise, src: 'handy', auto: true};
+      if (ex && !ex.ex) { if (ex.bed === o.bed && ex.wake === o.wake && ex.waso === o.waso && ex.pre === o.pre && ex.plug === o.plug && JSON.stringify(ex.noise || null) === JSON.stringify(o.noise || null)) continue; Object.assign(ex, o); }
       else { if (ex) state.sleepLog.splice(state.sleepLog.indexOf(ex), 1); state.sleepLog.push({id: uid(), date, q: 0, tags: [], ...o}); }
       n++;
     }
@@ -9526,7 +9612,7 @@ function sleepGuess(date){
   const med = k => { const a = conf.map(x => x[k]).filter(v => v != null && v !== '').map(Number); return a.length >= 3 ? sMed(a) : null; };
   const g = {date, ex, sp, confirmed: !!(ex && !ex.auto)};
   g.src = ex ? (ex.src === 'handy' ? (ex.auto ? 'handy' : 'handy-ok') : 'self') : sp ? 'plan' : 'none';
-  g.lat = ex && ex.lat != null && ex.lat !== '' ? +ex.lat : Math.round(med('lat') ?? L);
+  g.lat = ex && ex.lat != null && ex.lat !== '' ? +ex.lat : ex && ex.bedRaw && ex.inBed ? Math.round(((minutesOf(ex.bed) - minutesOf(ex.inBed) + 1440) % 1440) + L) : Math.round(med('lat') ?? L);
   if (ex && ex.inBed) g.inBed = ex.inBed;
   else if (ex && ex.bedRaw) g.inBed = ex.bed;
   else if (ex) g.inBed = toHM(minutesOf(ex.bed) - (ex.lat != null && ex.lat !== '' ? +ex.lat : g.lat));
@@ -9534,11 +9620,12 @@ function sleepGuess(date){
   else g.inBed = '23:15';
   g.wake = ex ? ex.wake : sp ? hm(sp.wake) : '07:30';
   g.waso = ex && ex.waso != null && ex.waso !== '' ? +ex.waso : Math.round(med('waso') ?? 0);
-  g.woke = ex && ex.woke ? ex.woke : ex && ex.alarm === false && !ex.auto ? 'selbst'
+  g.woke = ex && ex.woke ? ex.woke : ex && ex.auto && ex.noise && ex.noise.wakeBy ? 'geraeusch' : ex && ex.alarm === false && !ex.auto ? 'selbst'
     : sp && Math.abs(minutesOf(g.wake) - minutesOf(hm(sp.wake))) <= 10 ? 'wecker' : 'selbst';
   const qs = conf.filter(x => x.q > 0).map(x => x.q);
   g.q = ex && ex.q ? ex.q : qs.length >= 3 ? Math.round(sMed(qs)) : 0;
-  g.tags = ex ? (ex.tags || []) : [];
+  g.tags = ex ? (ex.tags || []).slice() : []; g.tagGuess = [];
+  if (ex && ex.auto && ex.noise && ex.noise.woke && !g.tags.includes('laerm')) { g.tags.push('laerm'); g.tagGuess.push('laerm'); }
   g.note = ex ? ex.note || '' : '';
   return g;
 }
@@ -9560,14 +9647,14 @@ function sleepForm(date, mode){
   const body = `
     ${G ? `<p class="sl3-hint"><i class="sw"></i>Grau ist geschätzt. Tipp an, was nicht stimmt, der Rest wird übernommen.</p>` : ''}
     <div class="sl3-grid">
-      ${tIn('inBed', g.inBed, g.src === 'handy' ? 'Ins Bett (Handy weg)' : 'Ins Bett')}
+      ${tIn('inBed', g.inBed, g.src === 'handy' ? (g.ex && g.ex.plug && g.ex.inBed ? 'Ins Bett (Ladekabel)' : 'Ins Bett (Handy weg)') : 'Ins Bett')}
       <div class="f"><span>Bis eingeschlafen, min</span>${chips('lat', [[5, '5'], [15, '15'], [30, '30'], [45, '45'], [60, '60+']], g.lat)}</div>
       ${tIn('wake', g.wake, 'Aufgewacht')}
       <div class="f"><span>Nachts wach, min</span>${chips('waso', [[0, '0'], [10, '10'], [30, '30'], [60, '60'], [90, '90+']], g.waso)}</div>
     </div>
     <div class="f"><span>Geweckt von</span>${chips('woke', SLEEP_WOKE, g.woke)}</div>
     <div class="f"><span>Wie erholt bist du?</span>${chips('q', qs, g.q || '')}</div>
-    <div class="f"><span>Was war los?</span><div class="remchips">${SLEEP_TAGS.map(([k, l]) => `<label><input type="checkbox" name="tags" value="${k}" ${g.tags.includes(k) ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div></div>`;
+    <div class="f"><span>Was war los?</span><div class="remchips">${SLEEP_TAGS.map(([k, l]) => `<label class="${(g.tagGuess || []).includes(k) ? 'guess' : ''}"><input type="checkbox" name="tags" value="${k}" ${g.tags.includes(k) ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div></div>`;
   if (mode === 'inline') return `<form class="form sl3-form${G ? '' : ' touched'}" data-form="sleepEntry"><input type="hidden" name="date" value="${date}">${body}
     <div class="sl3-go"><button class="btn primary" type="submit" data-alt="Speichern">${G ? 'Passt so' : 'Speichern'}</button>${G && g.src === 'handy' ? '<small>Ein Tipp genügt, wenn alles stimmt.</small>' : ''}</div></form>`;
   const d = parseYMD(date);
@@ -9612,7 +9699,8 @@ function sleepLastCard(D){
     <div class="sl3-dur${g.confirmed ? '' : ' est'}"><b>${fmtH(n.dur)}</b><span>Schlaf${short ? `, <em>${dur(Math.round(D.need - n.dur))} unter deinem Bedarf</em>` : ''}</span></div>
     ${sleepBar(n, g.sp)}
     <div class="sl3-tl">${sleepTimes(n)}</div>
-    ${g.ex && (g.ex.pre != null || g.ex.wakes) ? `<div class="sl3-ph">${ic('handy', 's')}${g.ex.pre != null ? `<span><b>${g.ex.pre} min</b> am Handy in der Stunde davor</span>` : ''}${g.ex.wakes ? `<span><b>${g.ex.wakes}×</b> nachts aufs Handy geschaut</span>` : ''}</div>` : ''}
+    ${g.ex && (g.ex.pre != null || g.ex.wakes || g.ex.plug) ? `<div class="sl3-ph">${ic('handy', 's')}${g.ex.plug ? `<span><b>${g.ex.plug}</b> ans Ladekabel</span>` : ''}${g.ex.pre != null ? `<span><b>${g.ex.pre} min</b> am Handy in der Stunde davor</span>` : ''}${g.ex.wakes ? `<span><b>${g.ex.wakes}×</b> nachts aufs Handy geschaut</span>` : ''}</div>` : ''}
+    ${(() => { const base = +addMin(startOfDay(addDays(d, -1)), 720); return noiseMini(base + (n.ib ?? n.b) * 60000, base + n.w * 60000); })()}
     ${g.confirmed ? sum() : sleepForm(date, 'inline')}
     ${showSt ? `<div class="sl3-st ${as.lvl}"><span class="dot"></span><span><b>${esc(as.t)}</b> ${as.k === 'on' ? (SleepAuto.stat ? `<br>zuletzt geprüft ${hm(new Date(SleepAuto.stat.at))}` : '') : `<br>${as.sub}`}</span>${as.act || ''}</div>` : ''}
   </section>`;
@@ -9633,6 +9721,9 @@ function sleepLastCard(D){
    (ausgeschlafen, okay, müde) kommt aus dem Schlafdruck beim Aufwachen.
    ================================================================ */
 let _enCache = {k: null};
+/* Wachheit (Rohwert) zu einer Uhrzeit: S + C + W + Mittagstief */
+function enRaw(t, wake, sWake, sh){ const h = (t - wake) / 3600000, c = t.getHours() + t.getMinutes() / 60;
+  return 2.4 + (sWake - 2.4) * Math.exp(-0.0353 * h) + 2.5 * Math.cos(2 * Math.PI * (c - 16.8 - sh) / 24) - 5.72 * Math.exp(-1.51 * Math.max(0, h)) - 0.7 * Math.exp(-((c - 14 - sh) ** 2) / 2); }
 function energyDay(d){
   d = startOfDay(d); const P = sleepPlan(), key = ymd(d);
   if (_enCache.k !== P) _enCache = {k: P};
@@ -9650,10 +9741,10 @@ function energyDay(d){
   }
   const today = nightOf(d), tn = P[ymd(addDays(d, 1))];
   if (!today || !tn) return (_enCache[key] = null);
+  if (_enCache.shift == null && state.pvtCal && state.pvtCal.shift != null) _enCache.shift = state.pvtCal.shift;
   if (_enCache.shift == null) { let sh = 0; try { const st = sleepStats(14); if (st.msfsc != null) sh = Math.max(-2.5, Math.min(3, ((st.msfsc + 720) % 1440) / 60 - 4)); } catch {} _enCache.shift = sh; }
   const sh = _enCache.shift, wake = today.off, bed = tn.bed, sWake = s;
-  const raw = t => { const h = (t - wake) / 3600000, c = t.getHours() + t.getMinutes() / 60;
-    return 2.4 + (sWake - 2.4) * Math.exp(-0.0353 * h) + 2.5 * Math.cos(2 * Math.PI * (c - 16.8 - sh) / 24) - 5.72 * Math.exp(-1.51 * Math.max(0, h)) - 0.7 * Math.exp(-((c - 14 - sh) ** 2) / 2); };
+  const raw = t => enRaw(t, wake, sWake, sh);
   const pts = []; for (let t = Math.ceil(+wake / 900000) * 900000; t <= +bed; t += 15 * 60000) pts.push([new Date(t), raw(new Date(t))]);
   if (pts.length < 8) return (_enCache[key] = null);
   const core = pts.filter(([t]) => t - wake >= 90 * 60000), mn = Math.min(...core.map(p => p[1])), mx = Math.max(...core.map(p => p[1]));
@@ -9684,13 +9775,16 @@ function energyCard(d, compact){
   const grp = {}; work.forEach(w => { (grp[w.id] = grp[w.id] || []).push(w); });
   const rows = Object.values(grp).map(ws => { ws.sort((a, b) => a.start - b.start); const w0 = ws[0], e = sAvg(ws.map(w => E.lv(new Date((+w.start + +w.end) / 2))));
     return `<div class="en-w"><span class="ic">${ic('aufgaben', 's')}</span><span class="tx"><b>${esc(w0.title)}</b><small>${ws.map(w => `${hm(w.start)}–${hm(w.end)}`).join(', ')} · ${e >= 0.66 ? 'in deiner wachsten Zeit' : e >= 0.4 ? 'mittlere Wachheit' : 'nur noch müde Zeit frei'}</small></span><button class="btn sm" data-act="pinWork" data-id="${esc(w0.id)}" data-date="${ymd(d)}">Eintragen</button></div>`; }).join('');
+  const sv = isToday && typeof Sens !== 'undefined' && Sens.on() && Sens.stepsOk() ? stepsDay(now) : null, stepsChip = sv != null ? `<span class="stp">${sv.toLocaleString('de-DE')} Schritte</span>` : '';
+  const pv = isToday && typeof PVT !== 'undefined' ? PVT.todayLine() : '';
   const lbl = isToday ? 'Energie heute' : sameDay(d, addDays(startOfDay(now), 1)) ? 'Energie morgen' : `Energie ${esc(fmtShort(d))}`;
   return `<section class="en-card${compact ? ' compact' : ''}">
-    <div class="en-h"><span class="lbl">${ic('sonne', 's')}${lbl}</span><span class="form ${E.form[0]}">${E.form[1]}</span></div>
+    <div class="en-h"><span class="lbl">${ic('sonne', 's')}${lbl}</span><span class="r">${stepsChip}<span class="form ${E.form[0]}">${E.form[1]}</span></span></div>
     <p>Am wachsten <b>${span(E.hi)}</b>${E.lo ? `, Tief um <b>${hm(E.lo.a)}</b>` : ''}.${E.form[0] === 'low' ? ' Nach den letzten Nächten ist dein Schlafdruck hoch, plane Schweres in die wache Zeit und Leichtes ins Tief.' : ''}</p>
     <div class="en-plot"><svg class="en-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wachheit über den Tag, am höchsten ${span(E.hi)}">${g}</svg>${nowDot}<div class="hrs">${lb}</div></div>
     ${rows ? `<div class="en-ws">${rows}</div>` : ''}
-    ${compact ? '' : '<small class="en-src">Berechnet aus deinen letzten 7 Nächten, deinem Chronotyp und der Tageszeit (Drei-Prozess-Modell nach Borbély und Åkerstedt). Lern- und Arbeitsblöcke für Fristen legt der Kalender bevorzugt in die wache Zeit.</small>'}
+    ${isToday ? `<div class="en-pvt">${pv}<button class="btn sm" data-act="pvtOpen">${ic('uhr', 's')}Wachheit testen, 60 s</button></div>` : ''}
+    ${compact ? '' : `<small class="en-src">Berechnet aus deinen letzten 7 Nächten, deiner inneren Uhr und der Tageszeit (Drei-Prozess-Modell nach Borbély und Åkerstedt)${state.pvtCal ? `, angepasst an ${state.pvtCal.n} Wachheitstests` : ''}. Lern- und Arbeitsblöcke für Fristen legt der Kalender bevorzugt in die wache Zeit.</small>`}
   </section>`;
 }
 /* Klausuren: Fristen mit Haken „Klausur“ und Termine, die so heißen */
@@ -9716,6 +9810,342 @@ function phoneLastHour(){
   if (!SleepAuto.on()) return null;
   const now = Date.now(), U = SleepAuto.uses(SleepAuto.events(now - 3 * 3600000, now), now);
   return Math.round(U.reduce((a, u) => a + Math.max(0, Math.min(u[1], now) - Math.max(u[0], now - 3600000)), 0) / 60000);
+}
+/* ================================================================
+   §H HANDY-SENSOREN (v40, nur Android-App, alles bleibt auf dem Gerät)
+   · Ladekabel      → Ins-Bett-Zeit für die Schlaf-Erkennung
+   · Lärm (Pegel)   → laute Momente in der Nacht, ob sie dich geweckt haben
+   · Schritte       → Schritte pro Tag, Zusammenhang mit dem Schlaf
+   · App-Nutzung    → Handy in Vorlesungen
+   · Spur auf Wegen → frühere/spätere Bahn automatisch, echte Fußwege
+   · Wachheitstest  → Psychomotor Vigilance Test (Dinges & Powell 1985;
+                      Kurzform nach Basner & Dinges 2011), passt die
+                      Energiekurve an deine echte innere Uhr an
+   ================================================================ */
+const ovl = (a0, a1, b0, b1) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+const Sens = {
+  on(){ return Native.has('sense'); },
+  call(fn, ...a){ try { return window.KalNative[fn](...a); } catch { return null; } },
+  get(fn, from, to){ try { const a = JSON.parse(window.KalNative[fn](+from, +to) || '[]'); return Array.isArray(a) ? a.sort((x, y) => x[0] - y[0]) : []; } catch { return []; } },
+  stepsOk(){ return !!this.call('stepsOk'); },
+  stepsSensor(){ return !!this.call('stepsSensor'); },
+  micOk(){ return !!this.call('micOk'); },
+  noiseUntil(){ return +this.call('noiseUntil') || 0; },
+  set(){ return (state.settings.sense = Object.assign({noise: true, trip: true}, state.settings.sense || {})); }
+};
+
+/* ---------- Ladekabel ---------- */
+function plugNear(off){
+  const C = Sens.get('charge', off - 3 * 3600000, off + 3600000).filter(r => r[1] === 1 && r[0] >= off - 120 * 60000 && r[0] <= off + 30 * 60000);
+  if (!C.length) return null;
+  const before = C.filter(r => r[0] <= off); return (before.length ? before[before.length - 1] : C[0])[0];
+}
+
+/* ---------- Lärm ---------- */
+function noiseNight(n0, n1, uses){
+  const S = Sens.get('noise', n0, n1); if (S.length < 10) return null;
+  const means = S.map(r => r[1]).sort((a, b) => a - b), base = means[Math.floor(means.length / 2)], thr = Math.max(base + 15, 50), ev = [];
+  for (const [t, m, p] of S) if (p >= thr) { const l = ev[ev.length - 1]; if (l && t - l.t1 <= 120000) { l.t1 = t + 30000; l.peak = Math.max(l.peak, p); } else ev.push({t, t1: t + 30000, peak: p}); }
+  ev.forEach(e => { e.woke = !!(uses || []).find(u => u[0] >= e.t - 30000 && u[0] - e.t1 <= 15 * 60000); });
+  return {S, base, thr, ev, peak: Math.max(...S.map(r => r[2]))};
+}
+function noiseSummary(z, wakeT){
+  if (!z) return null;
+  return {n: z.ev.length, base: z.base, peak: z.peak, woke: z.ev.filter(e => e.woke).length, wakeBy: !!z.ev.find(e => wakeT - e.t1 <= 10 * 60000 && wakeT >= e.t), ev: z.ev.slice(0, 8).map(e => [hm(new Date(e.t)), e.peak, e.woke ? 1 : 0])};
+}
+function noiseMini(ib, w){
+  if (!Sens.on()) return '';
+  const z = noiseNight(ib - 15 * 60000, w + 10 * 60000, []); if (!z) return '';
+  const W = 640, H = 46, x0 = z.S[0][0], x1 = z.S[z.S.length - 1][0] + 30000, X = t => ((t - x0) / (x1 - x0) * W).toFixed(1), lo = Math.max(20, z.base - 10), hi = Math.max(z.peak, z.thr + 5), Y = v => (H - Math.max(1.5, (v - lo) / (hi - lo) * H)).toFixed(1);
+  let g = `<line class="th" x1="0" x2="${W}" y1="${Y(z.thr)}" y2="${Y(z.thr)}"/>`;
+  z.S.forEach(([t, m, p]) => { g += `<rect class="${p >= z.thr ? 'lo' : 'b'}" x="${X(t)}" y="${Y(p)}" width="${Math.max(1, W / z.S.length - .6).toFixed(2)}" height="${(H - Y(p)).toFixed(1)}"/>`; });
+  const loud = z.ev.slice().sort((a, b) => b.peak - a.peak)[0];
+  return `<div class="nz"><div class="nz-h">${ic('glocke', 's')}<span>${z.ev.length ? `<b>${z.ev.length}× laut</b>${loud ? `, am lautesten um ${hm(new Date(loud.t))} (${loud.peak} dB)` : ''}${z.ev.some(e => e.woke) ? `, ${z.ev.filter(e => e.woke).length}× danach wach` : ''}` : '<b>Ruhige Nacht</b>, kein lauter Moment'}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${g}</svg><div class="nz-x"><span>${hm(new Date(x0))}</span><span>${hm(new Date(x1))}</span></div></div>`;
+}
+function noiseCtl(tn){
+  if (!Sens.on() || Sens.set().noise === false) return '';
+  const u = Sens.noiseUntil();
+  if (u > Date.now()) return `<div class="nz-run"><span class="dot"></span><span>Nachtmessung läuft bis <b>${hm(new Date(u))}</b></span><button class="btn sm ghost" data-act="noiseStop">Beenden</button></div>`;
+  const nw = new Date(); if (!tn || !(nw > addMin(tn.bed, -240) && nw < addMin(tn.wake, -60))) return '';
+  return `<button class="btn sm" data-act="noiseStart" data-until="${+addMin(tn.wake, 30)}">${ic('glocke', 's')}Heute Nacht Lärm messen</button>`;
+}
+
+/* ---------- Schritte ---------- */
+function stepsFrom(S, d){
+  const a = +startOfDay(d), b = a + 86400000; let tot = 0, prev = null, any = false;
+  for (const [t, v] of S) { if (prev && t > a && prev[0] < b) { const dv = v - prev[1], inc = dv >= 0 ? dv : v; tot += inc * ovl(prev[0], t, a, b) / Math.max(1, t - prev[0]); any = true; } prev = [t, v]; }
+  return any ? Math.round(tot) : null;
+}
+function stepsDay(d){ const a = +startOfDay(d); return stepsFrom(Sens.get('steps', a - 6 * 3600000, a + 86400000 + 3600000), d); }
+
+/* ---------- Handy in Vorlesungen ---------- */
+function lectureUse(days = 14){
+  if (!SleepAuto.on()) return null;
+  const now = Date.now(), t0 = startOfDay(new Date()), from = +addDays(t0, -days + 1), occ = [];
+  for (let i = 0; i < days; i++) for (const o of dayItems(addDays(t0, -i))) if (o.kind === 'course' && +o.end <= now) occ.push(o);
+  if (!occ.length) return null;
+  const U = SleepAuto.uses(SleepAuto.events(from, now), now), A = Sens.get('apps', from, now), by = {};
+  for (const o of occ) {
+    const k = o.ref.short || o.ref.title, a0 = +o.start, a1 = +o.end, m = U.reduce((s, u) => s + ovl(u[0], u[1], a0, a1), 0) / 60000;
+    const x = by[k] || (by[k] = {title: o.ref.short || o.ref.title, cat: o.cat, n: 0, min: 0, len: 0, apps: {}});
+    x.n++; x.min += m; x.len += (a1 - a0) / 60000;
+    for (const [s, e, , nm] of A) { const v = ovl(s, e, a0, a1) / 60000; if (v > 0.2) x.apps[nm] = (x.apps[nm] || 0) + v; }
+  }
+  return Object.values(by).map(x => ({...x, avg: x.min / x.n, pct: x.min / Math.max(1, x.len) * 100, top: Object.entries(x.apps).sort((a, b) => b[1] - a[1]).slice(0, 3)})).sort((a, b) => b.avg - a.avg);
+}
+function lectureTile(){
+  const L = lectureUse(14); if (!L || !L.length) return '';
+  const tot = L.reduce((s, x) => s + x.min, 0), len = L.reduce((s, x) => s + x.len, 0);
+  return `<div class="toolbar" style="margin-top:22px"><h2 class="h2">Handy in Vorlesungen</h2><span class="muted">letzte 14 Tage · insgesamt ${dur(Math.round(tot))}, ${Math.round(tot / Math.max(1, len) * 100)} % der Zeit</span></div>
+    <section class="panel lu">${L.map(x => `<div class="lu-r" style="--c:${x.cat.color}"><span class="sym">${sy(x.cat.symbol)}</span><div class="tx"><b>${esc(PV(x.title, x.cat))}</b><small>Ø ${dur(Math.round(x.avg))} von ${dur(Math.round(x.len / x.n))} · ${x.n}× besucht</small>
+      ${x.top.length ? `<div class="apps">${x.top.map(([n, m]) => `<span>${esc(n)} <b>${dur(Math.max(1, Math.round(m)))}</b></span>`).join('')}</div>` : ''}</div>
+      <div class="bar"><i style="width:${Math.min(100, Math.max(2, x.pct)).toFixed(0)}%"></i><span>${Math.round(x.pct)} %</span></div></div>`).join('')}
+    <p class="note" style="margin:10px 0 0">Gezählt wird die Zeit, in der dein Handy während des Kurses entsperrt war. Die Daten bleiben auf deinem Handy.</p></section>`;
+}
+
+/* ---------- Wachheitstest (PVT) ---------- */
+const PVT = {
+  run: null,
+  open(){
+    openSheet(`${head('Wachheitstest')}<div class="pvt">
+      <p class="muted" style="margin:0">Tipp so schnell wie möglich auf die Fläche, sobald die Zahl erscheint. Dauert 60 Sekunden. Am besten ein paarmal zu verschiedenen Tageszeiten, dann passt sich deine Energiekurve an dich an.</p>
+      <div class="pvt-pad" data-pvtpad role="button" tabindex="0" aria-label="Testfläche"><span data-pvtshow>Tippen zum Starten</span></div>
+      <div class="pvt-bar"><i data-pvtprog></i></div><div class="pvt-res" data-pvtres hidden></div></div>`, {kind: 'pvt'});
+    const pad = document.querySelector('[data-pvtpad]');
+    pad.addEventListener('pointerdown', ev => { ev.preventDefault(); this.tap(); });
+    pad.addEventListener('keydown', ev => { if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); this.tap(); } });
+  },
+  start(){ this.run = {t0: performance.now(), rts: [], fs: 0, on: 0, timer: null, raf: null, done: false}; this.next(); this.prog(); },
+  next(){ const r = this.run; if (!r) return; clearTimeout(r.timer); this.show('');
+    if (performance.now() - r.t0 > 60000) return this.finish();
+    r.timer = setTimeout(() => { r.on = performance.now(); const tick = () => { if (!r.on || !this.run) return; this.show(String(Math.round(performance.now() - r.on)), true); if (performance.now() - r.on > 1500) { r.rts.push(1500); r.on = 0; this.next(); return; } r.raf = requestAnimationFrame(tick); }; tick(); }, 2000 + Math.random() * 4000); },
+  tap(){ const r = this.run;
+    if (!r) { if (this._done) return; return this.start(); }
+    if (r.done) return;
+    if (!r.on) { r.fs++; this.show('Zu früh', false, 'fs'); clearTimeout(r.timer); setTimeout(() => this.next(), 700); return; }
+    const rt = performance.now() - r.on; r.on = 0; cancelAnimationFrame(r.raf); r.rts.push(rt); this.show(`${Math.round(rt)} ms`, true, 'hit'); haptic && haptic(); setTimeout(() => this.next(), 500); },
+  show(t, big, cls = ''){ const el = document.querySelector('[data-pvtshow]'); if (!el) { this.abort(); return; } el.textContent = t; el.className = (big ? 'big ' : '') + cls; },
+  prog(){ const r = this.run; if (!r || r.done) return; const el = document.querySelector('[data-pvtprog]'); if (!el) { this.abort(); return; } el.style.width = Math.min(100, (performance.now() - r.t0) / 600) + '%'; requestAnimationFrame(() => this.prog()); },
+  abort(){ if (this.run) { clearTimeout(this.run.timer); cancelAnimationFrame(this.run.raf); } this.run = null; },
+  finish(){
+    const r = this.run; if (!r || r.done) return; r.done = true; clearTimeout(r.timer);
+    const rts = r.rts.slice().sort((a, b) => a - b), n = rts.length;
+    if (n < 5) { this.show('Zu wenige Reaktionen'); this.run = null; return; }
+    const med = Math.round(sMed(rts)), slow = Math.round(sAvg(rts.slice(Math.floor(n * 0.9)))), lapses = rts.filter(x => x > 500).length;
+    const prev = (state.pvt || []).map(x => x.med), usual = prev.length >= 3 ? sMed(prev) : null;
+    state.pvt = (state.pvt || []).concat([{at: Date.now(), med, slow, lapses, fs: r.fs, n}]).slice(-300);
+    const before = state.pvtCal && state.pvtCal.shift; this.calibrate(); commit();
+    const lvl = med < 280 ? ['gut', 'Sehr wach'] : med < 330 ? ['mid', 'Wach'] : med < 400 ? ['mid', 'Etwas müde'] : ['low', 'Müde'];
+    const res = document.querySelector('[data-pvtres]'); this.show(`${med} ms`, true, 'end'); this._done = true; setTimeout(() => { this._done = false; }, 1500); this.run = null;
+    if (res) { res.hidden = false; res.innerHTML = `<div class="pvt-k"><div><span>Reaktionszeit</span><b>${med} ms</b><small class="${lvl[0]}">${lvl[1]}</small></div><div><span>Aussetzer über 500 ms</span><b>${lapses}</b><small>${lapses ? 'Zeichen für Müdigkeit' : 'keine'}</small></div><div><span>Zu früh getippt</span><b>${r.fs}</b><small>von ${n} Reizen</small></div></div>
+      <p>${usual ? (med < usual - 15 ? `Schneller als sonst (üblich ${Math.round(usual)} ms).` : med > usual + 15 ? `Langsamer als sonst (üblich ${Math.round(usual)} ms).` : `So schnell wie sonst (${Math.round(usual)} ms).`) : 'Nach ein paar Tests siehst du, wie du im Vergleich zu sonst bist.'} ${state.pvtCal ? (before !== state.pvtCal.shift ? `<b>Deine Energiekurve ist jetzt an ${state.pvtCal.n} Tests angepasst.</b>` : `Energiekurve angepasst an ${state.pvtCal.n} Tests.`) : `Noch ${Math.max(0, 6 - (state.pvt || []).length)} Tests zu verschiedenen Tageszeiten, dann passt sich deine Energiekurve an.`}</p>
+      <button class="btn" data-act="pvtOpen">Noch einmal</button>`; }
+  },
+  /* Innere Uhr aus den Tests: welche Verschiebung der Kurve passt am besten zu deinen Reaktionszeiten? */
+  calibrate(){
+    const T = (state.pvt || []).filter(x => x.n >= 5).slice(-60);
+    if (T.length < 6 || new Set(T.map(x => Math.floor(new Date(x.at).getHours() / 3))).size < 3) return;
+    _enCache = {k: null}; const keep = state.pvtCal; state.pvtCal = null;
+    const rows = T.map(x => { const E = energyDay(new Date(x.at)); return E ? {x, E} : null; }).filter(Boolean);
+    state.pvtCal = keep; if (rows.length < 6) return;
+    const pear = (a, b) => { const ma = sAvg(a), mb = sAvg(b); let n = 0, da = 0, db = 0; for (let i = 0; i < a.length; i++) { n += (a[i] - ma) * (b[i] - mb); da += (a[i] - ma) ** 2; db += (b[i] - mb) ** 2; } return da && db ? n / Math.sqrt(da * db) : 0; };
+    let best = null;
+    for (let s = -3; s <= 3.01; s += 0.5) { const c = pear(rows.map(r => enRaw(new Date(r.x.at), r.E.wake, r.E.sWake, s)), rows.map(r => -r.x.med)); if (!best || c > best.c) best = {s, c}; }
+    if (best.c > 0.2) state.pvtCal = {shift: best.s, r: Math.round(best.c * 100) / 100, n: rows.length, at: Date.now()};
+    _enCache = {k: null};
+  },
+  todayLine(){ const t = (state.pvt || []).filter(x => sameDay(new Date(x.at), new Date())).pop(); return t ? `<span>Test um ${hm(new Date(t.at))}: <b>${t.med} ms</b>${t.lapses ? `, ${t.lapses} Aussetzer` : ''}</span>` : `<span>${(state.pvt || []).length ? `${state.pvt.length} Tests bisher` : 'Miss, wie wach du gerade bist'}</span>`; }
+};
+
+/* ---------- Bahn automatisch erkennen, Fußwege lernen ---------- */
+function walkExtra(lv){
+  const w = lv && lv.legs && lv.legs[0]; if (!w || !w.walk || !state.walkLearn) return 0;
+  const L = state.walkLearn[stopKey(w.to)]; if (!L || L.s.length < 2) return 0;
+  return Math.max(-3, Math.min(10, Math.round(sMed(L.s.map(x => x.real - x.plan)))));
+}
+const TripAuto = {
+  _t: {}, busy: false,
+  done: (() => { try { return JSON.parse(localStorage.getItem('kal-walkdone') || '{}') || {}; } catch { return {}; } })(),
+  on(){ return Sens.on() && Sens.set().trip !== false && Native.bgLoc(); },
+  pos(now){
+    const T = Sens.get('trace', now - 4 * 60000, now).filter(p => p[3] <= 80), p = T[T.length - 1];
+    if (p) return {ll: [p[1], p[2]], at: p[0]};
+    if (Loc.pos && now - Loc.at < 3 * 60000) return {ll: [Loc.pos.lat, Loc.pos.lon], at: Loc.at};
+    return null;
+  },
+  async tick(){
+    if (!this.on() || this.busy) return; this.busy = true;
+    try { this.learn(); await this.check(); } catch (e) { console.warn(e); }
+    this.busy = false;
+  },
+  async check(){
+    const now = Date.now(), P = planDay(startOfDay(new Date()));
+    for (const l of P.legs) {
+      if (l.kind !== 'go' || !l.live || !l.live.legs || l.live.plan) continue;
+      const key = l.before && l.before.key; if (!key || Transit.over[key]) continue;
+      if (now < +l.depart - 5 * 60000 || now > +l.arrive + 5 * 60000) continue;
+      if (this._t[key] && now - this._t[key] < 3 * 60000) continue;
+      const p = this.pos(now); if (!p) continue;
+      const pace = tripPace(l.live, p.ll, now); if (pace == null || Math.abs(pace) < 3) continue;
+      const g = l.live.legs.find(x => !x.walk && x.fromId && +new Date(x.arr) > now); if (!g) continue;
+      const atStop = distM(p.ll, g.fromLL) < 150, dep = +new Date(g.dep);
+      if (pace > 0 && !(atStop && now > dep + 60000)) continue;
+      if (pace < 0 && atStop) continue;
+      const dest = l.to && l.to.vbb; if (!dest) continue;
+      this._t[key] = now;
+      let st, list; try { ({st, list} = await Transit.caughtOptions(g, dest)); } catch { continue; }
+      let pick = null;
+      if (pace > 0) pick = list.filter(x => !x.earlier && +new Date(x.f.dep) > now - 60000).sort((a, b) => a.pd - b.pd)[0] || null;
+      else {
+        const fit = list.map(x => { const f = x.j.legs.find(y => !y.walk); if (!f) return null; let best = null;
+          for (const q of tripTimeline({legs: [f]})) { const dd = distM(p.ll, q.ll); if (!best || dd < best.dd) best = {dd, q}; }
+          if (!best || best.dd > 400) return null;
+          return {x, tm: now < best.q.t0 ? best.q.t0 - now : now > best.q.t1 ? now - best.q.t1 : 0}; }).filter(Boolean).sort((a, b) => a.tm - b.tm)[0];
+        if (fit && fit.tm < 4 * 60000) pick = fit.x;
+      }
+      if (pick) this.apply(key, st, pick, pace < 0 ? 'früher' : 'später');
+    }
+  },
+  apply(key, st, x, kind){
+    Transit.setOver(key, {from: st, line: x.f.line, pdep: x.pd, j: x.j});
+    const old = Transit.cache[key];
+    Transit.cache[key] = {...x.j, fetchedAt: Date.now(), alts: [], over: true, why: Delay.why(x.j), arriveBy: old && old.arriveBy, after: old && old.after};
+    invalidate(); if (typeof Push !== 'undefined') Push.queue(); Native.queue();
+    ui._tripAutoKey = key;
+    state.tripLog = (state.tripLog || []).concat([{at: Date.now(), kind, line: x.f.line}]).slice(-200); Store.schedule();
+    toast(`${kind === 'früher' ? 'Frühere' : 'Spätere'} Bahn erkannt`, `${x.f.line} um ${hm(new Date(x.f.dep))}. Ankunft jetzt ${hm(new Date(x.j.arrive))}, der Rest ist neu berechnet.`, {sym: 'zug', action: {act: 'tripAutoUndo', label: 'Rückgängig'}, ttl: 9000});
+    renderSoft();
+  },
+  learn(){
+    const H = Loc.homeL(); if (!H) return; const home = [H.latitude, H.longitude], now = Date.now(); let changed = false, learned = false;
+    for (const k of [-1, 0]) {
+      const d = addDays(startOfDay(new Date()), k);
+      for (const l of planDay(d).legs) {
+        if (l.kind !== 'go' || !l.live || !l.live.legs) continue;
+        const w = l.live.legs[0]; if (!w || !w.walk || !w.toLL) continue;
+        const id = (l.before && l.before.key) + ':' + ymd(d); if (this.done[id] || +l.depart > now - 15 * 60000) continue;
+        this.done[id] = 1; changed = true;
+        const T = Sens.get('trace', +l.depart - 40 * 60000, +l.depart + 45 * 60000).filter(p => p[3] <= 60);
+        let leave = null, reach = null, wasHome = false;
+        for (const p of T) { const ll = [p[1], p[2]];
+          if (!leave) { if (distM(ll, home) <= 120) wasHome = true; else if (wasHome) leave = p[0]; }
+          else if (distM(ll, w.toLL) <= 80) { reach = p[0]; break; } }
+        if (!leave || !reach) continue;
+        const real = (reach - leave) / 60000, plan = (+new Date(w.arr) - +new Date(w.dep)) / 60000;
+        if (real < 1 || real > plan * 3 + 10) continue;
+        const L = state.walkLearn = state.walkLearn || {}, sk = stopKey(w.to);
+        (L[sk] = L[sk] || {name: w.to, s: []}).s.push({at: now, plan: Math.round(plan), real: Math.round(real)}); L[sk].s = L[sk].s.slice(-8); learned = true;
+      }
+    }
+    if (changed) { try { localStorage.setItem('kal-walkdone', JSON.stringify(this.done)); } catch {} }
+    if (learned) commit();
+  }
+};
+
+/* ---------- Monatsrückblick ---------- */
+const WR_COLORS = [['#6B4BEF', '#fff'], ['#2547F4', '#fff'], ['#0E8550', '#fff'], ['#D7381C', '#fff'], ['#CC2E77', '#fff'], ['#FFC21A', '#111113'], ['#2B2B30', '#fff']];
+function monthReview(y, m){
+  const a = new Date(y, m, 1), b = new Date(y, m + 1, 1), now = new Date(), end = b > now ? startOfDay(addDays(now, 1)) : b, mk = d => ymd(d) >= ymd(a) && ymd(d) < ymd(end);
+  const S = [], name = MONTHS[m], need = (+state.settings.sleep.hours || 8) * 60, partial = b > now;
+  const nights = (state.sleepLog || []).filter(x => !x.ex && x.date >= ymd(a) && x.date < ymd(end)).map(x => ({...x, ...sleepNight(x)}));
+  let items = 0; for (let d = new Date(a); d < end; d = addDays(d, 1)) items += dayItems(d).filter(o => isTimed(o) && o.kind !== 'deadline').length;
+  S.push({k: 'intro', kicker: partial ? `${name} bis heute` : `Dein ${name}`, big: String(items), unit: items === 1 ? 'Termin' : 'Termine', text: `${nights.length ? `${nights.length} Nächte aufgezeichnet. ` : ''}Hier ist, was dein Handy und dein Kalender über diesen Monat wissen.`});
+  if (nights.length >= 3) {
+    const avg = sAvg(nights.map(n => n.dur)), best = nights.slice().sort((p, q) => (q.q || 0) - (p.q || 0) || q.dur - p.dur)[0], debt = nights.reduce((s, n) => s + Math.max(0, need - n.dur), 0);
+    S.push({k: 'sleep', kicker: 'Schlaf', big: fmtH(avg), unit: 'pro Nacht', text: `Beste Nacht: ${fmtShort(parseYMD(best.date))} mit ${fmtH(best.dur)}${best.q ? `, Erholung ${best.q} von 5` : ''}. ${debt > 60 ? `Insgesamt ${fmtH(debt)} unter deinem Bedarf.` : 'Kaum Schlafschuld, stark.'}`});
+    const W = 300, H = 170, n = nights.length, bw = W / n, Y = v => ((v - 540) / (1380 - 540) * H).toFixed(1);
+    const viz = `<svg viewBox="0 0 ${W} ${H}" class="wr-bars" aria-hidden="true">${nights.map((x, i) => `<rect x="${(i * bw + bw * .18).toFixed(1)}" y="${Y(x.b)}" width="${(bw * .64).toFixed(1)}" height="${Math.max(2, Y(x.w) - Y(x.b)).toFixed(1)}" rx="${Math.min(4, bw * .3).toFixed(1)}"/>`).join('')}</svg>`;
+    const sd = sSd(nights.map(x => x.b));
+    S.push({k: 'rhythm', kicker: 'Dein Schlafbild', big: sd != null ? `±${Math.round(sd)}` : '–', unit: 'min Schwankung', text: `Jede Säule ist eine Nacht, oben eingeschlafen, unten aufgewacht. ${sd != null && sd < 35 ? 'Ein sehr gleichmäßiger Rhythmus.' : 'Je gleicher die Säulen, desto erholsamer.'}`, viz});
+    const pr = nights.filter(x => x.pre != null), wk = nights.reduce((s, x) => s + (x.wakes || 0), 0);
+    if (pr.length >= 3) S.push({k: 'phone', kicker: 'Handy am Abend', big: dur(Math.round(sAvg(pr.map(x => x.pre)))), unit: 'in der Stunde vor dem Schlafen', text: `${wk ? `${wk}× hast du nachts aufs Handy geschaut. ` : 'Nachts hast du nie aufs Handy geschaut. '}Gemessen, ohne dass du etwas eintragen musstest.`});
+    const nz = nights.filter(x => x.noise && x.noise.peak), loud = nz.sort((p, q) => q.noise.peak - p.noise.peak)[0];
+    if (loud) S.push({k: 'noise', kicker: 'Lauteste Nacht', big: `${loud.noise.peak} dB`, unit: fmtShort(parseYMD(loud.date)), text: `${loud.noise.n}× laut in dieser Nacht${loud.noise.woke ? `, ${loud.noise.woke}× bist du danach aufgewacht` : ''}. ${nz.length} Nächte gemessen.`});
+  }
+  const his = []; for (let d = new Date(a); d < end; d = addDays(d, 1)) { const E = energyDay(d); if (E && E.hi) his.push(E.hi.a.getHours() * 60 + E.hi.a.getMinutes()); }
+  const tests = (state.pvt || []).filter(x => x.at >= +a && x.at < +end);
+  if (his.length >= 5) { const mid = sMed(his); S.push({k: 'energy', kicker: 'Deine wachste Zeit', big: toHM(Math.round(mid / 15) * 15), unit: 'bis ' + toHM(Math.round(mid / 15) * 15 + 120), text: tests.length ? `${tests.length} Wachheitstests, schnellste Reaktion ${Math.min(...tests.map(x => x.med))} ms.` : 'Berechnet aus deinem Schlaf und deiner inneren Uhr.'}); }
+  const work = (state.events || []).filter(e => /^(Lernen|Arbeiten):/.test(e.title || '') && e.date >= ymd(a) && e.date < ymd(end)).reduce((s, e) => s + Math.max(0, minutesOf(e.end) - minutesOf(e.start)), 0);
+  const doneD = (state.deadlines || []).filter(d => d.done && d.date >= ymd(a) && d.date < ymd(b)).length;
+  if (work || doneD) S.push({k: 'work', kicker: 'Gelernt und erledigt', big: work ? fmtH(work) : String(doneD), unit: work ? 'Lern- und Arbeitszeit' : 'Fristen erledigt', text: `${work && doneD ? `${doneD} ${doneD === 1 ? 'Frist' : 'Fristen'} erledigt. ` : ''}Die Blöcke lagen in deiner wachsten Zeit des Tages.`});
+  let legs = 0, mins = 0; for (let d = new Date(a); d < end; d = addDays(d, 1)) for (const l of planDay(d).legs) if (l.kind === 'go' || l.kind === 'home') { legs++; mins += l.mins || 0; }
+  const auto = (state.tripLog || []).filter(x => x.at >= +a && x.at < +end).length;
+  if (legs) S.push({k: 'ways', kicker: 'Unterwegs', big: fmtH(mins), unit: `auf ${legs} Wegen`, text: auto ? `${auto}× hat die App selbst erkannt, dass du eine andere Bahn genommen hast.` : 'Losgehzeiten mit Live-Fahrplan und Verspätungen eingerechnet.'});
+  if (Sens.on() && Sens.stepsOk()) { const St = Sens.get('steps', +a - 6 * 3600000, +end + 3600000); let tot = 0, best = null; for (let d = new Date(a); d < end; d = addDays(d, 1)) { const v = stepsFrom(St, d); if (v != null) { tot += v; if (!best || v > best.v) best = {d: new Date(d), v}; } }
+    if (tot) S.push({k: 'steps', kicker: 'Schritte', big: tot.toLocaleString('de-DE'), unit: 'Schritte', text: best ? `Dein aktivster Tag: ${fmtShort(best.d)} mit ${best.v.toLocaleString('de-DE')}.` : ''}); }
+  const lu = Sens.on() ? lectureUse(Math.min(31, Math.round((end - a) / 86400000))) : null;
+  if (lu && lu.length) { const calm = lu.slice().sort((p, q) => p.pct - q.pct)[0]; S.push({k: 'lect', kicker: 'Handy in Vorlesungen', big: `${Math.round(lu.reduce((s, x) => s + x.min, 0))}`, unit: 'Minuten', text: `Am wenigsten in ${PV(calm.title, calm.cat)} (${Math.round(calm.pct)} %).`}); }
+  S.forEach((s, i) => { const c = WR_COLORS[i % WR_COLORS.length]; s.bg = c[0]; s.fg = c[1]; });
+  S.push({k: 'end', kicker: `${name} ${y}`, big: 'Das war', unit: 'dein Monat', text: 'Teile ihn als Bild oder schau nächsten Monat wieder rein.', bg: '#111113', fg: '#fff', share: true});
+  return {y, m, name, S};
+}
+const Wrap = {
+  R: null, i: 0,
+  open(y, m){
+    this.R = monthReview(y, m); this.i = 0;
+    let el = document.getElementById('wrap'); if (!el) { el = document.createElement('div'); el.id = 'wrap'; el.className = 'wr'; document.body.appendChild(el); }
+    el.hidden = false; document.documentElement.classList.add('wr-open'); this.draw();
+    el.onpointerup = ev => { if (ev.target.closest('button')) return; const x = ev.clientX / window.innerWidth; this.go(x < 0.3 ? -1 : 1); };
+    this._key = ev => { if (ev.key === 'ArrowRight') this.go(1); else if (ev.key === 'ArrowLeft') this.go(-1); else if (ev.key === 'Escape') this.close(); };
+    document.addEventListener('keydown', this._key);
+  },
+  go(d){ const n = this.i + d; if (n < 0) return; if (n >= this.R.S.length) return this.close(); this.i = n; this.draw(); },
+  close(){ const el = document.getElementById('wrap'); if (el) el.hidden = true; document.documentElement.classList.remove('wr-open'); document.removeEventListener('keydown', this._key); },
+  draw(){
+    const el = document.getElementById('wrap'), s = this.R.S[this.i];
+    el.style.setProperty('--wb', s.bg); el.style.setProperty('--wf', s.fg);
+    el.innerHTML = `<div class="wr-prog">${this.R.S.map((_, k) => `<i class="${k < this.i ? 'done' : k === this.i ? 'cur' : ''}"></i>`).join('')}</div>
+      <button class="wr-x" data-act="wrapClose" aria-label="Schließen">${ic('x')}</button>
+      <div class="wr-s" key="${this.i}"><span class="wr-k">${esc(s.kicker)}</span><b class="wr-big">${esc(s.big)}</b><span class="wr-u">${esc(s.unit)}</span>${s.viz || ''}<p>${esc(s.text)}</p>
+      ${s.share ? `<div class="wr-sum">${this.R.S.filter(x => !['intro', 'end'].includes(x.k)).slice(0, 6).map(x => `<div style="--c:${x.bg};--f:${x.fg}"><span>${esc(x.kicker)}</span><b>${esc(x.big)}</b></div>`).join('')}</div><button class="btn wr-share" data-act="wrapShare">${ic('extern', 's')}Als Bild teilen</button>` : ''}</div>
+      <div class="wr-hint">${this.i === 0 ? 'Tippen zum Weiterblättern' : ''}</div>`;
+  },
+  async share(){
+    const R = this.R, W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    try { await document.fonts.ready; } catch {}
+    g.fillStyle = '#111113'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#fff'; g.font = '800 96px "Kal Display", sans-serif'; g.fillText(`Mein ${R.name}`, 72, 170);
+    g.font = '500 36px "Kal Sans", sans-serif'; g.fillStyle = 'rgba(255,255,255,.7)'; g.fillText('Kalendarium Rückblick', 76, 230);
+    const tiles = R.S.filter(x => !['intro', 'end'].includes(x.k)).slice(0, 6);
+    tiles.forEach((x, k) => { const col = k % 2, row = Math.floor(k / 2), tx = 72 + col * 476, ty = 300 + row * 330, tw = 452, th = 306;
+      g.fillStyle = x.bg; g.beginPath(); g.roundRect ? g.roundRect(tx, ty, tw, th, 36) : g.rect(tx, ty, tw, th); g.fill();
+      g.fillStyle = x.fg; g.globalAlpha = .8; g.font = '600 32px "Kal Sans", sans-serif'; g.fillText(x.kicker, tx + 36, ty + 62); g.globalAlpha = 1;
+      g.font = '800 84px "Kal Display", sans-serif'; let t = x.big; while (g.measureText(t).width > tw - 72 && t.length > 3) t = t.slice(0, -1); g.fillText(t, tx + 36, ty + 180);
+      g.font = '500 30px "Kal Sans", sans-serif'; g.globalAlpha = .8; g.fillText(x.unit.slice(0, 26), tx + 36, ty + 236); g.globalAlpha = 1; });
+    const url = c.toDataURL('image/png'), text = `Mein ${R.name} mit Kalendarium`;
+    if (Sens.on() && Sens.call('shareImage', url, text)) return;
+    try { const blob = await (await fetch(url)).blob(), f = new File([blob], `kalendarium-${R.name}.png`, {type: 'image/png'}); if (navigator.canShare && navigator.canShare({files: [f]})) { await navigator.share({files: [f], text}); return; } } catch {}
+    const a = document.createElement('a'); a.href = url; a.download = `kalendarium-${R.name}.png`; a.click(); toast('Bild gespeichert', `kalendarium-${R.name}.png`);
+  }
+};
+function wrapTile(){
+  const n = new Date(), pm = new Date(n.getFullYear(), n.getMonth() - 1, 1);
+  return `<section class="sl2-tile wr-tile"><div><b>Monatsrückblick</b><small>Schlaf, Rhythmus, Wachheit, Wege und mehr zum Durchwischen</small></div><div class="act"><button class="btn sm primary" data-act="wrapOpen" data-y="${n.getFullYear()}" data-m="${n.getMonth()}">${MONTHS[n.getMonth()]} bis heute</button><button class="btn sm" data-act="wrapOpen" data-y="${pm.getFullYear()}" data-m="${pm.getMonth()}">${MONTHS[pm.getMonth()]}</button></div></section>`;
+}
+
+/* ---------- Einstellungen: alles an einem Ort ---------- */
+function sensePanel(){
+  const sw = (path, on, label) => `<button class="switch" role="switch" aria-checked="${!!on}" data-act="toggle" data-k="${path}" aria-label="${label}"></button>`;
+  const row = (ic0, t, sub, right) => `<div class="row sens-r"><span class="sens-ic">${ic(ic0, 's')}</span><div class="l"><b>${t}</b><small>${sub}</small></div>${right}</div>`;
+  const allow = (act, lbl = 'Erlauben') => `<button class="btn sm" data-act="${act}">${lbl}</button>`;
+  let body;
+  if (!Native.on()) body = `<p class="note">Diese Funktionen gibt es nur in der Android-App: Schlaf vom Handy, Ladekabel, Lärm, Schritte, Bahn erkennen und Handy in Vorlesungen.</p>`;
+  else if (!Sens.on()) body = `<p class="note">Lade die neue Android-App von der Download-Seite, dann gibt es hier Ladekabel, Lärm, Schritte, Bahn erkennen und mehr.</p>`;
+  else {
+    const S = Sens.set(), now = Date.now(), plugs = Sens.get('charge', now - 7 * 86400000, now).filter(r => r[1] === 1).length;
+    const st = Sens.stepsOk() ? stepsDay(new Date()) : null, WL = Object.values(state.walkLearn || {}).filter(x => x.s.length >= 2);
+    body = [
+      row('handy', 'Nutzungsdaten', 'Schlaf erkennen, Handy vor dem Schlafen, Handy in Vorlesungen', SleepAuto.ok() ? '<span class="sens-ok">erlaubt</span>' : allow('sleepUsage')),
+      row('mond', 'Ladekabel', `Wann du das Handy ansteckst, zählt als Ins-Bett-Zeit. ${plugs ? `${plugs}× in den letzten 7 Tagen` : 'Noch nichts erkannt'}`, '<span class="sens-ok">automatisch</span>'),
+      row('glocke', 'Lärm in der Nacht', Sens.micOk() ? 'Abends bei „Heute Nacht“ startbar. Nur die Lautstärke, nichts wird aufgenommen.' : 'Braucht das Mikrofon. Gemessen wird nur die Lautstärke, nichts wird aufgenommen.', Sens.micOk() ? sw('sense.noise', S.noise !== false, 'Lärm messen anbieten') : allow('askMic')),
+      row('laeufer', 'Schritte', !Sens.stepsSensor() ? 'Dein Handy hat keinen Schrittzähler.' : Sens.stepsOk() ? `${st != null ? `Heute ${st.toLocaleString('de-DE')} Schritte. ` : ''}Für das Muster „Schritte und Schlaf“` : 'Braucht die Erlaubnis für Körperaktivität', !Sens.stepsSensor() ? '' : Sens.stepsOk() ? '<span class="sens-ok">an</span>' : allow('askSteps')),
+      row('zug', 'Bahn erkennen und Fußwege lernen', Native.bgLoc() ? `Während deiner Wege merkt die App, welche Bahn du genommen hast, und lernt, wie lange du wirklich zur Haltestelle brauchst.${WL.length ? ' Gelernt: ' + WL.map(x => { const e = Math.round(sMed(x.s.map(y => y.real - y.plan))); return `${esc(x.name)} ${e > 0 ? '+' : ''}${e} min`; }).join(', ') + '.' : ''}` : 'Braucht den Standort auf „Immer erlauben“', Native.bgLoc() ? sw('sense.trip', S.trip !== false, 'Bahn erkennen') : allow('widgetLoc')),
+      row('uhr', 'Wachheitstest', `${(state.pvt || []).length ? `${state.pvt.length} Tests` : 'Noch kein Test'}${state.pvtCal ? `, Energiekurve angepasst (Verschiebung ${state.pvtCal.shift > 0 ? '+' : ''}${String(state.pvtCal.shift).replace('.', ',')} h)` : ', ab 6 Tests zu verschiedenen Zeiten passt sich die Energiekurve an'}`, allow('pvtOpen', 'Test starten')),
+      row('stern', 'Monatsrückblick', 'Dein Monat zum Durchwischen und Teilen', `<button class="btn sm" data-act="wrapOpen" data-y="${new Date().getFullYear()}" data-m="${new Date().getMonth()}">Ansehen</button>`)
+    ].join('') + '<p class="note">Alles bleibt auf deinem Handy. Es wird nichts aufgenommen und nichts verschickt.</p>';
+  }
+  return `<section class="panel"><div class="panel-h"><h2>Handy-Sensoren</h2></div><div class="sens">${body}</div></section>`;
 }
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
@@ -11250,6 +11680,7 @@ function init(){
   setInterval(() => Reminders.check(), 20000);
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
+  if (Native.has('sense')) { setInterval(() => { if (!document.hidden) TripAuto.tick(); }, 30000); setTimeout(() => TripAuto.tick(), 5000); window.addEventListener('kalresume', () => { TripAuto.tick(); SleepAuto.run(true); }); window.addEventListener('kalperm', () => setTimeout(render, 300)); }
   if (Native.has('sleep')) { setTimeout(() => SleepAuto.run(true), 2500); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => SleepAuto.run(), 600); }); }
   if (Native.on()) { setTimeout(() => Native.sync(true), 1500); setInterval(() => Native.sync(), 5 * 60000); document.addEventListener('visibilitychange', () => { if (document.hidden) Native.sync(); }); }
   setInterval(() => document.querySelectorAll('[data-ago]').forEach(e => { const a = Math.max(0, Math.round((Date.now() - +e.dataset.ago) / 60000)); e.textContent = a ? `vor ${a} min aktualisiert` : 'gerade aktualisiert'; }), 15000);
