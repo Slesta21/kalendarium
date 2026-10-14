@@ -11,15 +11,16 @@ import org.json.JSONObject;
 
 /* Schnittstelle für die Web-App: window.KalNative */
 public class Bridge {
-    final Context ctx;
-    Bridge(Context c) { ctx = c.getApplicationContext(); }
+    final Context ctx; final android.app.Activity act;
+    Bridge(android.app.Activity a) { ctx = a.getApplicationContext(); act = a; }
+    void ask(String... perms) { try { act.runOnUiThread(() -> act.requestPermissions(perms, 7)); } catch (Exception ignored) { } }
 
     @JavascriptInterface public String version() {
         try { return String.valueOf(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).getLongVersionCode()); } catch (Exception e) { return "0"; }
     }
 
     /* Was diese App-Version kann, damit die Web-App passend reagiert */
-    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep"; }
+    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep,sense"; }
 
     /* Startbildschirm-Widget mit den nächsten Terminen füttern */
     @JavascriptInterface public void widget(String json) { Widget.save(ctx, json); }
@@ -36,6 +37,38 @@ public class Bridge {
     @JavascriptInterface public boolean usageOk() { return Sleep.ok(ctx); }
     @JavascriptInterface public void usageOpen() { Sleep.open(ctx); }
     @JavascriptInterface public String screenEvents(double from, double to) { return Sleep.events(ctx, (long) from, (long) to); }
+
+    /* Sensoren: Ladekabel, Schritte, Spur, App-Nutzung, Lärm (alles lokal) */
+    @JavascriptInterface public String charge(double from, double to) { return Sense.read(ctx, "charge", (long) from, (long) to); }
+    @JavascriptInterface public String steps(double from, double to) { return Sense.read(ctx, "steps", (long) from, (long) to); }
+    @JavascriptInterface public String trace(double from, double to) { return Sense.read(ctx, "trace", (long) from, (long) to); }
+    @JavascriptInterface public String noise(double from, double to) { return Sense.read(ctx, "noise", (long) from, (long) to); }
+    @JavascriptInterface public String apps(double from, double to) { return Sense.apps(ctx, (long) from, (long) to); }
+    @JavascriptInterface public boolean stepsOk() { return Sense.stepsOk(ctx); }
+    @JavascriptInterface public boolean stepsSensor() { android.hardware.SensorManager sm = (android.hardware.SensorManager) ctx.getSystemService(Context.SENSOR_SERVICE); return sm != null && sm.getDefaultSensor(android.hardware.Sensor.TYPE_STEP_COUNTER) != null; }
+    @JavascriptInterface public void askSteps() { if (android.os.Build.VERSION.SDK_INT >= 29) ask(android.Manifest.permission.ACTIVITY_RECOGNITION); Sense.ensure(ctx); }
+    @JavascriptInterface public boolean micOk() { return ctx.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED; }
+    @JavascriptInterface public void askMic() { ask(android.Manifest.permission.RECORD_AUDIO); }
+    @JavascriptInterface public boolean noiseStart(double until) { if (!micOk()) return false; try { act.runOnUiThread(() -> NoiseService.start(act, (long) until)); return true; } catch (Exception e) { return false; } }
+    @JavascriptInterface public void noiseStop() { try { NoiseService.stop(ctx); } catch (Exception ignored) { } }
+    @JavascriptInterface public double noiseUntil() { return NoiseService.running ? ctx.getSharedPreferences(Sense.PREF, Context.MODE_PRIVATE).getLong("noiseUntil", 0) : 0; }
+    @JavascriptInterface public boolean charging() { return Sense.charging(ctx); }
+    /* Bild teilen (Monatsrückblick): in „Bilder/Kalendarium“ ablegen und das Teilen-Menü öffnen */
+    @JavascriptInterface public boolean shareImage(String dataUrl, String text) {
+        try {
+            byte[] png = android.util.Base64.decode(dataUrl.substring(dataUrl.indexOf(',') + 1), android.util.Base64.DEFAULT);
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "kalendarium-" + System.currentTimeMillis() + ".png");
+            v.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png");
+            if (android.os.Build.VERSION.SDK_INT >= 29) v.put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Kalendarium");
+            android.net.Uri u = ctx.getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+            if (u == null) return false;
+            try (java.io.OutputStream os = ctx.getContentResolver().openOutputStream(u)) { os.write(png); }
+            Intent s = new Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, u).putExtra(Intent.EXTRA_TEXT, text).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            act.runOnUiThread(() -> act.startActivity(Intent.createChooser(s, "Rückblick teilen")));
+            return true;
+        } catch (Exception e) { return false; }
+    }
 
     @JavascriptInterface public void vibrateNamed(String id) { Notify.vibrate(ctx, Notify.pattern(id)); }
 

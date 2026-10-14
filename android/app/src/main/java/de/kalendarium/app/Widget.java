@@ -40,6 +40,7 @@ public class Widget extends AppWidgetProvider {
             if (p != null) savePos(c, p.optDouble("lat"), p.optDouble("lon"), p.optLong("at"));
         } catch (Exception ignored) { }
         updateAll(c);
+        Sense.planTrace(c);
     }
 
     static void savePos(Context c, double lat, double lon, long at) {

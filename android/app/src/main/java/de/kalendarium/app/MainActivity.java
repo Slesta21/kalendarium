@@ -78,6 +78,9 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() { super.onResume(); Sense.ensure(this); if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('kalresume'))", null); }
+
+    @Override
     protected void onNewIntent(Intent i) {
         super.onNewIntent(i);
         if (i != null && i.getData() != null) web.loadUrl(i.getData().toString());
@@ -88,6 +91,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
+        if (code == 7 && web != null) web.evaluateJavascript("window.dispatchEvent(new Event('kalperm'))", null);
         if (code == 2 && geoCb != null) { geoCb.invoke(geoOrigin, res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED, true); geoCb = null; }
     }
 

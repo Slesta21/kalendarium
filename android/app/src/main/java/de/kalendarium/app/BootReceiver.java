@@ -6,5 +6,5 @@ import android.content.Intent;
 
 public class BootReceiver extends BroadcastReceiver {
     @Override
-    public void onReceive(Context c, Intent i) { Alarms.restore(c); Widget.updateAll(c); }
+    public void onReceive(Context c, Intent i) { Alarms.restore(c); Widget.updateAll(c); Sense.ensure(c); }
 }
