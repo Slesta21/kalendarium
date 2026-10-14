@@ -20,7 +20,7 @@ public class Bridge {
     }
 
     /* Was diese App-Version kann, damit die Web-App passend reagiert */
-    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep,sense,fetch"; }
+    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep,sense,fetch,light"; }
 
     /* Startbildschirm-Widget mit den nächsten Terminen füttern */
     @JavascriptInterface public void widget(String json) { Widget.save(ctx, json); }
@@ -52,6 +52,11 @@ public class Bridge {
     @JavascriptInterface public boolean noiseStart(double until) { if (!micOk()) return false; try { act.runOnUiThread(() -> NoiseService.start(act, (long) until)); return true; } catch (Exception e) { return false; } }
     @JavascriptInterface public void noiseStop() { try { NoiseService.stop(ctx); } catch (Exception ignored) { } }
     @JavascriptInterface public double noiseUntil() { return NoiseService.running ? ctx.getSharedPreferences(Sense.PREF, Context.MODE_PRIVATE).getLong("noiseUntil", 0) : 0; }
+    @JavascriptInterface public String light(double from, double to) { return Sense.read(ctx, "light", (long) from, (long) to); }
+    @JavascriptInterface public boolean lightSensor() { return Light.sensor(ctx); }
+    @JavascriptInterface public boolean lightOn() { return Light.on(ctx); }
+    @JavascriptInterface public void lightSet(boolean v) { Light.set(ctx, v); }
+    @JavascriptInterface public void lightNow() { try { act.runOnUiThread(() -> Light.sample(ctx, null)); } catch (Exception ignored) { } }
     @JavascriptInterface public boolean charging() { return Sense.charging(ctx); }
     /* Bild teilen (Monatsrückblick): in „Bilder/Kalendarium“ ablegen und das Teilen-Menü öffnen */
     @JavascriptInterface public boolean shareImage(String dataUrl, String text) {

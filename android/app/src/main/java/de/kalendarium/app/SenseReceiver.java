@@ -9,5 +9,6 @@ public class SenseReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context c, Intent i) {
         String a = i.getAction();
         if (Sense.TRACE.equals(a)) { Sense.tracePoint(c); Sense.planTrace(c); }
+        else if (Light.ACT.equals(a)) Light.onAlarm(c, goAsync());
     }
 }

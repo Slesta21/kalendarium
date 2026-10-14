@@ -66,7 +66,7 @@ public class NoiseService extends Service {
             ar = new AudioRecord(MediaRecorder.AudioSource.MIC, rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, Math.max(min, rate));
             ar.startRecording();
             short[] buf = new short[rate / 4];
-            double sum = 0, peak = 0; int n = 0; long bucket = System.currentTimeMillis();
+            double sum = 0, peak = 0; int n = 0, k2 = 0; long bucket = System.currentTimeMillis();
             while (running && System.currentTimeMillis() < until) {
                 int r = ar.read(buf, 0, buf.length); if (r <= 0) continue;
                 double s = 0; for (int k = 0; k < r; k++) s += (double) buf[k] * buf[k];
@@ -75,6 +75,7 @@ public class NoiseService extends Service {
                 if (System.currentTimeMillis() - bucket >= 30000) {
                     Sense.append(this, "noise", new JSONArray().put(bucket).put(Math.round(sum / n)).put(Math.round(peak)));
                     sum = 0; peak = 0; n = 0; bucket = System.currentTimeMillis();
+                    if (++k2 % 2 == 0 && Light.on(this)) Light.sample(this, null);
                 }
             }
         } catch (Exception ignored) {

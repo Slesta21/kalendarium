@@ -78,7 +78,7 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onResume() { super.onResume(); Sense.ensure(this); if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('kalresume'))", null); }
+    protected void onResume() { super.onResume(); Sense.ensure(this); if (Light.on(this)) Light.sample(this, null); if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('kalresume'))", null); }
 
     @Override
     protected void onNewIntent(Intent i) {

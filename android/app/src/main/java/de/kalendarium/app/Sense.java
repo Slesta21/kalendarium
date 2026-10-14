@@ -54,6 +54,7 @@ public class Sense extends JobService {
             else if (js.getPendingJob(JOB_PLUG) == null) schedulePlug(c);
         } catch (Exception ignored) { }
         planTrace(c);
+        Light.plan(c);
     }
     static void schedulePlug(Context c) {
         try {

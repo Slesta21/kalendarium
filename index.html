@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 48  ·  persönlicher Kalender für alles
+ KALENDARIUM 49  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2904,7 +2904,23 @@ html.wr-open,html.wr-open body{overflow:hidden}
 @media (max-width:560px){ .where{grid-template-columns:40px minmax(0,1fr)} .where .src{grid-column:2;text-align:left;margin-top:-6px} }
 
 .lt-shift{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:600;color:var(--zone-ink);margin-top:6px}.lt-shift svg{width:14px;height:14px}
-.lt-ride{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--accent-soft, rgba(14,116,144,.12));font-size:13px}.lt-ride svg{flex:none;margin-top:2px}.lt-ride b{display:block}.lt-ride small{display:block;opacity:.8}</style>
+.lt-ride{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--accent-soft, rgba(14,116,144,.12));font-size:13px}.lt-ride svg{flex:none;margin-top:2px}.lt-ride b{display:block}.lt-ride small{display:block;opacity:.8}.lx-row{display:flex;align-items:flex-start;gap:6px;font-size:13px;color:var(--muted);line-height:1.4}
+.lx-row svg{width:15px;height:15px;flex:none;margin-top:2px;color:var(--gold)}
+.lx-row b{color:var(--ink);font-weight:700}
+.lx-tile{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:var(--r-tile);background:var(--tile);margin-top:12px}
+.lx-h{display:flex;align-items:center;gap:8px;font-size:15px}
+.lx-h svg{width:18px;height:18px;color:var(--gold)}
+.lx-now{margin-left:auto;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--tile-2);color:var(--muted);font-variant-numeric:tabular-nums}
+.lx-bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center}
+.lx-bars .c{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.lx-bars .bar{position:relative;width:100%;max-width:36px;height:72px;background:var(--tile-2);border-radius:10px;display:flex;align-items:flex-end;overflow:hidden}
+.lx-bars .bar i{display:block;width:100%;background:var(--gold);border-radius:10px}
+.lx-bars .bar i.lo{background:color-mix(in oklab, var(--gold) 45%, var(--tile-2))}
+.lx-bars .bar em{position:absolute;left:0;right:0;height:2px;background:var(--ink);opacity:.35}
+.lx-bars b{font-size:13px;font-variant-numeric:tabular-nums}
+.lx-bars small{font-size:12px;color:var(--muted);font-weight:700}
+.en-h .lxc{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--tile-2);color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+</style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
 <body>
@@ -6670,7 +6686,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '48';
+const APP_VERSION = '49';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -7256,7 +7272,7 @@ const VIEWS = {
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
     const en = energyCard(t0, false), exT = examTile();
-    return `<div class="sl2 sl3">${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${wrapTile()}${how}</div>`;
+    return `<div class="sl2 sl3">${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${lightTile()}${wrapTile()}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -8614,7 +8630,7 @@ const SX = [
   ['ISIS', 'buch', 'Abgaben automatisch als Fristen'],
   ['Orte und Wege', 'ort', 'Zuhause, Uni, Losgehen'],
   ['Schlaf', 'mond', 'Schlafdauer und Aufstehen'],
-  ['Handy-Sensoren', 'handy', 'Ladekabel, Lärm, Schritte, Bahn, Wachheitstest'],
+  ['Handy-Sensoren', 'handy', 'Ladekabel, Lärm, Licht, Schritte, Bahn, Wachheitstest'],
   ['Darstellung', 'stift', 'Name, Farbe, Hell oder Dunkel'],
   ['Stil', 'stern', 'Schrift, Farbton, Dichte'],
   ['Kategorien', 'kreis', 'Farben und Symbole'],
@@ -8946,6 +8962,7 @@ const ACTIONS = {
   ltPick(){ LiveTrip.pick(); },
   ltCaught(el){ LiveTrip.caught(el.dataset.i); },
   overUndo(){ LiveTrip.undo(); },
+  lightToggle(){ try { window.KalNative.lightSet(!window.KalNative.lightOn()); } catch {} Lite._c = null; render(); },
   liveTrip(el){ LiveTrip.open(el.dataset.home ? {home: true} : {date: el.dataset.date, i: el.dataset.i}); },
   async stopInfo(el){
     const d = el.dataset, lat = parseFloat(d.lat), lon = parseFloat(d.lon), has = !isNaN(lat) && !isNaN(lon), name = d.name || 'Haltestelle';
@@ -9527,6 +9544,7 @@ function sleepPatterns(D){
   const noisy = D.base.filter(n => n.woke === 'geraeusch' || (n.tags || []).includes('laerm') || (n.noise && n.noise.woke > 0));
   if (noisy.length >= 2) { const rest = D.base.filter(n => !noisy.includes(n)), dd = rest.length >= 3 ? sAvg(noisy.map(n => n.dur)) - sAvg(rest.map(n => n.dur)) : 0, qn = sAvg(noisy.filter(n => n.q).map(n => n.q)), qr = sAvg(rest.filter(n => n.q).map(n => n.q));
     P('warn', 'glocke', `Geräusche wecken dich (${noisy.length}× in 4 Wochen)`, `${dd < -10 ? `In diesen Nächten schläfst du ${dur(Math.round(-dd))} kürzer. ` : ''}Lärm weckt auch dann, wenn man es morgens nicht mehr weiß. Hilft oft: Ohrstöpsel aus Schaumstoff, gleichmäßiges Rauschen (Ventilator, White Noise), Fenster zu bei Straßenlärm, Handy auf „Nicht stören“.`, qn != null && qr != null && noisy.filter(n => n.q).length >= 2 ? vzPair(qn, qr, 'mit', 'ohne') : ''); }
+  try { lightPatterns(D, P); } catch {}
   const PL = sleepPlan(), up = []; for (let k = 1; k <= 7; k++) { const x = PL[ymd(addDays(t0, k))]; if (x && x.short) up.push(`${dayLabel(addDays(t0, k - 1))} nur ${dur(x.sleepMin)}`); }
   if (up.length) P('warn', 'mond', 'Kurze Nächte in Sicht', up.join(' · ') + '. Der Plan gleicht das in den Nächten danach aus.');
   const rank = {warn: 0, '': 1, good: 2}; return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
@@ -9653,7 +9671,9 @@ const SleepAuto = {
     const pre = Math.round(U.reduce((a, u) => a + Math.max(0, Math.min(u[1], +off) - Math.max(u[0], +off - 3600000)), 0) / 60000);
     let plug = null, nz = null;
     if (typeof Sens !== 'undefined' && Sens.on()) { try { plug = plugNear(+off); nz = noiseSummary(noiseNight(Math.min(+off, plug || +off) - 15 * 60000, +onT + 10 * 60000, U), +onT); } catch {} }
-    return {pre, plugT: plug, plug: plug ? hm(new Date(plug)) : null, noise: nz, bed: hm(off), wake: hm(onT), waso: Math.round(waso / 60000 / 5) * 5, wakes: i1 - i0 - 1, off: +off, on: +onT};
+    let li = null; if (typeof Lite !== 'undefined' && Lite.has()) { try { li = lightNight(+off, +onT, U); } catch {} }
+    const bedT = li && li.offT && li.offT > +off + 5 * 60000 && li.offT - +off <= 120 * 60000 ? new Date(li.offT) : off;
+    return {pre, plugT: plug, plug: plug ? hm(new Date(plug)) : null, noise: nz, light: li, bedLight: bedT !== off, bed: hm(bedT), wake: hm(onT), waso: Math.round(waso / 60000 / 5) * 5, wakes: i1 - i0 - 1, off: +off, on: +onT};
   },
   stat: null,
   run(force){
@@ -9663,13 +9683,13 @@ const SleepAuto = {
     const t0 = startOfDay(new Date()); let n = 0; state.sleepLog = state.sleepLog || [];
     for (let k = 6; k >= 0; k--) {
       const date = ymd(addDays(t0, -k)), ex = state.sleepLog.find(x => x.date === date);
-      if (ex && !ex.ex && !ex.auto) { if (ex.pre == null || (ex.noise === undefined && typeof Sens !== 'undefined' && Sens.on())) { let r0 = null; try { r0 = this.night(date); } catch {} if (r0) { if (ex.pre == null) ex.pre = r0.pre; if (ex.wakes == null) ex.wakes = r0.wakes; ex.noise = r0.noise || null; if (r0.plug) ex.plug = r0.plug; n++; } } this.why[date] = 'Von dir selbst eingetragen, das hat Vorrang.'; continue; }
+      if (ex && !ex.ex && !ex.auto) { if (ex.pre == null || (ex.noise === undefined && typeof Sens !== 'undefined' && Sens.on()) || (ex.light === undefined && typeof Lite !== 'undefined' && Lite.has())) { let r0 = null; try { r0 = this.night(date); } catch {} if (r0) { if (ex.pre == null) ex.pre = r0.pre; if (ex.wakes == null) ex.wakes = r0.wakes; ex.noise = r0.noise || null; ex.light = r0.light || null; if (r0.plug) ex.plug = r0.plug; n++; } } this.why[date] = 'Von dir selbst eingetragen, das hat Vorrang.'; continue; }
       let r; try { r = this.night(date); } catch { r = null; }
       if (!r) continue;
       /* heute: sobald du nach 4 Uhr wieder am Handy warst; ein späterer Lauf korrigiert die Zeiten, falls du danach weitergeschlafen hast */
       if (k === 0 && new Date(r.on).getHours() < 4) { this.why[date] = 'Du warst vor 4 Uhr am Handy, die App wartet, ob du danach weiterschläfst.'; continue; }
-      const o = {bed: r.bed, wake: r.wake, bedRaw: true, waso: r.waso, wakes: r.wakes, pre: r.pre, inBed: r.plugT && r.plugT < r.off ? r.plug : null, plug: r.plug, noise: r.noise, src: 'handy', auto: true};
-      if (ex && !ex.ex) { if (ex.bed === o.bed && ex.wake === o.wake && ex.waso === o.waso && ex.pre === o.pre && ex.plug === o.plug && JSON.stringify(ex.noise || null) === JSON.stringify(o.noise || null)) continue; Object.assign(ex, o); }
+      const o = {bed: r.bed, wake: r.wake, bedRaw: true, waso: r.waso, wakes: r.wakes, pre: r.pre, inBed: r.plugT && r.plugT < r.off ? r.plug : r.bedLight ? hm(new Date(r.off)) : null, plug: r.plug, noise: r.noise, light: r.light || null, src: 'handy', auto: true};
+      if (ex && !ex.ex) { if (ex.bed === o.bed && ex.wake === o.wake && ex.waso === o.waso && ex.pre === o.pre && ex.plug === o.plug && JSON.stringify(ex.noise || null) === JSON.stringify(o.noise || null) && JSON.stringify(ex.light || null) === JSON.stringify(o.light || null)) continue; Object.assign(ex, o); }
       else { if (ex) state.sleepLog.splice(state.sleepLog.indexOf(ex), 1); state.sleepLog.push({id: uid(), date, q: 0, tags: [], ...o}); }
       n++;
     }
@@ -9799,6 +9819,7 @@ function sleepLastCard(D){
     <div class="sl3-tl">${sleepTimes(n)}</div>
     ${g.ex && (g.ex.pre != null || g.ex.wakes || g.ex.plug) ? `<div class="sl3-ph">${ic('handy', 's')}${g.ex.plug ? `<span><b>${g.ex.plug}</b> ans Ladekabel</span>` : ''}${g.ex.pre != null ? `<span><b>${g.ex.pre} min</b> am Handy in der Stunde davor</span>` : ''}${g.ex.wakes ? `<span><b>${g.ex.wakes}×</b> nachts aufs Handy geschaut</span>` : ''}</div>` : ''}
     ${(() => { const base = +addMin(startOfDay(addDays(d, -1)), 720); return noiseMini(base + (n.ib ?? n.b) * 60000, base + n.w * 60000); })()}
+    ${lightMini(g.ex)}
     ${g.confirmed ? sum() : sleepForm(date, 'inline')}
     ${showSt ? `<div class="sl3-st ${as.lvl}"><span class="dot"></span><span><b>${esc(as.t)}</b> ${as.k === 'on' ? (SleepAuto.stat ? `<br>zuletzt geprüft ${hm(new Date(SleepAuto.stat.at))}` : '') : `<br>${as.sub}`}</span>${as.act || ''}</div>` : ''}
   </section>`;
@@ -9879,7 +9900,7 @@ function energyCard(d, compact){
   const pv = isToday && typeof PVT !== 'undefined' ? PVT.todayLine() : '';
   const lbl = isToday ? 'Energie heute' : sameDay(d, addDays(startOfDay(now), 1)) ? 'Energie morgen' : `Energie ${esc(fmtShort(d))}`;
   return `<section class="en-card${compact ? ' compact' : ''}">
-    <div class="en-h"><span class="lbl">${ic('sonne', 's')}${lbl}</span><span class="r">${stepsChip}<span class="form ${E.form[0]}">${E.form[1]}</span></span></div>
+    <div class="en-h"><span class="lbl">${ic('sonne', 's')}${lbl}</span><span class="r">${stepsChip}${(() => { if (!isToday || typeof Lite === 'undefined' || !Lite.has()) return ''; const L = lightDay(now); return L ? `<span class="lxc">${L.day} min Tageslicht</span>` : ''; })()}<span class="form ${E.form[0]}">${E.form[1]}</span></span></div>
     <p>Am wachsten <b>${span(E.hi)}</b>${E.lo ? `, Tief um <b>${hm(E.lo.a)}</b>` : ''}.${E.form[0] === 'low' ? ' Nach den letzten Nächten ist dein Schlafdruck hoch, plane Schweres in die wache Zeit und Leichtes ins Tief.' : ''}</p>
     <div class="en-plot"><svg class="en-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wachheit über den Tag, am höchsten ${span(E.hi)}">${g}</svg>${nowDot}<div class="suns">${suns}</div><div class="hrs">${lb}</div></div>
     ${(() => { const LT = typeof lightTips === 'function' ? lightTips(d) : []; const L2 = compact ? LT.slice(0, 1) : LT; return L2.length ? `<div class="en-lt">${L2.map(x => `<div><span class="ic">${ic(x.ic, 's')}</span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></div>`).join('')}</div>` : ''; })()}
@@ -10242,6 +10263,7 @@ function sensePanel(){
       row('glocke', 'Lärm in der Nacht', Sens.micOk() ? 'Abends bei „Heute Nacht“ startbar. Nur die Lautstärke, nichts wird aufgenommen.' : 'Braucht das Mikrofon. Gemessen wird nur die Lautstärke, nichts wird aufgenommen.', Sens.micOk() ? sw('sense.noise', S.noise !== false, 'Lärm messen anbieten') : allow('askMic')),
       row('laeufer', 'Schritte', !Sens.stepsSensor() ? 'Dein Handy hat keinen Schrittzähler.' : Sens.stepsOk() ? `${st != null ? `Heute ${st.toLocaleString('de-DE')} Schritte. ` : ''}Für das Muster „Schritte und Schlaf“` : 'Braucht die Erlaubnis für Körperaktivität', !Sens.stepsSensor() ? '' : Sens.stepsOk() ? '<span class="sens-ok">an</span>' : allow('askSteps')),
       row('zug', 'Bahn erkennen und Fußwege lernen', Native.bgLoc() ? `Während deiner Wege merkt die App, welche Bahn du genommen hast, und lernt, wie lange du wirklich zur Haltestelle brauchst.${WL.length ? ' Gelernt: ' + WL.map(x => { const e = Math.round(sMed(x.s.map(y => y.real - y.plan))); return `${esc(x.name)} ${e > 0 ? '+' : ''}${e} min`; }).join(', ') + '.' : ''}` : 'Braucht den Standort auf „Immer erlauben“', Native.bgLoc() ? sw('sense.trip', S.trip !== false, 'Bahn erkennen') : allow('widgetLoc')),
+      row('sonne', 'Licht', !Native.has('light') ? 'Lade die neue Android-App, dann misst der Lichtsensor mit.' : !Sens.call('lightSensor') ? 'Dein Handy hat keinen Lichtsensor.' : (() => { const L = lightDay(new Date()), r = Lite.last(10 * 60000); return `Tageslicht, Licht aus, Helligkeit in der Nacht, drinnen oder draußen.${L ? ` Heute ${L.day} min draußen im Hellen, gemessen in ${L.cover} % der Zeit.` : ''}${r ? ` Gerade ${fmtLux(r.lux)}.` : ''}`; })(), Native.has('light') && Sens.call('lightSensor') ? `<button class="switch" role="switch" aria-checked="${!!Sens.call('lightOn')}" data-act="lightToggle" aria-label="Licht messen"></button>` : ''),
       row('uhr', 'Wachheitstest', `${(state.pvt || []).length ? `${state.pvt.length} Tests` : 'Noch kein Test'}${state.pvtCal ? `, Energiekurve angepasst (Verschiebung ${state.pvtCal.shift > 0 ? '+' : ''}${String(state.pvtCal.shift).replace('.', ',')} h)` : ', ab 6 Tests zu verschiedenen Zeiten passt sich die Energiekurve an'}`, allow('pvtOpen', 'Test starten')),
       row('stern', 'Monatsrückblick', 'Dein Monat zum Durchwischen und Teilen', `<button class="btn sm" data-act="wrapOpen" data-y="${new Date().getFullYear()}" data-m="${new Date().getMonth()}">Ansehen</button>`)
     ].join('') + '<p class="note">Alles bleibt auf deinem Handy. Es wird nichts aufgenommen und nichts verschickt.</p>';
@@ -10362,7 +10384,8 @@ function sunTimes(date, lat, lon){
   return {rise: toD(Jt - H / 360), set: toD(Jt + H / 360)};
 }
 function sunHere(d){ const h = typeof Loc !== 'undefined' && Loc.homeL ? Loc.homeL() : null; return sunTimes(d, h ? h.latitude : 52.52, h ? h.longitude : 13.405); }
-function lightTips(d){
+function lightTips(d){ const b = lightTips0(d); try { return lightTipsLive(startOfDay(d), b); } catch { return b; } }
+function lightTips0(d){
   if (!state.settings.sleep.on) return [];
   d = startOfDay(d); const S = sunHere(d), E = energyDay(d); if (!S || !E) return [];
   const now = new Date(), isToday = sameDay(d, now), out = [], sh = _enCache.shift || 0, late = sh > 0.4, early = sh < -0.4;
@@ -10501,11 +10524,161 @@ const Where = {
     return {k: 'away', ic: 'ort', t: 'Unterwegs', s: dh != null ? `${dh < 1000 ? Math.round(dh / 10) * 10 + ' m' : (dh / 1000).toFixed(1).replace('.', ',') + ' km'} von zuhause${v != null && v < 1.5 ? ', stehst gerade' : ''}` : '', src, leg};
   },
   chip(){
-    const w = this.now(), L = w.leg, act = L && L.kind === 'go' ? `data-act="liveTrip" data-date="${ymd(new Date())}" data-i="${planDay(startOfDay(new Date())).legs.indexOf(L)}"` : L && L.kind === 'home' ? 'data-act="liveTrip" data-home="1"' : 'data-act="whereInfo"';
-    return `<button class="where k-${w.k}${w.plan ? ' plan' : ''}" ${act}><span class="ic">${ic(w.ic)}</span><span class="tx"><b>${esc(w.t)}</b>${w.s ? `<small>${esc(w.s)}</small>` : ''}</span><span class="src">${esc(w.src || '')}</span></button>`;
+    const w = this.now(), env = typeof lightEnv === 'function' ? lightEnv() : '', L = w.leg, act = L && L.kind === 'go' ? `data-act="liveTrip" data-date="${ymd(new Date())}" data-i="${planDay(startOfDay(new Date())).legs.indexOf(L)}"` : L && L.kind === 'home' ? 'data-act="liveTrip" data-home="1"' : 'data-act="whereInfo"';
+    return `<button class="where k-${w.k}${w.plan ? ' plan' : ''}" ${act}><span class="ic">${ic(w.ic)}</span><span class="tx"><b>${esc(w.t)}</b>${w.s ? `<small>${esc(w.s)}</small>` : ''}</span><span class="src">${esc([w.src, env].filter(Boolean).join(' · '))}</span></button>`;
   },
   paint(){ const el = document.querySelector('.where'); if (!el) return; const tmp = document.createElement('div'); tmp.innerHTML = this.chip(); el.replaceWith(tmp.firstElementChild); }
 };
+/* ================================================================
+   §L LICHT (v49)
+   Der Lichtsensor vorne am Handy misst die Helligkeit in Lux. Die App
+   nimmt tagsüber alle ~5 min, nachts alle ~10 min einen Wert. Liegt
+   etwas direkt vor dem Handy (Tasche, Display nach unten), meldet das
+   der Näherungssensor und der Wert zählt nicht. Lücken gelten also nie
+   als „dunkel“, sondern als „nicht gemessen“.
+   Richtwerte: Nacht im dunklen Zimmer < 1 lx, Wohnzimmer abends 50–300,
+   Büro/Hörsaal 300–500, draußen bewölkt ab ~1.000, Sonne 10.000–100.000.
+   Wissenschaft: Morgenlicht stellt die innere Uhr vor, helles Licht am
+   Abend nach hinten und unterdrückt Melatonin (Khalsa 2003; Gooley 2011;
+   Chang 2015). Licht im Schlaf erhöht Puls und Insulinresistenz am
+   nächsten Tag (Mason 2022). Mehr Tageslicht hängt mit früherem und
+   besserem Schlaf zusammen (Wams 2017; Burns 2021).
+   ================================================================ */
+const Lite = {
+  _c: null, _poke: 0, memo: {},
+  has(){ return typeof Sens !== 'undefined' && Sens.on() && Native.has('light') && !!Sens.call('lightSensor'); },
+  on(){ return this.has() && !!Sens.call('lightOn'); },
+  all(){
+    const now = Date.now();
+    if (!this._c || now - this._c.at > 30000) { this._c = {at: now, R: Sens.get('light', now - 32 * 86400000, now + 60000).map(r => ({t: r[0], lux: +r[1] || 0, cov: r[2] === 1, scr: r[3] === 1}))}; this.memo = {}; }
+    return this._c.R;
+  },
+  rows(a, b){ return this.all().filter(r => r.t >= a && r.t <= b); },
+  /* Frischen Wert holen, höchstens einmal pro Minute */
+  poke(){ const now = Date.now(); if (now - this._poke < 60000) return; this._poke = now; try { window.KalNative.lightNow(); } catch {} setTimeout(() => { this._c = null; }, 3000); },
+  last(maxAge = 6 * 60000){ const now = Date.now(); const r = this.rows(now - maxAge, now + 60000).filter(x => !x.cov).pop(); return r || null; }
+};
+const fmtLux = v => v >= 10000 ? (Math.round(v / 1000)).toLocaleString('de-DE') + '.000 lx' : v >= 10 ? Math.round(v).toLocaleString('de-DE') + ' lx' : String(Math.round(v * 10) / 10).replace('.', ',') + ' lx';
+/* Jeder Wert gilt bis zum nächsten, höchstens 12 min (sonst Lücke) */
+function luxSpans(R, a, b){
+  const out = [], now = Date.now();
+  for (let i = 0; i < R.length; i++) { const r = R[i], nx = R[i + 1];
+    const t0 = Math.max(a, r.t), t1 = Math.min(b, nx ? Math.min(nx.t, r.t + 12 * 60000) : Math.min(r.t + 6 * 60000, now));
+    if (t1 > t0) out.push({...r, t0, t1}); }
+  return out;
+}
+function luxMin(S, test, a = -Infinity, b = Infinity){ let m = 0; for (const s of S) if (!s.cov && test(s)) m += Math.max(0, Math.min(s.t1, b) - Math.max(s.t0, a)); return Math.round(m / 60000); }
+
+/* Ein Tag: Tageslicht (≥ 1.000 lx), Morgenlicht in den 2 h nach dem Aufstehen, gemessener Anteil */
+function lightDay(d){
+  if (!Lite.has()) return null; d = startOfDay(d); const key = ymd(d); Lite.all();
+  if (Lite.memo[key] !== undefined) return Lite.memo[key];
+  const a = +at(key, '05:00'), b = Math.min(+at(key, '23:30'), Date.now());
+  if (b - a < 30 * 60000) return (Lite.memo[key] = null);
+  const R = Lite.rows(a - 12 * 60000, b), S = luxSpans(R, a, b);
+  if (S.filter(s => !s.cov).length < 3) return (Lite.memo[key] = null);
+  const ex = (state.sleepLog || []).find(x => x.date === key), wake = ex && ex.wake ? +at(key, ex.wake) : +at(key, '07:00');
+  const valid = S.filter(s => !s.cov).reduce((m, s) => m + s.t1 - s.t0, 0);
+  const out = {day: luxMin(S, s => s.lux >= 1000), bright: luxMin(S, s => s.lux >= 300), morning: luxMin(S, s => s.lux >= 1000, wake, wake + 2 * 3600000),
+    cover: Math.round(valid / (b - a) * 100), maxLux: Math.max(0, ...S.filter(s => !s.cov).map(s => s.lux)), wake, n: R.length};
+  return (Lite.memo[key] = out);
+}
+
+/* Eine Nacht. off/on = Handy weg / wieder da, U = Bildschirmzeiten
+   · Licht aus: nach dem letzten hellen Wert (≥ 15 lx) der erste dunkle (< 5 lx)
+   · Nacht: Median und hellster Moment während des Schlafs
+   · Abend: Minuten mit hellem Licht (≥ 150 lx) in den 2 h davor
+   · Handy im Dunkeln: Bildschirmzeit in der letzten Stunde, während es um dich dunkel war */
+function lightNight(off, on, U){
+  const R = Lite.rows(off - 2.5 * 3600000, on + 60000); if (R.filter(r => !r.cov).length < 3) return null;
+  const V = R.filter(r => !r.cov), w0 = off - 90 * 60000, w1 = off + 120 * 60000;
+  let lastBright = null; for (const r of V) if (r.t >= w0 && r.t <= w1 && r.lux >= 15) lastBright = r;
+  let offT = null; if (lastBright) { const thr = Math.max(5, Math.min(10, lastBright.lux * 0.15)), nx = V.find(r => r.t > lastBright.t && r.lux < thr); if (nx && nx.t <= w1 + 15 * 60000) offT = Math.round((lastBright.t + nx.t) / 2); }
+  const s0 = Math.max(off, offT || off) + 10 * 60000, s1 = on - 10 * 60000, N = V.filter(r => r.t >= s0 && r.t <= s1);
+  while (N.length > 3 && N[N.length - 1].lux >= 50) N.pop(); /* Licht an am Morgen gehört nicht zur Nacht */
+  const lx = N.map(r => r.lux).sort((x, y) => x - y), med = lx.length >= 3 ? lx[lx.length >> 1] : null, mx = N.reduce((m, r) => !m || r.lux > m.lux ? r : m, null);
+  const S = luxSpans(R, off - 2 * 3600000, off), eve = luxMin(S, s => s.lux >= 150);
+  let inDark = 0; for (const u of (U || [])) { const a = Math.max(u[0], off - 3600000), b = Math.min(u[1], off); if (b <= a) continue;
+    const mid = (a + b) / 2, near = V.reduce((m, r) => Math.abs(r.t - mid) <= 8 * 60000 && (!m || Math.abs(r.t - mid) < Math.abs(m.t - mid)) ? r : m, null);
+    if (near && near.lux < 10) inDark += b - a; }
+  return {off: offT ? hm(new Date(offT)) : null, offT, med, max: mx ? Math.round(mx.lux * 10) / 10 : null, maxAt: mx && mx.lux >= 10 ? hm(new Date(mx.t)) : null, n: N.length, eve, inDark: Math.round(inDark / 60000)};
+}
+
+/* Zeile in „Letzte Nacht“ */
+function lightMini(ex){
+  const L = ex && ex.light; if (!L) return '';
+  const night = L.med == null ? '' : L.med < 1 ? '<b>dunkel</b>' : L.med < 5 ? `<b>fast dunkel</b> (${fmtLux(L.med)})` : `<b>nicht dunkel</b> (${fmtLux(L.med)})`;
+  const bits = [L.off ? `Licht aus <b>${L.off}</b>` : '', night ? `Nacht ${night}` : '', L.maxAt ? `um ${L.maxAt} hell (${fmtLux(L.max)})` : '', L.inDark >= 5 ? `${dur(L.inDark)} Handy im Dunkeln` : ''].filter(Boolean);
+  return bits.length ? `<div class="lx-row">${ic('sonne', 's')}<span>${bits.join(' · ')}</span></div>` : '';
+}
+
+/* Umgebung jetzt: draußen, drinnen, dunkel */
+function lightEnv(){
+  if (typeof Lite === 'undefined' || !Lite.has()) return '';
+  Lite.poke(); const r = Lite.last(4 * 60000); if (!r) return '';
+  const now = Date.now(), S = sunHere(new Date()), day = S && now > +S.rise + 30 * 60000 && now < +S.set - 30 * 60000;
+  if (day && r.lux >= 1000) return 'draußen';
+  if (day) return r.lux < 500 ? 'drinnen' : '';
+  return r.lux < 5 ? 'im Dunkeln' : '';
+}
+
+/* Tipps mit echten Messwerten vor die allgemeinen */
+function lightTipsLive(d, base){
+  if (!Lite.has() || !sameDay(d, new Date())) return base;
+  const L = lightDay(d), now = new Date(), S = sunHere(d), out = [];
+  if (L && L.cover >= 15) {
+    if (L.morning >= 10 && now < L.wake + 4 * 3600000) out.push({ic: 'sonne', t: `Morgenlicht: ${dur(L.morning)} draußen`, s: 'Gemessen mit dem Lichtsensor. Das stellt deine innere Uhr, heute Abend wirst du eher müde.'});
+    else if (S && now.getHours() >= 12 && now < addMin(S.set, -30) && L.day < 15) out.push({ic: 'sonne', t: L.day ? `Heute erst ${dur(L.day)} Tageslicht` : 'Heute noch kein Tageslicht gemessen', s: `Draußen ist es auch bei Wolken über 1.000 Lux hell, drinnen meist unter 500. 15 bis 30 Minuten vor ${hm(S.set)} reichen schon.`});
+    else if (L.day >= 30 && now.getHours() >= 14) out.push({ic: 'sonne', t: `${dur(L.day)} Tageslicht heute`, s: 'Gut für die innere Uhr und den Schlaf heute Nacht.'});
+  }
+  const tn = sleepPlan()[ymd(addDays(d, 1))], r = Lite.last(10 * 60000);
+  if (tn && r && now > addMin(tn.bed, -150) && now < tn.bed && r.lux >= 250) out.push({ic: 'mond', t: `Gerade helles Licht (${fmtLux(r.lux)})`, s: `Bis ${hm(tn.bed)} sind es noch ${dur(Math.round((tn.bed - now) / 60000))}. Gedimmtes, warmes Licht hilft dir beim Einschlafen.`});
+  return out.concat(base.filter(x => !(x.ic === 'sonne' && out.some(o => o.ic === 'sonne')) && !(x.ic === 'mond' && out.some(o => o.ic === 'mond')))).slice(0, 3);
+}
+
+/* Muster für den Schlaf-Tab */
+function lightPatterns(D, P){
+  if (!Lite.has() && !D.base.some(n => n.light)) return;
+  const LN = D.base.filter(n => n.light && n.light.med != null);
+  if (LN.length >= 5) {
+    const br = LN.filter(n => n.light.med >= 3), dk = LN.filter(n => n.light.med < 1), medAll = sMed(LN.map(n => n.light.med));
+    if (br.length >= 3 && dk.length >= 3) {
+      const ddur = sAvg(br.map(n => n.dur)) - sAvg(dk.map(n => n.dur)), qb = br.filter(n => n.q), qd = dk.filter(n => n.q), dq = qb.length >= 2 && qd.length >= 2 ? sAvg(qb.map(n => n.q)) - sAvg(qd.map(n => n.q)) : null;
+      const ww = br.filter(n => n.waso != null), wd = dk.filter(n => n.waso != null), dw = ww.length >= 2 && wd.length >= 2 ? sAvg(ww.map(n => n.waso)) - sAvg(wd.map(n => n.waso)) : null;
+      const bits = [Math.abs(ddur) >= 10 ? `${fmtDelta(ddur)} Schlaf` : '', dq != null && Math.abs(dq) >= 0.3 ? `Erholung ${dq > 0 ? '+' : '−'}${Math.abs(dq).toFixed(1).replace('.', ',')}` : '', dw != null && Math.abs(dw) >= 10 ? `${fmtDelta(dw)} nachts wach` : ''].filter(Boolean);
+      const worse = ddur < -10 || (dq != null && dq < -0.3) || (dw != null && dw > 10);
+      P(worse ? 'warn' : '', 'sonne', worse ? 'Helle Nächte schaden dir' : 'Licht in der Nacht', `${br.length} Nächte waren nicht ganz dunkel (über 3 Lux), ${dk.length} dunkel.${bits.length ? ' In den hellen: ' + bits.join(' · ') + '.' : ' Bisher kaum ein Unterschied.'}${worse ? ' Verdunkeln, Schlafmaske oder Standby-Lichter abdecken hilft.' : ''}`);
+    } else if (medAll < 1) P('good', 'mond', 'Dein Zimmer ist nachts dunkel', `In ${LN.length} gemessenen Nächten meist unter 1 Lux. Genau so soll es sein.`);
+    else if (medAll >= 3) P('warn', 'sonne', `Nachts nicht ganz dunkel (meist ${fmtLux(medAll)})`, 'Schon wenig Licht im Schlaf erhöht den Puls und macht den Schlaf leichter (Mason 2022). Rollladen, Verdunklung oder eine Schlafmaske helfen.');
+  }
+  const EV = D.base.filter(n => n.light && n.light.eve != null);
+  if (EV.length >= 6) { const srt = EV.map(n => n.light.eve).sort((a, b) => a - b), q1 = srt[Math.floor(srt.length / 3)], q2 = srt[Math.floor(srt.length * 2 / 3)];
+    const hi = EV.filter(n => n.light.eve >= q2 && n.light.eve >= 30), lo = EV.filter(n => n.light.eve <= q1);
+    if (q2 > q1 && hi.length >= 3 && lo.length >= 3) { const don = sAvg(hi.map(n => n.b)) - sAvg(lo.map(n => n.b));
+      if (Math.abs(don) >= 15) P(don > 0 ? 'warn' : '', 'mond', don > 0 ? `Helle Abende: ${dur(Math.round(don))} später eingeschlafen` : 'Helles Licht am Abend', `Nach Abenden mit viel hellem Licht in den 2 Stunden vor dem Schlafen (über ${dur(q2)}) schläfst du ${dur(Math.round(Math.abs(don)))} ${don > 0 ? 'später' : 'früher'} ein als nach dunklen (unter ${dur(Math.max(1, q1))}).${don > 0 ? ' Abends gedimmtes, warmes Licht verschiebt das zurück.' : ''}`); } }
+  const ID = D.base.filter(n => n.light && n.light.inDark != null), idAvg = ID.length >= 5 ? sAvg(ID.map(n => n.light.inDark)) : null;
+  if (idAvg != null && idAvg >= 10) P('', 'handy', `Abends ${dur(Math.round(idAvg))} am Handy im Dunkeln`, 'Im Schnitt in der letzten Stunde vor dem Schlafen, während das Licht schon aus war. Ein heller Bildschirm in einem dunklen Raum hält wach. Nachtmodus und niedrige Helligkeit mildern das.');
+  if (Lite.has()) {
+    const DL = D.base.map(n => ({n, L: lightDay(addDays(n.d, -1))})).filter(x => x.L && x.L.cover >= 15);
+    if (DL.length >= 6) { const avg = sAvg(DL.map(x => x.L.day)), hi = DL.filter(x => x.L.day >= 30).map(x => x.n), lo = DL.filter(x => x.L.day < 10).map(x => x.n);
+      if (hi.length >= 3 && lo.length >= 3) { const don = sAvg(hi.map(n => n.b)) - sAvg(lo.map(n => n.b)), qh = hi.filter(n => n.q), ql = lo.filter(n => n.q), dq = qh.length >= 2 && ql.length >= 2 ? sAvg(qh.map(n => n.q)) - sAvg(ql.map(n => n.q)) : null;
+        const bits = [Math.abs(don) >= 10 ? `${dur(Math.round(Math.abs(don)))} ${don < 0 ? 'früher' : 'später'} eingeschlafen` : '', dq != null && Math.abs(dq) >= 0.3 ? `Erholung ${dq > 0 ? '+' : '−'}${Math.abs(dq).toFixed(1).replace('.', ',')}` : ''].filter(Boolean), good = don < -10 || (dq != null && dq > 0.3);
+        P(good ? 'good' : '', 'sonne', good ? 'Tageslicht hilft deinem Schlaf' : 'Tageslicht und Schlaf', `Nach Tagen mit mindestens 30 min draußen im Hellen${bits.length ? ': ' + bits.join(' · ') : ' schläfst du ähnlich'}, verglichen mit Tagen unter 10 min. Im Schnitt ${dur(Math.round(avg))} am Tag.`); }
+      else if (avg < 20) P('warn', 'sonne', `Wenig Tageslicht: ${dur(Math.round(avg))} am Tag`, 'Gemessen, wenn das Handy nicht in der Tasche war, also eher etwas mehr. 30 Minuten draußen, am besten vormittags, stabilisieren die innere Uhr.'); }
+  }
+}
+
+/* Kachel im Schlaf-Tab: Tageslicht der letzten 7 Tage */
+function lightTile(){
+  if (!Lite.has()) return '';
+  const t0 = startOfDay(new Date()), days = []; for (let k = 6; k >= 0; k--) { const d = addDays(t0, -k); days.push({d, L: lightDay(d)}); }
+  const has = days.filter(x => x.L); if (!has.length) return `<div class="lx-tile"><div class="lx-h">${ic('sonne', 's')}<b>Tageslicht</b></div><p class="sl2-note">Der Lichtsensor misst ab jetzt mit. Nach dem ersten Tag steht hier, wie viel Tageslicht du abbekommst.</p></div>`;
+  const mx = Math.max(30, ...has.map(x => x.L.day)), avg = sAvg(has.filter(x => !sameDay(x.d, t0)).map(x => x.L.day)), cov = Math.round(sAvg(has.map(x => x.L.cover)));
+  const r = Lite.last(10 * 60000);
+  return `<div class="lx-tile"><div class="lx-h">${ic('sonne', 's')}<b>Tageslicht</b>${r ? `<span class="lx-now">jetzt ${fmtLux(r.lux)}</span>` : ''}</div>
+    <div class="lx-bars">${days.map(x => `<div class="c"><span class="bar"><i class="${x.L && x.L.day < 15 ? 'lo' : ''}" style="height:${x.L && x.L.day ? Math.max(4, x.L.day / mx * 100).toFixed(0) : 0}%"></i><em style="bottom:${(30 / mx * 100).toFixed(0)}%"></em></span><b>${x.L ? x.L.day : '–'}</b><small>${WD_SHORT[isoDow(x.d) - 1]}</small></div>`).join('')}</div>
+    <p class="sl2-note">Minuten über 1.000 Lux, also draußen im Hellen. Linie: 30 min.${avg != null ? ` Im Schnitt ${dur(Math.round(avg))} am Tag.` : ''} Gemessen in ${cov} % der Zeit, in der Tasche zählt nicht, also eher etwas mehr.</p></div>`;
+}
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
