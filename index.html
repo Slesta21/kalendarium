@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 45  ·  persönlicher Kalender für alles
+ KALENDARIUM 46  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2891,6 +2891,17 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .en-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .en-legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;outline:1.5px dashed var(--c);outline-offset:-1.5px}
 .en-legend i.hi{background:color-mix(in oklab, var(--c) 32%, var(--tile));outline-style:solid}.en-legend i.mid{background:color-mix(in oklab, var(--c) 20%, var(--tile))}.en-legend i.lo{background:color-mix(in oklab, var(--c) 9%, var(--tile))}
+
+/* v46: Wo bist du */
+.where{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;border:0;text-align:left;font:inherit;color:var(--ink);background:var(--tile);border-radius:var(--r-tile);padding:12px 16px;margin:0 0 var(--s3, 12px);cursor:pointer}
+.where .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--zone);color:var(--on-zone)}.where .ic svg{width:20px;height:20px}
+.where.plan .ic,.where.k-unknown .ic{background:var(--tile-2);color:var(--muted)}
+.where.k-home .ic{background:#0E8550;color:#fff}.where.k-train .ic,.where.k-stop .ic{background:#1F5AA6;color:#fff}.where.k-walk .ic{background:#CC2E77;color:#fff}
+.where b{display:block;font-family:var(--f-display);font-weight:800;font-size:18px;letter-spacing:-.02em;line-height:1.2}
+.where small{display:block;font-size:13px;color:var(--muted);margin-top:1px}
+.where .src{font-size:11px;color:var(--faint);white-space:nowrap;text-align:right}
+.tm + .rl,.rl{font-size:11px;font-weight:700;color:var(--warn);margin-left:4px;white-space:nowrap}
+@media (max-width:560px){ .where{grid-template-columns:40px minmax(0,1fr)} .where .src{grid-column:2;text-align:left;margin-top:-6px} }
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -5671,6 +5682,7 @@ const Native = {
         }
         if (f) {
           const last = l.live.legs.filter(g => !g.walk).at(-1), n = l.live.legs.filter(g => !g.walk).length;
+          e.tripId = f.hafasTrip || ''; e.fromId = f.fromId || ''; e.legToId = f.toId || ''; e.legArr = +new Date(f.arr) || 0; e.api = Transit.api;
           e.line = lineLabel(f); e.lineColor = LINE_COL[f.product] || '#5B5B5B'; e.lineDep = +new Date(f.dep); e.from = f.from || ''; e.plat = f.plat || ''; e.delay = f.ddel > 0 ? f.ddel : 0;
           e.exit = last ? last.to : ''; e.changes = Math.max(0, n - 1);
         }
@@ -6153,6 +6165,7 @@ const Delay = {
     for (const g of lv.legs) { if (g.walk || !g.line || !g.pdep) continue;
       const id = normLine(g.line) + '|' + stopKey(g.from) + '|' + (+new Date(g.pdep)), p = this.pend[id] || (this.pend[id] = {line: g.line, from: g.from, to: g.to, pdep: +new Date(g.pdep), parr: +new Date(g.parr || g.arr)});
       if (g.ddel != null && now <= p.pdep + 3 * 60000) p.ddel = g.ddel;
+      if (now <= p.pdep + 3 * 60000 && g.dep) p.shown = +new Date(g.dep); if (g.fromLL) p.fromLL = g.fromLL;
       if (g.adel != null) p.adel = g.adel; }
     this.commit();
   },
@@ -6160,6 +6173,7 @@ const Delay = {
     const now = Date.now(); let ch = false;
     for (const [id, p] of Object.entries(this.pend)) {
       if (now < p.parr + 60000 + Math.max(0, p.adel || 0) * 60000) continue;
+      if (now < p.parr + 6 * 3600000 && p.shown && p.fromLL && typeof realDeparture === 'function') { const a = realDeparture(p); if (a != null) { const off = Math.round((a - p.shown) / 60000); if (off >= -4 && off <= 20) { this.add('R:' + normLine(p.line) + '|' + stopKey(p.from), off); this.add('RL:' + normLine(p.line), off); } } }
       if (now < p.parr + 6 * 3600000) { if (p.ddel != null) this.sample('D', p.line, p.from, p.pdep, p.ddel); if (p.adel != null) this.sample('A', p.line, p.to, p.parr, p.adel); }
       delete this.pend[id]; ch = true;
     }
@@ -6282,7 +6296,7 @@ function planDay(date){
     if (loc && loc.id === pl.id) { prev = o; freeAt = o.end; locO = o; continue; }
     const tr = between(loc, pl, arriveBy), own = o.ref && o.ref.fromId && routeOk(o.ref.route) && loc && loc.id === o.ref.fromId ? o.ref.route : null,
       lv = Transit.liveFor(o.key, arriveBy) || (own ? routeTrip({name: pl.name, route: own}, arriveBy) : loc && loc.home && pl.mode === 'oepnv' ? routeTrip(pl, arriveBy) : null);
-    const depart = lv ? new Date(+lv.depart - walkExtra(lv) * 60000) : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
+    const depart = lv ? new Date(+lv.depart - (walkExtra(lv) - realLeave(lv)) * 60000) : addMin(arriveBy, -tr.total), arrive = lv ? lv.arrive : arriveBy, mins = lv ? Math.round((lv.arrive - lv.depart) / 60000) : tr.total;
     const tight = !!(freeAt && depart < freeAt);
     legs.push({kind:'go', from: lv && lv.fromHere ? {id:'_here', name:'Dein Standort', vbb: lv.fromVbb} : loc, to:pl, depart, arrive, mins, base:tr.base, rainy:lv ? false : tr.rainy, est:tr.est, tight, slack: tight ? Math.round((arriveBy - freeAt)/60000) : null, before:o, live:lv || null});
     loc = pl; freeAt = o.end; prev = o; locO = o;
@@ -6654,7 +6668,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '45';
+const APP_VERSION = '46';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -7622,6 +7636,7 @@ function dayDashboard(d){
       <div class="daytxt"><span class="eyebrow">${today ? greet + (s.name ? ', ' + esc(s.name) : '') : dayLabel(d)}</span><span class="wd">${fmtWD(d)}</span><span class="mo">${MONTHS[d.getMonth()]} ${d.getFullYear()}</span><div class="chipsrow">${chips.join('')}</div>${bar}</div>
       ${wxCard}
     </section>
+    ${today ? Where.chip() : ''}
     ${dayLead(d, plan, wake, bed, today)}
     ${wxStatusNote()}
     ${notes.length ? `<div class="notices">${notes.join('')}</div>` : ''}
@@ -8638,6 +8653,7 @@ const ACTIONS = {
     const C = Isis.cfg(); C.url = v; C.last = null; commit(); Isis.sync(true); },
   isisSync(){ Isis.sync(true); },
   isisOff(){ const C = Isis.cfg(); C.url = ''; C.last = null; commit(); toast('ISIS getrennt', 'Die bisherigen Fristen bleiben.'); },
+  whereInfo(){ const w = Where.now(); toast(w.t, [w.s, w.src].filter(Boolean).join(' · ') || 'Mehr weiß die App gerade nicht.'); },
   noiseStart(el){ if (!Sens.micOk()) { Sens.call('askMic'); toast('Mikrofon erlauben', 'Danach noch einmal tippen. Gemessen wird nur die Lautstärke, nichts wird aufgenommen.'); return; }
     const ok = Sens.call('noiseStart', +el.dataset.until); toast(ok ? 'Nachtmessung läuft' : 'Hat nicht geklappt', ok ? 'Leg das Handy neben das Bett, am besten ans Ladekabel. Morgens siehst du das Ergebnis bei „Letzte Nacht“.' : 'Das Mikrofon ist nicht erlaubt.'); setTimeout(render, 900); },
   noiseStop(){ Sens.call('noiseStop'); setTimeout(render, 600); },
@@ -10408,6 +10424,84 @@ function wayNote(l, d){
     if (l.kind === 'go' && later.some(w => w.it.some(i => i.k === 'regen')) && !t.includes(WAY_TIP.regen)) t.push('Schirm für den Rückweg');
     return t.length ? ' · ' + [...new Set(t)].join(', ') : ''; } catch { return ''; }
 }
+/* ================================================================
+   §W WO BIST DU, ECHTE ABFAHRTEN (v46)
+   · Echte Abfahrt aus der GPS-Spur: wann du die Haltestelle wirklich
+     verlassen hast, verglichen mit der Zeit, die die App angezeigt hat.
+     Pro Linie und Haltestelle gelernt („R:“), getrennt von den
+     Verspätungen, die der Fahrplan selbst meldet.
+   · Anzeige „Wo bist du“: Zuhause, an einem deiner Orte, an der
+     Haltestelle, in der Bahn, zu Fuß, unterwegs, mit Quelle.
+   ================================================================ */
+function realDeparture(p){
+  if (typeof Sens === 'undefined' || !Sens.on() || !p.fromLL) return null;
+  const T = Sens.get('trace', p.pdep - 25 * 60000, p.pdep + 35 * 60000).filter(x => x[3] <= 80).map(x => ({t: x[0], ll: [x[1], x[2]]}));
+  let lastNear = -1; for (let i = 0; i < T.length; i++) if (distM(T[i].ll, p.fromLL) <= 150) lastNear = i;
+  if (lastNear < 0 || lastNear === T.length - 1) return null;
+  const nx = T.slice(lastNear + 1).find(x => distM(x.ll, p.fromLL) > 400); if (!nx || nx.t - T[lastNear].t > 4 * 60000) return null;
+  return Math.round((T[lastNear].t + nx.t) / 2);
+}
+function realStat(line, stop){
+  const s = Delay.db['R:' + normLine(line) + '|' + stopKey(stop)], l = Delay.db['RL:' + normLine(line)], src = s && s.length >= 2 ? s : l && l.length >= 3 ? l : null;
+  return src ? {n: src.length, med: Delay.q(src, .5), p10: Delay.q(src, .1), where: src === s ? 'stop' : 'line'} : null;
+}
+function realHint(g){ if (!g || g.walk || !g.line) return ''; const r = realStat(g.line, g.from); return r && r.med >= 1 ? `<span class="rl" title="Aus ${r.n} eigenen Fahrten gemessen">meist +${r.med}</span>` : ''; }
+function realTxt(g){ if (!g || g.walk || !g.line) return ''; const r = realStat(g.line, g.from); return r && r.med >= 1 ? ` · fährt bei dir meist ~${r.med} min später` : ''; }
+/* Losgehen etwas später, wenn die erste Bahn bei dir zuverlässig später fährt als angezeigt */
+function realLeave(lv){
+  const L = lv && lv.legs; if (!L) return 0; const i = L.findIndex(g => !g.walk); if (i < 0 || i > 1) return 0;
+  const r = realStat(L[i].line, L[i].from); return r && r.n >= 4 && r.p10 >= 1 ? Math.min(4, r.p10) : 0;
+}
+
+const Where = {
+  pos(){
+    const now = Date.now(); let best = null;
+    if (typeof Sens !== 'undefined' && Sens.on()) { const T = Sens.get('trace', now - 5 * 60000, now), p = T[T.length - 1]; if (p) best = {ll: [p[1], p[2]], at: p[0], acc: p[3]}; }
+    if (Loc.pos && Loc.at && (!best || Loc.at > best.at)) best = {ll: [Loc.pos.lat, Loc.pos.lon], at: Loc.at, acc: Loc.pos.acc || 0};
+    return best && now - best.at < 6 * 60000 ? best : null;
+  },
+  speed(){
+    const now = Date.now(); let pts = (Loc.hist || []).map(h => ({ll: [h.lat, h.lon], at: h.at, acc: h.acc || 0}));
+    if (typeof Sens !== 'undefined' && Sens.on()) pts = pts.concat(Sens.get('trace', now - 6 * 60000, now).map(p => ({ll: [p[1], p[2]], at: p[0], acc: p[3]})));
+    pts = pts.filter(p => p.acc <= 80 && now - p.at < 6 * 60000).sort((a, b) => a.at - b.at); if (pts.length < 2) return null;
+    const z = pts[pts.length - 1], a = pts.find(p => p.at >= z.at - 3 * 60000 && p !== z); if (!a || z.at - a.at < 20000) return null;
+    return distM(a.ll, z.ll) / 1000 / ((z.at - a.at) / 3600000);
+  },
+  leg(now){ const P = planDay(startOfDay(new Date(now))); return P.legs.find(l => (l.kind === 'go' || l.kind === 'home') && now >= +l.depart - 3 * 60000 && now <= +l.arrive + 3 * 60000) || null; },
+  now(){
+    const now = Date.now(), p = this.pos(), v = this.speed(), leg = this.leg(now), H = Loc.homeL();
+    const cur = dayItems(new Date()).find(o => isTimed(o) && o.kind !== 'deadline' && +o.start <= now && +o.end > now);
+    const nm = o => o.kind === 'course' ? (o.ref.short || o.ref.title) : o.title;
+    const src = p ? `GPS vor ${now - p.at < 60000 ? Math.max(5, Math.round((now - p.at) / 1000)) + ' s' : Math.round((now - p.at) / 60000) + ' min'}` : '';
+    const lv = leg && leg.live && leg.live.legs ? leg.live : null;
+    const fromTrip = noGps => { if (!lv) return null; const pts = tripPoints(lv); if (pts.length < 2) return null; const w = tripWhere(lv, pts, now, null, noGps);
+      if (!noGps && w.src !== 'gps') return null;
+      const a = pts[w.i], b = pts[w.i + 1], g = lv.legs.find(g => !g.walk && (g.stops || []).some(s => stopKey(s.name) === stopKey(a.name)) && (!b || (g.stops || []).some(s => stopKey(s.name) === stopKey(b.name))));
+      const dep = g ? +new Date(g.dep) : 0;
+      if (g && stopKey(a.name) === stopKey(g.from) && !w.frac && now < dep + 60000 && (v == null || v < 8)) return {k: 'stop', ic: 'zug', t: `An der Haltestelle ${a.name}`, s: `${lineLabel(g)} ${now < dep ? 'kommt in ' + dur(Math.max(1, Math.round((dep - now) / 60000))) : 'fährt gerade ab'}${realTxt(g)}`};
+      if (g && (w.frac > 0 || now >= dep) && (v == null || v > 8 || !w.frac)) return {k: 'train', ic: 'zug', t: `In der ${lineLabel(g)}`, s: b ? `nächster Halt ${b.name} ${hm(new Date(b.t0))}` : `Richtung ${g.to}`};
+      if (!g) return {k: 'walk', ic: 'laeufer', t: 'Zu Fuß', s: b ? `zu ${b.name}` : ''};
+      return null; };
+    if (!p) {
+      const t = fromTrip(true); if (t) return {...t, t: 'Laut Plan: ' + t.t.replace(/^In der/, 'in der').replace(/^An der/, 'an der').replace(/^Zu Fuß/, 'zu Fuß'), src: 'kein GPS, nach Fahrplan', plan: true, leg};
+      if (cur && placeLabel(cur)) return {k: 'plan', ic: 'kalender', t: `Laut Kalender: ${PV(nm(cur), cur.cat)}`, s: `${PV(placeLabel(cur), cur.cat, '')} bis ${hm(cur.end)}`.replace(/^ bis/, 'bis'), src: 'kein GPS', plan: true};
+      return {k: 'unknown', ic: 'ort', t: 'Standort unbekannt', s: Loc.on() ? 'Wartet auf GPS' : 'Standort in den Einstellungen unter Orte und Wege einschalten', src: ''};
+    }
+    if (H && distM(p.ll, [H.latitude, H.longitude]) <= Math.max(120, p.acc + 50)) return {k: 'home', ic: 'haus', t: 'Zuhause', s: leg && leg.kind === 'go' && now < +leg.depart ? `Losgehen in ${dur(Math.max(1, Math.round((+leg.depart - now) / 60000)))}` : '', src, leg};
+    for (const pl of state.places) { const q = pl.vbb; if (pl.home || !q || q.latitude == null) continue;
+      if (distM(p.ll, [q.latitude, q.longitude]) <= Math.max(150, p.acc + 60)) return {k: 'place', ic: 'ort', t: `${Priv.on() ? 'An einem deiner Orte' : 'Bei ' + pl.name}`, s: cur ? `${PV(nm(cur), cur.cat)} läuft bis ${hm(cur.end)}` : '', src}; }
+    const t = fromTrip(false); if (t) return {...t, src, leg};
+    if (v != null && v > 18) return {k: 'ride', ic: 'zug', t: 'In einem Fahrzeug', s: `etwa ${Math.round(v)} km/h`, src, leg};
+    if (v != null && v >= 2.5) return {k: 'walk', ic: 'laeufer', t: 'Zu Fuß unterwegs', s: '', src, leg};
+    const dh = H ? distM(p.ll, [H.latitude, H.longitude]) : null;
+    return {k: 'away', ic: 'ort', t: 'Unterwegs', s: dh != null ? `${dh < 1000 ? Math.round(dh / 10) * 10 + ' m' : (dh / 1000).toFixed(1).replace('.', ',') + ' km'} von zuhause${v != null && v < 1.5 ? ', stehst gerade' : ''}` : '', src, leg};
+  },
+  chip(){
+    const w = this.now(), L = w.leg, act = L && L.kind === 'go' ? `data-act="liveTrip" data-date="${ymd(new Date())}" data-i="${planDay(startOfDay(new Date())).legs.indexOf(L)}"` : L && L.kind === 'home' ? 'data-act="liveTrip" data-home="1"' : 'data-act="whereInfo"';
+    return `<button class="where k-${w.k}${w.plan ? ' plan' : ''}" ${act}><span class="ic">${ic(w.ic)}</span><span class="tx"><b>${esc(w.t)}</b>${w.s ? `<small>${esc(w.s)}</small>` : ''}</span><span class="src">${esc(w.src || '')}</span></button>`;
+  },
+  paint(){ const el = document.querySelector('.where'); if (!el) return; const tmp = document.createElement('div'); tmp.innerHTML = this.chip(); el.replaceWith(tmp.firstElementChild); }
+};
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
@@ -10576,10 +10670,10 @@ const Loc = {
     if (document.hidden) { this.stop(); return; }
     if (this.watch != null) return;
     this.watch = navigator.geolocation.watchPosition(p => {
-      this.pos = {lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy}; this.at = Date.now(); this.err = ''; try { mapMe(); } catch {}
+      this.pos = {lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy}; this.at = Date.now(); (this.hist = this.hist || []).push({lat: this.pos.lat, lon: this.pos.lon, acc: this.pos.acc, at: this.at}); if (this.hist.length > 20) this.hist.shift(); try { Where.paint(); } catch {} this.err = ''; try { mapMe(); } catch {}
       const st = this.status(); if (st !== this.last) { const prev = this.last; this.last = st; this.changed(prev, st); }
     }, e => { this.err = e.code === 1 ? 'denied' : 'na'; if (ask && e.code === 1) toast('Standort nicht erlaubt', 'Gib Kalendarium in den Browser-Einstellungen Zugriff auf den Standort.'); renderSoft(); },
-    {enableHighAccuracy: false, maximumAge: 120000, timeout: 30000});
+    {enableHighAccuracy: true, maximumAge: 15000, timeout: 30000});
   },
   stop(){ if (this.watch != null) try { navigator.geolocation.clearWatch(this.watch); } catch {} this.watch = null; },
   changed(prev, st){
@@ -10699,7 +10793,7 @@ const Transit = {
   },
   simplify(j){
     const legs = (j.legs || []).map(g => ({
-      walk: !!g.walking, line: g.line ? g.line.name : '', product: g.line ? g.line.product : '', dir: g.direction || '', fromId: g.origin && g.origin.id || null, toId: g.destination && g.destination.id || null,
+      walk: !!g.walking, hafasTrip: g.tripId || null, line: g.line ? g.line.name : '', product: g.line ? g.line.product : '', dir: g.direction || '', fromId: g.origin && g.origin.id || null, toId: g.destination && g.destination.id || null,
       fromLL: llOf(g.origin), toLL: llOf(g.destination),
       stops: (g.stopovers || []).map(v => ({name: v.stop ? v.stop.name : '', id: v.stop ? v.stop.id : null, ll: llOf(v.stop), arr: v.arrival || v.plannedArrival || null, dep: v.departure || v.plannedDeparture || null,
         delay: v.arrivalDelay != null ? Math.round(v.arrivalDelay / 60) : v.departureDelay != null ? Math.round(v.departureDelay / 60) : null, x: !!v.cancelled})),
@@ -10906,7 +11000,7 @@ function transitHtml(lv, opt = {}){
     const img = g.fromLL ? `<img class="st-img" alt="" data-stopimg data-lat="${g.fromLL[0]}" data-lon="${g.fromLL[1]}" data-name="${esc(g.from)}" hidden>` : '';
     const row = v => `<li><button type="button" data-act="stopInfo" ${stopAttrs(v)}><span class="sv-t">${v.arr || v.dep ? hm(new Date(v.arr || v.dep)) : ''}${v.delay > 0 ? `<span class="late">+${v.delay}</span>` : ''}</span><span class="sv-n">${esc(v.name)}</span></button></li>`;
     const nx = L[i + 1], xfer = nx && !nx.walk ? `<div class="tleg xfer"><span></span><span></span><span class="tx"><small>${mins(g.arr, nx.dep)} min Umstieg</small></span></div>` : '';
-    return `<div class="tleg${g.x ? ' x' : ''}" style="--lc:${lc}">${tm(g.dep, g.pdep, g.ddel, g.approx)}<span class="ln">${esc(lineLabel(g))}</span><span class="tx">${img}<button type="button" class="tx-stop" data-act="stopInfo" ${stopAttrs({id: g.fromId, src: g.src, name: g.from, ll: g.fromLL})}>${esc(g.from)}</button>${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}
+    return `<div class="tleg${g.x ? ' x' : ''}" style="--lc:${lc}">${tm(g.dep, g.pdep, g.ddel, g.approx)}${realHint(g)}<span class="ln">${esc(lineLabel(g))}</span><span class="tx">${img}<button type="button" class="tx-stop" data-act="stopInfo" ${stopAttrs({id: g.fromId, src: g.src, name: g.from, ll: g.fromLL})}>${esc(g.from)}</button>${g.plat ? ` · Gleis ${esc(g.plat)}` : ''}
       <small>${g.dir ? `Richtung ${esc(g.dir)} · ` : ''}${g.approx ? `alle ${g.every} min · ` : ''}<b>${m} min</b>${mid.length ? ` · ${mid.length} ${mid.length === 1 ? 'Halt' : 'Halte'} dazwischen` : ''}</small>
       ${mid.length ? `<details class="sv" data-svk="${esc(normLine(g.line) + '|' + stopKey(g.from))}"${SV_OPEN.has(normLine(g.line) + '|' + stopKey(g.from)) ? ' open' : ''}><summary><span class="sv-a">${ic('weiter','s')}</span><span class="sv-l">${mid.length} Haltestellen</span></summary><ol class="sv-list">${mid.map(row).join('')}</ol></details>` : ''}
       <small>an <button type="button" class="tx-stop" style="font-weight:500" data-act="stopInfo" ${stopAttrs({id: g.toId, src: g.src, name: g.to, ll: g.toLL})}>${esc(g.to || '')}</button> ${g.approx ? 'ca. ' : ''}${hm(new Date(g.arr))}${g.adel > 0 ? ` <span class="late" style="color:var(--danger)">+${g.adel}</span>` : ''}</small>
@@ -11011,7 +11105,7 @@ function tripStatus(lv, now = Date.now()){
     const g = L[i];
     if (now > t(g.arr)) continue;
     if (g.walk) { const nx = L[i + 1]; return {head: `Zu Fuß bis ${g.to}`, sub: nx && !nx.walk ? `${nx.line} fährt ${relTime(new Date(nx.dep))} (${hm(new Date(nx.dep))})` : `Ankunft ${hm(new Date(g.arr))}`}; }
-    if (now < t(g.dep)) return {head: `Warten auf ${g.line}`, sub: `Abfahrt ${hm(new Date(g.dep))}${g.ddel > 0 ? ` (+${g.ddel})` : ''} ab ${g.from}${g.plat ? `, Gleis ${g.plat}` : ''}`};
+    if (now < t(g.dep)) return {head: `Warten auf ${g.line}`, sub: `Abfahrt ${hm(new Date(g.dep))}${g.ddel > 0 ? ` (+${g.ddel})` : ''} ab ${g.from}${g.plat ? `, Gleis ${g.plat}` : ''}${realTxt(g)}`};
     const rest = (g.stops || []).filter(v => t(v.arr || v.dep) > now), nxt = rest[0];
     return {head: `In der ${g.line}`, sub: `${nxt ? `Nächster Halt ${nxt.name}` : ''}${rest.length > 1 ? ` · aussteigen an ${g.to} in ${rest.length} Halten` : ` · gleich aussteigen an ${g.to}`}`};
   }
@@ -11945,6 +12039,7 @@ function init(){
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
   setTimeout(() => { try { migrateWorkCat(); } catch {} }, 1500);
+  setInterval(() => { if (!document.hidden) try { Where.paint(); } catch {} }, 20000);
   setTimeout(() => Isis.auto(), 6000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Isis.auto(); });
   if (Native.has('sense')) { setInterval(() => { if (!document.hidden) TripAuto.tick(); }, 30000); setTimeout(() => TripAuto.tick(), 5000); window.addEventListener('kalresume', () => { TripAuto.tick(); SleepAuto.run(true); }); window.addEventListener('kalperm', () => setTimeout(render, 300)); }
   if (Native.has('sleep')) { setTimeout(() => SleepAuto.run(true), 2500); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => SleepAuto.run(), 600); }); }
