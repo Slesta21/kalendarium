@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 37  ·  persönlicher Kalender für alles
+ KALENDARIUM 38  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2669,6 +2669,94 @@ main.enter > *{animation:tilein .38s cubic-bezier(.2,.8,.2,1) both}
 .sl2-auto .btn{white-space:nowrap;background:var(--tile-2)}
 .sl2-auto{align-items:start}.sl2-auto .dot{margin-top:5px}.sl2-auto > .btn{align-self:center}
 @media (max-width:560px){ .sl2-auto{grid-template-columns:12px minmax(0,1fr)} .sl2-auto .btn{grid-column:2;justify-self:start} }
+/* §S4 Schlaf neu geordnet (v38) */
+.sl3-sec{grid-column:span 12;display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;margin:18px 2px 0;animation:none!important}
+.sl3-sec h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.035em;color:var(--ink)}
+.sl3-sec small{color:var(--muted);font-size:14px}
+.sl3-sec .seg,.sl3-sec .btn{margin-left:auto}
+.sl2-h h3{margin:0;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.03em}
+/* Letzte Nacht */
+.sl3-last{grid-column:span 8;display:flex;flex-direction:column;gap:10px}
+.sl3-tonight{grid-column:span 4;align-self:start;background:var(--zone-soft);display:flex;flex-direction:column;gap:10px}
+.sl3-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sl3-top .lbl,.sl3-tonight .lbl{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--zone-ink);font-size:15px}
+.sl3-tonight .lbl svg{width:18px;height:18px}
+.sl3-top small{display:block;color:var(--muted);font-size:14px;margin-top:1px}
+.sl3-last .badge{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--tile-2);color:var(--muted)}
+.sl3-last .badge.erk{background:var(--zone);color:var(--on-zone)}
+.sl3-last .badge.ok{background:color-mix(in oklab, var(--ok) 16%, var(--tile));color:var(--ok)}
+.sl3-dur{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:2px}
+.sl3-dur b{font-family:var(--f-display);font-weight:800;font-size:clamp(56px,7vw,80px);letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sl3-dur.est b{color:color-mix(in oklab, var(--ink) 45%, var(--tile))}
+.sl3-dur span{font-size:16px;font-weight:600;color:var(--muted)}
+.sl3-dur em{font-style:normal;color:var(--danger)}
+.sl3-bar{position:relative;height:30px;border-radius:10px;background:var(--tile-2);margin:6px 0 20px}
+.sl3-bar > i{position:absolute;top:0;bottom:0;border-radius:10px;transition:left .3s cubic-bezier(.2,.8,.2,1),width .3s cubic-bezier(.2,.8,.2,1)}
+.sl3-bar .slp{background:var(--zone)}
+.sl3-last:not(.done) .sl3-bar .slp{background:color-mix(in oklab, var(--zone) 55%, var(--tile-2))}
+.sl3-bar .lat{background:color-mix(in oklab, var(--zone) 25%, var(--tile-2));border-radius:10px 0 0 10px}
+.sl3-bar .plan{top:-4px;bottom:-4px;border:1.5px dashed color-mix(in oklab, var(--zone) 55%, transparent);background:none;border-radius:12px}
+.sl3-bar .tk{position:absolute;left:0;right:0;top:100%;height:18px}
+.sl3-bar .tk span{position:absolute;transform:translateX(-50%);top:4px;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.sl3-tl{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.sl3-tl b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:700}
+.sl3-form{border-top:1px solid var(--line);padding-top:14px;margin-top:6px;gap:14px}
+.sl3-hint{display:flex;align-items:center;gap:8px;margin:0;font-size:13px;color:var(--muted)}
+.sl3-hint .sw{width:22px;height:14px;border-radius:5px;background:var(--tile-2);outline:1.5px dashed var(--faint);outline-offset:-1.5px;flex:none}
+.sl3-grid{display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);gap:12px 14px;align-items:end}
+.sl3-form .f > span{font-size:13px}
+.sl3-form .seg.sp{display:flex;flex-wrap:wrap;gap:4px}
+.sl3-form .seg.sp button{flex:1 1 auto;min-width:44px;white-space:nowrap;padding-left:10px;padding-right:10px}
+/* geschätzt = grau mit gestricheltem Rand */
+.sl3-form .seg.g button[aria-pressed="true"]{background:var(--tile-2);color:var(--muted);outline:1.5px dashed var(--faint);outline-offset:-1.5px}
+.sl3-form input.guess{color:var(--faint);outline:1.5px dashed var(--faint);outline-offset:-1.5px}
+.sl3-go{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sl3-go small{color:var(--muted);font-size:13px}
+.sl3-sum{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+.sl3-sum span{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 11px;border-radius:999px;background:var(--tile-2)}
+.sl3-sum span.t{background:var(--zone-soft);color:var(--zone-ink);font-weight:600}
+.sl3-sum .q i{width:7px;height:7px;border-radius:50%;background:color-mix(in oklab, var(--ink) 15%, transparent)}.sl3-sum .q i.on{background:var(--zone)}
+.sl3-st{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px;margin-top:4px;font-size:13px;color:var(--muted)}
+.sl3-st b{color:var(--ink);font-weight:600}
+.sl3-st .dot{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none}
+.sl3-st.good .dot{background:var(--ok)}.sl3-st.warn .dot{background:var(--warn)}
+.sl3-st > span:nth-child(2){flex:1;min-width:0}
+.sl3-st .btn{background:var(--tile-2)}
+/* Heute Nacht */
+.sl3-tonight .tt{display:flex;align-items:flex-end;gap:10px}
+.sl3-tonight .tt small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.sl3-tonight .tt b{font-family:var(--f-display);font-weight:800;font-size:clamp(36px,4vw,46px);letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.sl3-tonight .tt i{color:var(--zone-ink);padding-bottom:8px}.sl3-tonight .tt i svg{width:22px;height:22px}
+.sl3-tonight p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}.sl3-tonight p b{color:var(--ink)}
+.sl3-tonight .btn{align-self:flex-start;margin-top:auto;background:none;padding-left:0}
+/* Überblick */
+.sl3-over{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 28px;align-items:center}
+.sl3-over .sc{display:flex;align-items:center;gap:12px}
+.sl3-over .sc > b{font-family:var(--f-display);font-weight:800;font-size:clamp(64px,8vw,88px);letter-spacing:-.055em;line-height:.85;color:var(--zone-ink);font-variant-numeric:tabular-nums}
+.sl3-over .sc span{display:block;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.02em}
+.sl3-over .sc small{display:block;font-size:13px;color:var(--muted)}
+.sl3-over .ks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sl3-kpi{background:var(--paper);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.sl3-kpi > span{font-size:12px;color:var(--muted);font-weight:600}
+.sl3-kpi > b{font-family:var(--f-display);font-weight:800;font-size:24px;letter-spacing:-.035em;line-height:1.1;font-variant-numeric:tabular-nums}
+.sl3-kpi .m{display:block;height:5px;border-radius:3px;background:var(--tile-2);overflow:hidden;margin:4px 0 1px}
+.sl3-kpi .m em{display:block;height:100%;background:var(--zone);border-radius:3px}
+.sl3-kpi small{font-size:12px;color:var(--muted)}
+.sl3-kpi small.bad{color:var(--danger)}.sl3-kpi small.good{color:var(--ok)}
+.sl3-parts{grid-column:1/-1;border-top:1px solid var(--line);padding-top:10px}
+.sl3-parts summary{cursor:pointer;list-style:none;font-weight:600;font-size:14px;color:var(--zone-ink)}.sl3-parts summary::-webkit-details-marker{display:none}
+.sl3-parts .sl2-parts{margin-top:12px}
+.sl3-empty b{display:block;font-family:var(--f-display);font-weight:800;font-size:20px}.sl3-empty small{color:var(--muted);font-size:14px}
+.sl2-log > button.open .dt::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--zone);margin-left:6px;vertical-align:middle}
+@media (max-width:860px){
+  .sl3-last,.sl3-tonight{grid-column:span 12}
+  .sl3-sec{margin-top:14px}.sl3-sec h2{font-size:23px}
+  .sl3-over{grid-template-columns:1fr}
+  .sl3-over .ks{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sl3-grid{grid-template-columns:1fr}
+  .sl3-sec .seg{flex-basis:100%;display:flex;margin-left:0}.sl3-sec .seg button{flex:1}
+}
+.sl3-go .btn:not(.primary){background:var(--tile-2)}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6422,7 +6510,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '37';
+const APP_VERSION = '38';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -6949,60 +7037,63 @@ const VIEWS = {
 
   /* ---------- SCHLAF: ruhig, das Wichtigste zuerst, Details auf Wunsch ---------- */
   schlaf(){
-    const days = ui.sleepRange || 7, D = sleepDeep(), st = D.st, stR = days === 14 ? st : sleepStats(days), P = sleepPlan(), t0 = startOfDay(new Date()), today = ymd(t0), tn = P[ymd(addDays(t0, 1))];
-    const enough = st.N >= 3, sc = D.score, S = state.settings.sleep;
+    const days = ui.sleepRange || 7, D = sleepDeep(), st = D.st, stR = days === 14 ? st : sleepStats(days), P = sleepPlan(), t0 = startOfDay(new Date()), tn = P[ymd(addDays(t0, 1))];
+    const enough = st.N >= 3, sc = D.score, S = state.settings.sleep, short = enough ? D.need - st.durAvg : 0;
     const verdict = sc == null ? '' : sc >= 85 ? 'Sehr gut' : sc >= 70 ? 'Gut' : sc >= 55 ? 'Ausbaufähig' : 'Unruhig';
-    const short = enough ? D.need - st.durAvg : 0;
-    const lead = !enough ? 'Trag ein paar Nächte ein. Ab 3 Nächten gibt es erste Werte, ab einer Woche ein belastbares Bild, ab vier Wochen Muster nach Wochentag und Einflüssen.'
-      : `${short > 30 ? `Dir fehlen im Schnitt <b>${dur(Math.round(short))}</b> pro Nacht` : short > 10 ? `Mit <b>${fmtH(st.durAvg)}</b> liegst du knapp unter deinem Bedarf` : short < -45 ? `Du schläfst <b>${dur(Math.round(-short))}</b> mehr als dein Bedarf` : `Mit <b>${fmtH(st.durAvg)}</b> schläfst du genug`}${st.sri != null ? (st.sri >= 75 ? ', dein Rhythmus ist stabil.' : ', aber dein Rhythmus schwankt.') : st.sdBed != null ? (st.sdBed < 35 ? ', dein Rhythmus ist stabil.' : ', aber dein Rhythmus schwankt.') : '.'}`;
-    const logged = (state.sleepLog || []).some(x => x.date === today && !x.ex), spToday = P[today];
-    const hero = `<section class="sl2-tile sl2-hero">
-      <div class="sc">${enough ? `<b data-count="${sc}">${sc}</b><span>${verdict}<small>Schlafwert, ${D.N28 >= 7 ? `${Math.min(st.N, 14)} Nächte` : `${st.N} Nächte`}</small></span>` : `<b>–</b><span>Noch keine Werte</span>`}</div>
-      <p>${lead}</p>
-      ${enough ? `<div class="sl2-parts">${D.parts.map(p => `<div><span>${p.l}</span><i><em style="width:${p.v}%"></em></i><b>${p.v}</b></div>`).join('')}</div>` : ''}
-    </section>`;
+    const sec = (t, sub = '', right = '') => `<div class="sl3-sec"><h2>${t}</h2>${sub ? `<small>${sub}</small>` : ''}${right}</div>`;
+    /* 1 Letzte Nacht + Heute Nacht */
+    const last = sleepLastCard(D);
     const wd = tn ? addMin(tn.bed, -(S.windDown == null ? 30 : +S.windDown)) : null;
-    const night = `<section class="sl2-tile sl2-night">
+    const night = `<section class="sl2-tile sl3-tonight">
       <span class="lbl">${ic('mond', 's')}Heute Nacht</span>
-      ${tn ? `<div class="tt"><b>${hm(tn.bed)}</b><i>${ic('weiter')}</i><b>${hm(tn.wake)}</b></div>
-      <small>${fmtH(tn.sleepMin)} Schlaf${tn.short ? ', weniger als dein Bedarf' : ''}. Ab ${hm(wd)} Bildschirm weg und Licht dimmen.</small>` : `<small>Kein Plan für heute Nacht. Schalte die Schlafplanung in den Einstellungen ein.</small>`}
-      <div class="act">${logged ? `<button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('stift', 's')}Letzte Nacht ändern</button>` : `<button class="btn sm primary" data-act="sleepLog" data-date="${today}">${ic('plus', 's')}Letzte Nacht eintragen</button>${spToday ? `<button class="btn sm" data-act="sleepAsPlanned" data-date="${today}">Wie geplant</button>` : ''}`}
-      ${tn ? `<button class="btn sm ghost" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">Warum diese Zeit</button>` : ''}</div>
+      ${tn ? `<div class="tt"><div><small>Ins Bett</small><b>${hm(tn.bed)}</b></div><i>${ic('weiter')}</i><div><small>Wecker</small><b>${hm(tn.wake)}</b></div></div>
+      <p>${fmtH(tn.sleepMin)} Schlaf${tn.short ? ', weniger als dein Bedarf' : ''}. Ab <b>${hm(wd)}</b> Bildschirm weg und Licht dimmen.</p>
+      <button class="btn sm ghost" data-act="sleepInfo" data-date="${ymd(addDays(t0, 1))}">Warum diese Zeit</button>` : `<p>Kein Plan für heute Nacht. Schalte die Schlafplanung in den Einstellungen ein.</p>`}
     </section>`;
-    const kpi = (lbl, val, sub, cls = '', bar = null) => `<div class="sl2-kpi"><span>${lbl}</span><b>${val}</b>${bar != null ? `<i class="m"><em style="width:${Math.max(2, Math.min(100, bar)).toFixed(0)}%"></em></i>` : ''}<small class="${cls}">${sub}</small></div>`;
-    const kpis = enough ? [
-      kpi('Schlaf pro Nacht', fmtH(st.durAvg), `Bedarf ${fmtH(D.need)}`, short > 30 ? 'bad' : 'good', st.durAvg / D.need * 100),
-      kpi('Regelmäßigkeit', st.sri != null ? String(st.sri) : st.sdBed != null ? `±${Math.round(st.sdBed)} min` : '–', st.sri != null ? `${st.sri >= 80 ? 'sehr regelmäßig' : st.sri >= 70 ? 'regelmäßig' : 'schwankt'} (SRI)` : 'Schwankung beim Einschlafen', (st.sri != null ? st.sri < 70 : st.sdBed >= 35) ? 'bad' : 'good', st.sri != null ? Math.max(0, st.sri) : null),
-      kpi('Schlafschuld', st.debtNow > 15 ? fmtH(st.debtNow) : 'keine', 'in den letzten 7 Nächten', st.debtNow > 120 ? 'bad' : 'good'),
-      D.se != null ? kpi('Effizienz', `${D.se} %`, [D.sol != null ? `${dur(Math.round(D.sol))} bis zum Einschlafen` : '', D.waso != null ? `${dur(Math.round(D.waso))} nachts wach` : ''].filter(Boolean).join(', ') || 'Ziel ab 85 %', D.se >= 85 ? 'good' : 'bad', D.se)
-        : kpi('Erholung', st.qAvg != null ? st.qAvg.toFixed(1).replace('.', ',') : '–', st.qAvg != null ? 'von 5' : 'noch nicht bewertet', '', st.qAvg != null ? (st.qAvg - 1) / 4 * 100 : null)
-    ].join('') : '';
-    const pats = sleepPatterns(D);
+    const setup = SleepAuto.avail() && S.detect !== false && !SleepAuto.ok() ? `<section class="sl2-tile sl2-setup"><span class="ic">${ic('handy')}</span><div><b>Nicht mehr eintragen</b><small>Kalendarium kann aus der Zeit, in der dein Handy nachts unbenutzt war, erkennen, wann du geschlafen hast. Dafür braucht die App den Zugriff auf Nutzungsdaten. Nichts verlässt dein Handy.</small><div class="act"><button class="btn sm primary" data-act="sleepUsage">Erlauben</button><button class="btn sm ghost" data-act="sleepDetectOff">Lieber selbst eintragen</button></div></div></section>` : '';
+    /* 2 Überblick */
+    const kpi = (lbl, val, sub, cls = '', bar = null) => `<div class="sl3-kpi"><span>${lbl}</span><b>${val}</b>${bar != null ? `<i class="m"><em style="width:${Math.max(2, Math.min(100, bar)).toFixed(0)}%"></em></i>` : ''}<small class="${cls}">${sub}</small></div>`;
+    const over = enough ? `${sec('Überblick', `${Math.min(st.N, 14)} Nächte`)}
+      <section class="sl2-tile sl3-over">
+        <div class="sc"><b data-count="${sc}">${sc}</b><div><span>${verdict}</span><small>Schlafwert</small></div></div>
+        <div class="ks">
+          ${kpi('Schlaf pro Nacht', fmtH(st.durAvg), short > 30 ? `${dur(Math.round(short))} unter Bedarf` : `Bedarf ${fmtH(D.need)}`, short > 30 ? 'bad' : 'good', st.durAvg / D.need * 100)}
+          ${kpi('Regelmäßigkeit', st.sri != null ? String(st.sri) : st.sdBed != null ? `±${Math.round(st.sdBed)} min` : '–', st.sri != null ? (st.sri >= 80 ? 'sehr regelmäßig' : st.sri >= 70 ? 'regelmäßig' : 'schwankt') : 'Schwankung', (st.sri != null ? st.sri < 70 : st.sdBed >= 35) ? 'bad' : 'good', st.sri != null ? Math.max(0, st.sri) : null)}
+          ${kpi('Schlafschuld', st.debtNow > 15 ? fmtH(st.debtNow) : 'keine', 'letzte 7 Nächte', st.debtNow > 120 ? 'bad' : 'good')}
+          ${D.se != null ? kpi('Effizienz', `${D.se} %`, D.se >= 85 ? 'Ziel erreicht' : 'Ziel ab 85 %', D.se >= 85 ? 'good' : 'bad', D.se) : kpi('Erholung', st.qAvg != null ? st.qAvg.toFixed(1).replace('.', ',') : '–', st.qAvg != null ? 'von 5' : 'noch nicht bewertet', '', st.qAvg != null ? (st.qAvg - 1) / 4 * 100 : null)}
+        </div>
+        <details class="sl3-parts"><summary>So setzt sich der Wert zusammen</summary><div class="sl2-parts">${D.parts.map(p => `<div><span>${p.l}</span><i><em style="width:${p.v}%"></em></i><b>${p.v}</b></div>`).join('')}</div></details>
+      </section>` : `<section class="sl2-tile sl3-empty"><b>Noch keine Auswertung</b><small>Ab 3 Nächten gibt es erste Werte, ab einer Woche ein belastbares Bild, ab vier Wochen Muster nach Wochentag und Einflüssen.</small></section>`;
+    /* 3 Muster */
+    const pats = enough ? sleepPatterns(D) : [];
     const patRow = x => `<div class="sl2-pat ${x.lvl}"><span class="ic">${ic(x.icon)}</span><div class="tx"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small>${x.act ? `<div class="pa">${x.act}</div>` : ''}</div>${x.viz ? `<div class="vzw">${x.viz}</div>` : ''}</div>`;
-    const muster = enough ? `<section class="sl2-tile sl2-muster"><div class="sl2-h"><h2>Muster</h2><small>${pats.filter(x => x.lvl === 'warn').length ? `${pats.filter(x => x.lvl === 'warn').length} zum Angehen, ` : ''}aus ${D.N28} Nächten der letzten 4 Wochen</small></div>
-      ${pats.slice(0, 6).map(patRow).join('')}
-      ${pats.length > 6 ? `<details class="sl2-more"><summary>${pats.length - 6} weitere Muster</summary>${pats.slice(6).map(patRow).join('')}</details>` : ''}</section>` : '';
-    const chart = `<section class="sl2-tile"><div class="sl2-h"><h2>Nächte</h2><div class="seg" role="group" aria-label="Zeitraum">${[[7,'7 Tage'],[14,'14 Tage'],[30,'30 Tage']].map(([v,l]) => `<button data-act="sleepRange" data-v="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div></div>
-      ${days === 30 ? sleepDurChart(stR) : sleepNightsChart(stR)}</section>`;
+    const nWarn = pats.filter(x => x.lvl === 'warn').length;
+    const muster = pats.length ? `${sec('Muster', nWarn ? `${nWarn} zum Angehen` : 'alles im grünen Bereich')}
+      <section class="sl2-tile sl2-muster">${pats.slice(0, 4).map(patRow).join('')}
+      ${pats.length > 4 ? `<details class="sl2-more"><summary>${pats.length - 4} weitere Muster</summary>${pats.slice(4).map(patRow).join('')}</details>` : ''}</section>` : '';
+    /* 4 Verlauf */
+    const chart = `${sec('Verlauf', '', `<div class="seg" role="group" aria-label="Zeitraum">${[[7, '7 Tage'], [14, '14 Tage'], [30, '30 Tage']].map(([v, l]) => `<button data-act="sleepRange" data-v="${v}" aria-pressed="${days === v}">${l}</button>`).join('')}</div>`)}
+      <section class="sl2-tile">${days === 30 ? sleepDurChart(stR) : sleepNightsChart(stR)}</section>`;
+    /* 5 Rhythmus */
     const week = sleepWeekTile(D), chrono = sleepChronoTile(st);
-    const duo = week || chrono ? `${week ? `<section class="sl2-tile ${chrono ? 'sl2-half' : ''}"><div class="sl2-h"><h2>Wochentage</h2><small>Abend des Tages</small></div>${week}</section>` : ''}${chrono ? `<section class="sl2-tile ${week ? 'sl2-half' : ''}"><div class="sl2-h"><h2>Innere Uhr</h2><small>nach MCTQ</small></div>${chrono}</section>` : ''}` : '';
+    const rhythm = week || chrono ? `${sec('Rhythmus')}${week ? `<section class="sl2-tile ${chrono ? 'sl2-half' : ''}"><div class="sl2-h"><h3>Wochentage</h3></div>${week}</section>` : ''}${chrono ? `<section class="sl2-tile ${week ? 'sl2-half' : ''}"><div class="sl2-h"><h3>Innere Uhr</h3></div>${chrono}</section>` : ''}` : '';
+    /* 6 Protokoll */
     const log = (state.sleepLog || []).slice().sort((a, b) => b.date.localeCompare(a.date));
-    const logRow = x => { const n = sleepNight(x), ext = [n.se != null ? `Effizienz ${n.se} %` : '', n.sol != null ? `${n.sol} min bis Schlaf` : '', n.waso ? `${n.waso} min wach` : '', x.src === 'handy' ? (x.auto ? 'vom Handy erkannt' : 'vom Handy, angepasst') : '', x.alarm === false ? 'ohne Wecker' : '', ...(x.tags || []).map(t => (SLEEP_TAGS.find(z => z[0] === t) || [, t])[1])].filter(Boolean);
-      return `<button data-act="sleepLog" data-date="${x.date}"><span class="dt">${esc(fmtShort(parseYMD(x.date)))}</span><span class="tm">${x.bed} – ${x.wake}${ext.length ? `<small>${esc(ext.join(' · '))}</small>` : ''}</span><b class="${n.dur < D.need - 45 ? 'lo' : ''}">${fmtH(n.dur)}</b><span class="q" aria-label="Erholung ${x.q || 0} von 5">${[1,2,3,4,5].map(k => `<i class="${k <= x.q ? 'on' : ''}"></i>`).join('')}</span></button>`; };
-    const proto = `<section class="sl2-tile sl2-log"><div class="sl2-h"><h2>Protokoll</h2><button class="btn sm" data-act="sleepLog" data-date="${today}">${ic('plus','s')}Nacht eintragen</button></div>
-      ${log.length ? log.slice(0, 5).map(logRow).join('') : emptyArt('frei', 'Noch keine Nacht eingetragen.', 'Am besten morgens kurz nach dem Aufstehen, das dauert 20 Sekunden.')}
-      ${log.length > 5 ? `<details class="sl2-more"><summary>Alle ${log.length} Nächte</summary>${log.slice(5).map(logRow).join('')}</details>` : ''}</section>`;
+    const logRow = x => { const n = sleepNight(x), w = SLEEP_WOKE.find(z => z[0] === x.woke);
+      const ext = [x.src === 'handy' ? (x.auto ? 'vom Handy, offen' : 'vom Handy') : '', n.waso ? `${n.waso} min wach` : '', w && w[0] !== 'wecker' ? (w[0] === 'geraeusch' ? 'Geräusch' : w[1]) : '', ...(x.tags || []).map(t => (SLEEP_TAGS.find(z => z[0] === t) || [, t])[1])].filter(Boolean);
+      return `<button data-act="sleepLog" data-date="${x.date}" class="${x.auto ? 'open' : ''}"><span class="dt">${esc(fmtShort(parseYMD(x.date)))}</span><span class="tm">${fmtClock(n.ib ?? n.b)} – ${x.wake}${ext.length ? `<small>${esc(ext.join(' · '))}</small>` : ''}</span><b class="${n.dur < D.need - 45 ? 'lo' : ''}">${fmtH(n.dur)}</b><span class="q" aria-label="Erholung ${x.q || 0} von 5">${[1, 2, 3, 4, 5].map(k => `<i class="${k <= x.q ? 'on' : ''}"></i>`).join('')}</span></button>`; };
+    const proto = `${sec('Protokoll', `${log.length} ${log.length === 1 ? 'Nacht' : 'Nächte'}`, `<button class="btn sm" data-act="sleepLog" data-date="${ymd(addDays(t0, -1))}">${ic('plus', 's')}Andere Nacht</button>`)}
+      <section class="sl2-tile sl2-log">${log.length ? log.slice(0, 7).map(logRow).join('') : emptyArt('frei', 'Noch keine Nacht eingetragen.', 'Oben bei „Letzte Nacht“ geht es los.')}
+      ${log.length > 7 ? `<details class="sl2-more"><summary>Alle ${log.length} Nächte</summary>${log.slice(7).map(logRow).join('')}</details>` : ''}</section>`;
     const how = `<section class="sl2-tile sl2-how"><details><summary><b>So wird gerechnet</b><small>Methoden und Quellen</small></summary>
-      <p><b>Schlafwert</b> aus ${enough ? D.parts.map(p => `${p.l} (${p.w} %)`).join(', ') : 'Dauer, Regelmäßigkeit, Wochenend-Rhythmus, Erholung, Plan und Effizienz'}. Dauer zählt voll ab deinem Bedarf; Regelmäßigkeit über den Sleep Regularity Index (Wahrscheinlichkeit, zur selben Uhrzeit im selben Zustand zu sein wie am Vortag, 0 bis 100).</p>
-      <p><b>Schlafzeit</b> ist die Zeit vom Einschlafen bis zum Aufwachen minus der Zeit, die du nachts wach warst. <b>Effizienz</b> ist Schlafzeit geteilt durch Zeit im Bett, Ziel ab 85 %.</p>
-      <p><b>Innere Uhr</b> ist die Mitte deines Schlafs an freien Tagen, korrigiert um nachgeholten Schlaf (MSFsc). <b>Sozialer Jetlag</b> ist der Abstand zur Schlafmitte an Werktagen.</p>
-      <p><b>Einflüsse</b> vergleichen Nächte mit und ohne einen Faktor. Die Stärke ist Cohens d: ab 0,5 spürbar, ab 0,8 deutlich. Bei wenigen Nächten sind das Hinweise, keine Beweise.</p>
+      <p><b>Schlafwert</b> aus ${enough ? D.parts.map(p => `${p.l} (${p.w} %)`).join(', ') : 'Dauer, Regelmäßigkeit, Wochenend-Rhythmus, Erholung, Plan und Effizienz'}. Regelmäßigkeit über den Sleep Regularity Index (Wahrscheinlichkeit, zur selben Uhrzeit im selben Zustand zu sein wie am Vortag).</p>
+      <p><b>Schlafzeit</b> ist Einschlafen bis Aufwachen minus nachts wach. <b>Effizienz</b> ist Schlafzeit geteilt durch Zeit im Bett, Ziel ab 85 %.</p>
+      <p><b>Vom Handy erkannt</b>: die längste Pause in der Nacht, in der dein Handy unbenutzt war. Kurze Blicke zählen als Wachzeit, die Einschlafdauer ist geschätzt, bis du sie bestätigst.</p>
+      <p><b>Innere Uhr</b> ist die Mitte deines Schlafs an freien Tagen, korrigiert um nachgeholten Schlaf. <b>Sozialer Jetlag</b> ist der Abstand zu Werktagen. <b>Einflüsse</b> vergleichen Nächte mit und ohne einen Faktor (Cohens d: ab 0,5 spürbar, ab 0,8 deutlich).</p>
       <ul class="src">${SLEEP_SRC.map(([a, b]) => `<li><b>${esc(a)}</b> ${esc(b)}</li>`).join('')}</ul>
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
-    const setup = SleepAuto.avail() && S.detect !== false && !SleepAuto.ok() ? `<section class="sl2-tile sl2-setup"><span class="ic">${ic('handy')}</span><div><b>Nicht mehr eintragen</b><small>Kalendarium kann aus der Zeit, in der dein Handy nachts unbenutzt war, erkennen, wann du geschlafen hast. Dafür braucht die App den Zugriff auf Nutzungsdaten. Nichts verlässt dein Handy.</small><div class="act"><button class="btn sm primary" data-act="sleepUsage">Erlauben</button><button class="btn sm ghost" data-act="sleepDetectOff">Lieber selbst eintragen</button></div></div></section>` : '';
-    const as = sleepAutoStatus(), stLine = setup || as.k === 'plan' ? '' : `<section class="sl2-auto ${as.lvl}"><span class="dot"></span><div><b>${as.t}</b><small>${as.sub}</small></div>${as.act || ''}</section>`;
-    return `<div class="sl2">${hero}${night}${setup}${stLine}${kpis}${muster}${chart}${duo}${proto}${how}</div>`;
+    return `<div class="sl2 sl3">${last}${night}${setup}${over}${muster}${chart}${rhythm}${proto}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7956,24 +8047,8 @@ function symPicker(name, current){ return `<div class="symgrid">${Object.keys(SY
 const foot = canDel => `<div class="sheet-foot">${canDel ? `<button type="button" class="btn sm danger" data-act="deleteItem">Löschen</button>` : ''}<div class="r"><button type="button" class="btn" data-act="closeSheet">Abbrechen</button><button type="submit" class="btn primary">Speichern</button></div></div>`;
 const EDITORS = {
   sleepEntry(date){
-    const ex = (state.sleepLog || []).find(x => x.date === date), sp = sleepPlan()[date] || null;
-    let e = ex || {date, bed: sp ? hm(sp.bed) : '23:30', wake: sp ? hm(sp.wake) : '07:30', q: 0, tags: [], note: ''};
-    if (e.bedRaw) { const L = +state.settings.sleep.latency || 0; e = {...e, bed: toHM(minutesOf(e.bed) + L), lat: e.lat ?? L}; }
-    const pick = (k, lbl, opts, v) => `<div class="f"><span>${lbl}</span><input type="hidden" name="${k}" value="${v == null ? '' : v}"><div class="seg sp">${(() => { const has = v != null && v !== '', near = has ? opts.reduce((p, c) => Math.abs(c[0] - v) < Math.abs(p[0] - v) ? c : p)[0] : null; return opts.map(([o, l]) => `<button type="button" data-act="sleepPick" data-k="${k}" data-v="${o}" aria-pressed="${has && near === o}">${l}</button>`).join(''); })()}</div></div>`;
-    const qs = [[1,'Schlecht'],[2,'Unruhig'],[3,'Okay'],[4,'Gut'],[5,'Sehr gut']];
-    openSheet(`${head('Wie war die Nacht?')}<form class="form" data-form="sleepEntry">
-      ${e.src === 'handy' ? `<p class="note" style="margin:0">${ic('handy','s')} Vom Handy erkannt${e.auto ? '' : ' und von dir angepasst'}. Einschlafzeit ist geschätzt, korrigier sie, wenn du es weißt.</p>` : ''}
-      <p class="muted" style="margin:0">${esc(fmtWD(addDays(parseYMD(date), -1)))} auf ${esc(fmtWD(parseYMD(date)))}, ${esc(fmtDM(parseYMD(date)))}${sp ? ` · geplant ${hm(sp.bed)} bis ${hm(sp.wake)}` : ''}</p>
-      <div class="frow"><label class="f"><span>Eingeschlafen etwa</span><input type="time" name="bed" required value="${esc(e.bed)}"></label><label class="f"><span>Aufgewacht</span><input type="time" name="wake" required value="${esc(e.wake)}"></label></div>
-      ${pick('lat', 'Bis zum Einschlafen', [[5,'5'],[15,'15'],[30,'30'],[45,'45'],[60,'60+']], e.lat)}
-      ${pick('waso', 'Nachts wach, insgesamt', [[0,'0'],[10,'10'],[30,'30'],[60,'60'],[90,'90+']], e.waso)}
-      <p class="muted" style="margin:-6px 0 0;font-size:13px">In Minuten, grob geschätzt reicht. Daraus berechnet die App deine Schlafeffizienz.</p>
-      <div class="remchips"><label><input type="checkbox" name="noalarm" ${e.alarm === false ? 'checked' : ''}><span>Ohne Wecker aufgewacht</span></label></div>
-      <label class="f"><span>Datum (Morgen)</span><input type="date" name="date" required value="${esc(date)}"></label>
-      <div class="f"><span>Wie erholt fühlst du dich?</span><input type="hidden" name="q" value="${+e.q || 0}"><div class="seg sq">${qs.map(([v,l]) => `<button type="button" data-act="sleepQ" data-v="${v}" aria-pressed="${+e.q === v}">${l}</button>`).join('')}</div></div>
-      <div class="f"><span>Was war los? (optional)</span><div class="remchips">${SLEEP_TAGS.map(([k,l]) => `<label><input type="checkbox" name="tags" value="${k}" ${(e.tags||[]).includes(k)?'checked':''}><span>${l}</span></label>`).join('')}</div></div>
-      <label class="f"><span>Notiz</span><input name="note" value="${esc(e.note || '')}" placeholder="z. B. zweimal aufgewacht"></label>
-      ${foot(false)}</form>`, {kind:'sleep', id: ex ? ex.id : null});
+    const ex = (state.sleepLog || []).find(x => x.date === date && !x.ex);
+    openSheet(`${head(ex && !ex.auto ? 'Nacht bearbeiten' : 'Wie war die Nacht?')}${sleepForm(date, 'sheet')}`, {kind:'sleep', id: ex ? ex.id : null});
   },
   event(e, opts = {}){
     const isNew = !e;
@@ -8153,11 +8228,13 @@ const SAVE = {
   codeEnter(form, fd){ const c = xNorm(fd.get('code')); if (c.length !== 8) { toast('Der Code hat 8 Zeichen', 'Zum Beispiel K7Q2 M9XD.'); return; } closeSheet(); importFromToken(c); },
   places(form){ const any = savePlaces(form); closeSheet(); commit(); toast(any ? 'Orte gespeichert' : 'Später geht es unter Einstellungen → Orte und Wege', any ? 'Die Wege werden jetzt aus dem Fahrplan berechnet.' : ''); if (any) Transit.fillRoutes(true); },
   sleepEntry(form, fd){
-    const date = fd.get('date'), bed = fd.get('bed'), wake = fd.get('wake');
-    if (!/^\d\d:\d\d$/.test(bed) || !/^\d\d:\d\d$/.test(wake)) { toast('Uhrzeiten fehlen', ''); return; }
+    const date = fd.get('date'), inBed = fd.get('inBed'), wake = fd.get('wake');
+    if (!/^\d\d:\d\d$/.test(inBed) || !/^\d\d:\d\d$/.test(wake)) { toast('Uhrzeiten fehlen', ''); return; }
     const num = k => { const v = fd.get(k); return v === '' || v == null ? null : +v; };
-    upsertSleep({date, bed, wake, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(fd.get('note') || '').trim(), lat: num('lat'), waso: num('waso'), alarm: fd.get('noalarm') ? false : true, bedRaw: false, auto: false});
-    closeSheet(); toast('Nacht gespeichert', `${fmtShort(addDays(parseYMD(date), -1))} auf ${fmtShort(parseYMD(date))}`);
+    const ex = (state.sleepLog || []).find(x => x.date === date && !x.ex), lat = num('lat'), woke = fd.get('woke') || null;
+    const note = fd.get('note'); const o = {date, inBed, bed: toHM(minutesOf(inBed) + (lat || 0)), wake, lat, waso: num('waso'), woke, alarm: woke === 'wecker' ? true : woke === 'selbst' ? false : null, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(note != null ? note : (ex && ex.note) || '').trim(), bedRaw: false, auto: false};
+    upsertSleep(o); closeSheet(); haptic && haptic();
+    const n = sleepNight(o); toast('Nacht gespeichert', `${fmtH(n.dur)} Schlaf, ${fmtShort(addDays(parseYMD(date), -1))} auf ${fmtShort(parseYMD(date))}`);
   },
   onb(f, fd){
     const step = +f.dataset.step, s = state.settings;
@@ -8346,7 +8423,7 @@ const ACTIONS = {
   sleepDetectNow(){ const n = SleepAuto.run(true); render(); const st = SleepAuto.stat; const w = SleepAuto.why[ymd(new Date())]; toast(n ? `${n} ${n === 1 ? 'Nacht' : 'Nächte'} erkannt` : 'Nichts Neues', n ? 'Im Protokoll unter „vom Handy erkannt“.' : st && !st.ev ? 'Android liefert noch keine Bildschirmzeiten.' : w ? `Letzte Nacht: ${w}` : 'Alle Nächte der letzten Tage sind schon eingetragen.'); },
   sleepDetectOff(){ state.settings.sleep.detect = false; commit(); toast('Erkennung aus', 'Du kannst sie in den Einstellungen unter Schlaf wieder einschalten.'); },
   sleepQuickQ(el){ const x = (state.sleepLog || []).find(o => o.date === el.dataset.date); if (!x) return; x.q = +el.dataset.v; commit(); haptic && haptic(); toast('Danke', 'Erholung gespeichert.'); },
-  sleepPick(el){ const f = el.closest('form'), inp = f.elements[el.dataset.k], on = el.getAttribute('aria-pressed') === 'true'; inp.value = on ? '' : el.dataset.v; el.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', !on && b === el)); },
+  sleepPick(el){ const f = el.closest('form'), grp = el.parentElement, inp = f.elements[el.dataset.k], guess = grp.classList.contains('g'), on = el.getAttribute('aria-pressed') === 'true' && !guess; inp.value = on ? '' : el.dataset.v; grp.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', !on && b === el)); if (f.classList.contains('sl3-form')) sleepFormTouch(f, grp); },
   sleepNeedSet(el){ const m = +el.dataset.m; if (!(m >= 300 && m <= 660)) return; pushUndo(); state.settings.sleep.hours = Math.round(m / 30) / 2; commit(); toast('Bedarf angepasst', `${fmtH(m)} pro Nacht. Der Schlafplan rechnet ab jetzt damit.`, undoOpt); },
   transfer(){ transferSheet(); },
   async transferCopy(){
@@ -8949,7 +9026,7 @@ function showKeys(){
    · Planabweichung, Einflüsse auf die Erholung (nur ab 3 Nächten je Einfluss)
    Ergebnis: Schlafwert 0–100 aus fünf gewichteten Teilen und konkrete Empfehlungen.
    ================================================================ */
-const SLEEP_TAGS = [['koffein','Koffein nach 15 Uhr'],['bildschirm','Bildschirm im Bett'],['sport','Sport am Tag'],['spaet','Spät gegessen'],['alkohol','Alkohol'],['stress','Stress'],['nap','Mittagsschlaf'],['krank','Krank']];
+const SLEEP_TAGS = [['koffein','Koffein nach 15 Uhr'],['bildschirm','Bildschirm im Bett'],['sport','Sport am Tag'],['spaet','Spät gegessen'],['alkohol','Alkohol'],['stress','Stress'],['nap','Mittagsschlaf'],['krank','Krank'],['laerm','Lärm in der Nacht']];
 function upsertSleep(o){
   state.sleepLog = state.sleepLog || []; pushUndo();
   const ex = state.sleepLog.find(x => x.date === o.date);
@@ -9062,7 +9139,7 @@ function sleepDeep(){
   out.wk = [1, 2, 3, 4, 5, 6, 7].map(dw => { const a = base.filter(n => n.eve === dw); return {dw, n: a.length, dur: sAvg(a.map(n => n.dur)), on: sAvg(a.map(n => n.b)), q: sAvg(a.filter(n => n.q > 0).map(n => n.q))}; });
   /* Trend: letzte 7 gegen die 7 davor */
   const cur = all.filter(n => n.date >= since(7)), prev = all.filter(n => n.date >= since(14) && n.date < since(7));
-  out.trend = cur.length >= 3 && prev.length >= 3 ? {dur: sAvg(cur.map(n => n.dur)) - sAvg(prev.map(n => n.dur)), on: sAvg(cur.map(n => n.b)) - sAvg(prev.map(n => n.b)), q: (sAvg(cur.filter(n => n.q).map(n => n.q)) ?? 0) - (sAvg(prev.filter(n => n.q).map(n => n.q)) ?? 0)} : null;
+  out.trend = cur.length >= 3 && prev.length >= 3 ? {dur: sAvg(cur.map(n => n.dur)) - sAvg(prev.map(n => n.dur)), on: sAvg(cur.map(n => n.b)) - sAvg(prev.map(n => n.b)), q: cur.filter(n => n.q).length >= 3 && prev.filter(n => n.q).length >= 3 ? sAvg(cur.filter(n => n.q).map(n => n.q)) - sAvg(prev.filter(n => n.q).map(n => n.q)) : 0} : null;
   /* Effizienz, Einschlafdauer, nächtliches Wachsein */
   const seA = base.filter(n => n.se != null), solA = base.filter(n => n.sol != null && !n.solEst), wasoA = base.filter(n => n.waso != null);
   out.se = seA.length >= 3 ? Math.round(sAvg(seA.map(n => n.se))) : null; out.seN = seA.length;
@@ -9178,6 +9255,9 @@ function sleepPatterns(D){
   if (D.calEarly && D.calEarly.ddur < -30) P('warn', 'uhr', 'Frühe Starts kosten Schlaf', `Vor Tagen mit Terminen vor 9 Uhr schläfst du ${dur(Math.round(-D.calEarly.ddur))} kürzer. Der Plan legt die Bettzeit davor schon früher, die Erinnerung am Abend hilft, sie zu halten.`);
   if (D.streak >= 4) P('good', 'haken', `${D.streak} Nächte in Folge im Rhythmus`, `Jedes Mal höchstens 30 min von deinem üblichen Einschlafen (${fmtClock(D.medOn)}) entfernt.`);
   if (st.msfsc != null) { const h = ((st.msfsc + 720) % 1440) / 60; if (h >= 4.5) P('', 'sonne', `${chronoLabel(st.msfsc)}`, `Schlafmitte an freien Tagen ${fmtClock(st.msfsc)}. Wenn du früher müde werden willst: Tageslicht in der ersten Stunde nach dem Aufstehen und am Abend gedimmtes Licht verschieben die innere Uhr nach vorn.`); }
+  const noisy = D.base.filter(n => n.woke === 'geraeusch' || (n.tags || []).includes('laerm'));
+  if (noisy.length >= 2) { const rest = D.base.filter(n => !noisy.includes(n)), dd = rest.length >= 3 ? sAvg(noisy.map(n => n.dur)) - sAvg(rest.map(n => n.dur)) : 0, qn = sAvg(noisy.filter(n => n.q).map(n => n.q)), qr = sAvg(rest.filter(n => n.q).map(n => n.q));
+    P('warn', 'glocke', `Geräusche wecken dich (${noisy.length}× in 4 Wochen)`, `${dd < -10 ? `In diesen Nächten schläfst du ${dur(Math.round(-dd))} kürzer. ` : ''}Lärm weckt auch dann, wenn man es morgens nicht mehr weiß. Hilft oft: Ohrstöpsel aus Schaumstoff, gleichmäßiges Rauschen (Ventilator, White Noise), Fenster zu bei Straßenlärm, Handy auf „Nicht stören“.`, qn != null && qr != null && noisy.filter(n => n.q).length >= 2 ? vzPair(qn, qr, 'mit', 'ohne') : ''); }
   const PL = sleepPlan(), up = []; for (let k = 1; k <= 7; k++) { const x = PL[ymd(addDays(t0, k))]; if (x && x.short) up.push(`${dayLabel(addDays(t0, k - 1))} nur ${dur(x.sleepMin)}`); }
   if (up.length) P('warn', 'mond', 'Kurze Nächte in Sicht', up.join(' · ') + '. Der Plan gleicht das in den Nächten danach aus.');
   const rank = {warn: 0, '': 1, good: 2}; return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
@@ -9342,6 +9422,111 @@ function sleepAutoStatus(){
   const today = ymd(new Date()), tEnt = (state.sleepLog || []).find(x => x.date === today && !x.ex), tWhy = !tEnt && SleepAuto.why[today] ? ` Letzte Nacht: ${esc(SleepAuto.why[today])}` : '';
   const ln = sleepNight(last), dd = parseYMD(last.date);
   return {k: 'on', lvl: 'good', t: 'Automatisch erkennen: an', sub: `Zuletzt erkannt: Nacht auf ${esc(fmtShort(dd))}, ${last.bed} bis ${last.wake} (${fmtH(ln.dur)} Schlaf). ${when[0].toUpperCase() + when.slice(1)}${st && st.n ? `, ${st.n} ${st.n === 1 ? 'Nacht' : 'Nächte'} neu` : ''}.${tWhy}`, act: `<button class="btn sm" data-act="sleepDetectNow">Jetzt prüfen</button>`};
+}
+/* ================================================================
+   §S4 LETZTE NACHT (v38): Die App schätzt jede Angabe vor (grau),
+   du bestätigst mit einem Tipp oder tippst an, was nicht stimmt.
+   Quellen der Schätzung: Handy-Erkennung, sonst dein Plan, sonst
+   deine üblichen Werte (Median der letzten bestätigten Nächte).
+   ================================================================ */
+const SLEEP_WOKE = [['wecker', 'Wecker'], ['selbst', 'Von selbst'], ['geraeusch', 'Geräusch'], ['anderes', 'Anderes']];
+function sleepLastDate(){ const n = new Date(); return ymd(n.getHours() < 4 ? addDays(startOfDay(n), -1) : startOfDay(n)); }
+function sleepGuess(date){
+  const S = state.settings.sleep, L = +S.latency || 0, sp = sleepPlan()[date] || null;
+  const ex = (state.sleepLog || []).find(x => x.date === date && !x.ex) || null;
+  const conf = (state.sleepLog || []).filter(x => !x.ex && !x.auto && x.date < date).slice(-21);
+  const med = k => { const a = conf.map(x => x[k]).filter(v => v != null && v !== '').map(Number); return a.length >= 3 ? sMed(a) : null; };
+  const g = {date, ex, sp, confirmed: !!(ex && !ex.auto)};
+  g.src = ex ? (ex.src === 'handy' ? (ex.auto ? 'handy' : 'handy-ok') : 'self') : sp ? 'plan' : 'none';
+  g.lat = ex && ex.lat != null && ex.lat !== '' ? +ex.lat : Math.round(med('lat') ?? L);
+  if (ex && ex.inBed) g.inBed = ex.inBed;
+  else if (ex && ex.bedRaw) g.inBed = ex.bed;
+  else if (ex) g.inBed = toHM(minutesOf(ex.bed) - (ex.lat != null && ex.lat !== '' ? +ex.lat : g.lat));
+  else if (sp) g.inBed = hm(sp.bed);
+  else g.inBed = '23:15';
+  g.wake = ex ? ex.wake : sp ? hm(sp.wake) : '07:30';
+  g.waso = ex && ex.waso != null && ex.waso !== '' ? +ex.waso : Math.round(med('waso') ?? 0);
+  g.woke = ex && ex.woke ? ex.woke : ex && ex.alarm === false && !ex.auto ? 'selbst'
+    : sp && Math.abs(minutesOf(g.wake) - minutesOf(hm(sp.wake))) <= 10 ? 'wecker' : 'selbst';
+  const qs = conf.filter(x => x.q > 0).map(x => x.q);
+  g.q = ex && ex.q ? ex.q : qs.length >= 3 ? Math.round(sMed(qs)) : 0;
+  g.tags = ex ? (ex.tags || []) : [];
+  g.note = ex ? ex.note || '' : '';
+  return g;
+}
+function sleepCalc(inBed, lat, wake, waso){ return sleepNight({inBed, bed: toHM(minutesOf(inBed) + (+lat || 0)), wake, waso: +waso || 0, lat: +lat || 0}); }
+/* Balken 21–11 Uhr: im Bett, Schlaf, Plan */
+function sleepBar(n, sp){
+  const A = 540, B = 1380, P = v => Math.max(0, Math.min(100, (v - A) / (B - A) * 100)).toFixed(2);
+  const seg = (a, b, cls) => `<i class="${cls}" style="left:${P(a)}%;width:${Math.max(0, P(b) - P(a)).toFixed(2)}%"></i>`;
+  let pl = ''; if (sp) { const p = sleepNight({bed: hm(sp.bed), wake: hm(sp.wake)}); pl = seg(p.b, p.w, 'plan'); }
+  const ticks = [22, 0, 2, 4, 6, 8, 10].map(h => { const r = h >= 12 ? (h - 12) * 60 : (h + 12) * 60; return `<span style="left:${P(r)}%">${String(h).padStart(2, '0')}</span>`; }).join('');
+  return `<div class="sl3-bar">${pl}${n.ib != null ? seg(n.ib, n.b, 'lat') : ''}${seg(n.b, n.w, 'slp')}<div class="tk">${ticks}</div></div>`;
+}
+function sleepForm(date, mode){
+  const g = sleepGuess(date), G = !g.confirmed;
+  const chips = (k, opts, v) => { const has = v != null && v !== ''; const near = !has ? null : typeof opts[0][0] === 'number' ? opts.reduce((p, c) => Math.abs(c[0] - v) < Math.abs(p[0] - v) ? c : p)[0] : v;
+    return `<input type="hidden" name="${k}" value="${has ? v : ''}"><div class="seg sp${G && has ? ' g' : ''}" role="group">${opts.map(([o, l]) => `<button type="button" data-act="sleepPick" data-k="${k}" data-v="${o}" aria-pressed="${has && near === o}">${l}</button>`).join('')}</div>`; };
+  const tIn = (name, v, lbl) => `<label class="f"><span>${lbl}</span><input type="time" name="${name}" required value="${esc(v)}" class="${G ? 'guess' : ''}"></label>`;
+  const qs = [[1, 'Schlecht'], [2, 'Unruhig'], [3, 'Okay'], [4, 'Gut'], [5, 'Sehr gut']];
+  const body = `
+    ${G ? `<p class="sl3-hint"><i class="sw"></i>Grau ist geschätzt. Tipp an, was nicht stimmt, der Rest wird übernommen.</p>` : ''}
+    <div class="sl3-grid">
+      ${tIn('inBed', g.inBed, g.src === 'handy' ? 'Ins Bett (Handy weg)' : 'Ins Bett')}
+      <div class="f"><span>Bis eingeschlafen, min</span>${chips('lat', [[5, '5'], [15, '15'], [30, '30'], [45, '45'], [60, '60+']], g.lat)}</div>
+      ${tIn('wake', g.wake, 'Aufgewacht')}
+      <div class="f"><span>Nachts wach, min</span>${chips('waso', [[0, '0'], [10, '10'], [30, '30'], [60, '60'], [90, '90+']], g.waso)}</div>
+    </div>
+    <div class="f"><span>Geweckt von</span>${chips('woke', SLEEP_WOKE, g.woke)}</div>
+    <div class="f"><span>Wie erholt bist du?</span>${chips('q', qs, g.q || '')}</div>
+    <div class="f"><span>Was war los?</span><div class="remchips">${SLEEP_TAGS.map(([k, l]) => `<label><input type="checkbox" name="tags" value="${k}" ${g.tags.includes(k) ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div></div>`;
+  if (mode === 'inline') return `<form class="form sl3-form${G ? '' : ' touched'}" data-form="sleepEntry"><input type="hidden" name="date" value="${date}">${body}
+    <div class="sl3-go"><button class="btn primary" type="submit" data-alt="Speichern">${G ? 'Passt so' : 'Speichern'}</button>${G && g.src === 'handy' ? '<small>Ein Tipp genügt, wenn alles stimmt.</small>' : ''}</div></form>`;
+  const d = parseYMD(date);
+  return `<form class="form sl3-form${G ? '' : ' touched'}" data-form="sleepEntry">
+    <p class="muted" style="margin:0">${esc(fmtWD(addDays(d, -1)))} auf ${esc(fmtWD(d))}, ${esc(fmtDM(d))}${g.sp ? ` · geplant ${hm(g.sp.bed)} bis ${hm(g.sp.wake)}` : ''}</p>
+    ${g.ex ? `<input type="hidden" name="date" value="${date}">` : `<label class="f"><span>Datum (Morgen)</span><input type="date" name="date" required value="${esc(date)}"></label>`}
+    ${body}
+    <label class="f"><span>Notiz</span><input name="note" value="${esc(g.note)}" placeholder="z. B. Nachbarn laut gewesen"></label>
+    ${foot(!!g.ex)}</form>`;
+}
+/* Live: Dauer und Balken folgen deinen Angaben */
+function sleepFormLive(f){
+  const card = f.closest('.sl3-last'); if (!card) return;
+  const v = k => f.elements[k] ? f.elements[k].value : '';
+  if (!/^\d\d:\d\d$/.test(v('inBed')) || !/^\d\d:\d\d$/.test(v('wake'))) return;
+  const n = sleepCalc(v('inBed'), v('lat'), v('wake'), v('waso')), g = sleepGuess(f.elements.date.value);
+  const big = card.querySelector('.sl3-dur b'); if (big) big.textContent = fmtH(n.dur);
+  const bar = card.querySelector('.sl3-bar'); if (bar) bar.outerHTML = sleepBar(n, g.sp);
+  const tl = card.querySelector('.sl3-tl'); if (tl) tl.innerHTML = sleepTimes(n);
+}
+function sleepTimes(n){ return `<span><b>${fmtClock(n.ib ?? n.b)}</b> ins Bett</span><span><b>${fmtClock(n.b)}</b> eingeschlafen</span><span><b>${fmtClock(n.w)}</b> wach</span>`; }
+function sleepFormTouch(f, grp){
+  if (grp) grp.classList.remove('g');
+  if (!f.classList.contains('touched')) { f.classList.add('touched'); const b = f.querySelector('.sl3-go [type=submit]'); if (b) b.textContent = b.dataset.alt || 'Speichern'; }
+  f.querySelectorAll('input.guess').forEach(i => { if (i === document.activeElement) i.classList.remove('guess'); });
+  sleepFormLive(f);
+}
+document.addEventListener('input', ev => { const t = ev.target, f = t.form; if (!f || !f.classList.contains('sl3-form')) return; if (t.classList.contains('guess')) t.classList.remove('guess'); sleepFormTouch(f); });
+/* Karte „Letzte Nacht“ */
+function sleepLastCard(D){
+  const date = sleepLastDate(), g = sleepGuess(date), d = parseYMD(date);
+  const n = sleepCalc(g.inBed, g.lat, g.wake, g.waso), short = n.dur < D.need - 45;
+  const badge = {handy: ['erk', 'Vom Handy erkannt, bitte prüfen'], 'handy-ok': ['ok', 'Bestätigt'], self: ['ok', 'Eingetragen'], plan: ['plan', 'Noch nicht eingetragen, geschätzt aus deinem Plan'], none: ['plan', 'Noch nicht eingetragen']}[g.src];
+  const as = sleepAutoStatus(), showSt = !['web', 'plan'].includes(as.k);
+  const sum = () => { const w = SLEEP_WOKE.find(x => x[0] === g.woke); return `<div class="sl3-sum">
+      ${g.lat != null ? `<span>${g.lat} min bis eingeschlafen</span>` : ''}${g.waso ? `<span>${g.waso} min nachts wach</span>` : '<span>durchgeschlafen</span>'}${w ? `<span>${w[0] === 'geraeusch' ? 'von einem Geräusch geweckt' : w[0] === 'wecker' ? 'mit Wecker' : w[0] === 'selbst' ? 'von selbst wach' : 'anders geweckt'}</span>` : ''}
+      ${g.q ? `<span class="q">Erholung ${[1, 2, 3, 4, 5].map(k => `<i class="${k <= g.q ? 'on' : ''}"></i>`).join('')}</span>` : ''}
+      ${g.tags.map(t => `<span class="t">${esc((SLEEP_TAGS.find(z => z[0] === t) || [, t])[1])}</span>`).join('')}
+    </div><div class="sl3-go"><button class="btn" data-act="sleepLog" data-date="${date}">${ic('stift', 's')}Ändern</button></div>`; };
+  return `<section class="sl2-tile sl3-last${g.confirmed ? ' done' : ''}">
+    <div class="sl3-top"><div><span class="lbl">Letzte Nacht</span><small>${esc(fmtShort(addDays(d, -1)))} auf ${esc(fmtShort(d))}</small></div><span class="badge ${badge[0]}">${badge[1]}</span></div>
+    <div class="sl3-dur${g.confirmed ? '' : ' est'}"><b>${fmtH(n.dur)}</b><span>Schlaf${short ? `, <em>${dur(Math.round(D.need - n.dur))} unter deinem Bedarf</em>` : ''}</span></div>
+    ${sleepBar(n, g.sp)}
+    <div class="sl3-tl">${sleepTimes(n)}</div>
+    ${g.confirmed ? sum() : sleepForm(date, 'inline')}
+    ${showSt ? `<div class="sl3-st ${as.lvl}"><span class="dot"></span><span><b>${esc(as.t)}</b> ${as.k === 'on' ? (SleepAuto.stat ? `<br>zuletzt geprüft ${hm(new Date(SleepAuto.stat.at))}` : '') : `<br>${as.sub}`}</span>${as.act || ''}</div>` : ''}
+  </section>`;
 }
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
