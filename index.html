@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 42  ·  persönlicher Kalender für alles
+ KALENDARIUM 43  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2881,6 +2881,16 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .ev.work b,.ev.work .m,.ev.work .mono{color:var(--ink)}
 .ev.work .wm{color:var(--c);opacity:.5}
 .wrow.work{background:color-mix(in oklab, var(--c) 12%, transparent);outline:1.5px dashed color-mix(in oklab, var(--c) 70%, transparent);outline-offset:-1.5px}
+
+/* v43: Wachheit im Arbeitsblock: je wacher, desto kräftiger */
+.ev.work.en-hi{background:color-mix(in oklab, var(--c) 32%, var(--tile));outline-style:solid}
+.ev.work.en-mid{background:color-mix(in oklab, var(--c) 20%, var(--tile))}
+.ev.work.en-lo{background:color-mix(in oklab, var(--c) 9%, var(--tile))}
+.wrow.work.en-hi{background:color-mix(in oklab, var(--c) 24%, transparent);outline-style:solid}
+.en-w .ic{background:color-mix(in oklab, var(--c) 18%, var(--tile));color:var(--c)}.en-w .ic svg{width:16px;height:16px}
+.en-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.en-legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;outline:1.5px dashed var(--c);outline-offset:-1.5px}
+.en-legend i.hi{background:color-mix(in oklab, var(--c) 32%, var(--tile));outline-style:solid}.en-legend i.mid{background:color-mix(in oklab, var(--c) 20%, var(--tile))}.en-legend i.lo{background:color-mix(in oklab, var(--c) 9%, var(--tile))}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6641,7 +6651,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '42';
+const APP_VERSION = '43';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => state.deadlines.filter(d => !d.done);
@@ -7131,7 +7141,7 @@ function dayTimeline(date){
     if (o.bb) body += `<div class="${bc}" style="--c:${o.cat.color};top:${top - o.bb/60*PX}px;height:${o.bb/60*PX + 8}px;${pos}"></div>`;
     if (o.ba) body += `<div class="${bc}" style="--c:${o.cat.color};top:${top + h - 8}px;height:${Math.max(0, o.ba/60*PX + 8)}px;${pos}"></div>`;
     const pl = placeLabel(o);
-    body += `<button class="ev${solid ? ' solid' : ''}${isClash(o) ? ' clash' : ''}${o.kind === 'work' ? ' work' : ''}${h < 46 ? ' short' : ''}${o.end < now ? ' past' : ''}" style="--c:${o.cat.color};top:${top}px;height:${h}px;${pos}" data-key="${esc(o.key)}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(o.start)}" ${isDraggable(o)?'data-drag="1"':''}>
+    body += `<button class="ev${solid ? ' solid' : ''}${isClash(o) ? ' clash' : ''}${o.kind === 'work' ? ' work' + (o.energy != null ? (o.energy >= 0.75 ? ' en-hi' : o.energy >= 0.5 ? ' en-mid' : ' en-lo') : '') : ''}${h < 46 ? ' short' : ''}${o.end < now ? ' past' : ''}" style="--c:${o.cat.color};top:${top}px;height:${h}px;${pos}" data-key="${esc(o.key)}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(o.start)}" ${isDraggable(o)?'data-drag="1"':''}>
       <b>${esc(o.kind==='course' ? (o.ref.short||o.ref.title) + ' · ' + (COURSE_TYPES[o.ref.type]||'') : o.title)}</b>
       <span class="m"><span class="mono">${hm(o.start)}–${hm(o.end)}</span>${pl?`<span>${esc(pl)}</span>`:''}</span><span class="wm" aria-hidden="true">${sy(o.kind === 'work' ? (o.ref.exam ? 'buch' : 'feder') : o.cat.symbol)}</span></button>`;
   }
@@ -7666,12 +7676,14 @@ function deadlineRemaining(d){
 /* Fristen (Flagge, Kategoriefarbe) und die Zeit, in der man daran arbeitet,
    sehen bewusst verschieden aus: eigene Kategorie „Lern- und Arbeitszeit“
    in Schiefer mit Feder, für Klausuren mit Buch. Farbe in Einstellungen → Kategorien änderbar. */
-const WORK_DEF = {id: 'arbeit', name: 'Lern- und Arbeitszeit', color: '#4E5D73', symbol: 'feder'};
-function ensureWorkCat(){ let c = state.categories.find(x => x.id === 'arbeit'); if (!c) { c = {...WORK_DEF}; state.categories.push(c); } return c.id; }
-function workCat(exam){ const c = state.categories.find(x => x.id === 'arbeit') || WORK_DEF; return exam ? {...c, symbol: 'buch'} : c; }
+const WORK_DEF = {id: 'lernzeit', name: 'Lern- und Arbeitszeit', color: '#0E7490', symbol: 'feder'};
+function ensureWorkCat(){ let c = state.categories.find(x => x.id === 'lernzeit'); if (!c) { c = {...WORK_DEF}; state.categories.push(c); } return c.id; }
+function workCat(exam){ const c = state.categories.find(x => x.id === 'lernzeit') || WORK_DEF; return exam ? {...c, symbol: 'buch'} : c; }
 function migrateWorkCat(){
   let n = 0;
-  for (const e of state.events || []) if (/^(Lernen|Arbeiten): /.test(e.title || '') && e.catId !== 'arbeit' && !e.workCatKeep) { const dl = state.deadlines.find(d => e.title.endsWith(d.title)); if (dl && e.catId === dl.catId) { e.catId = ensureWorkCat(); n++; } }
+  const wc = state.categories.find(x => x.id === 'lernzeit'); if (wc && wc.color === '#4E5D73') { wc.color = WORK_DEF.color; n++; }
+  if (state.deadlines.some(d => d.src === 'isis')) { const ic0 = Isis.ensureCat(); for (const d of state.deadlines) if (d.src === 'isis' && d.catId !== ic0 && !d.catKeep && (d.catId === 'abgabe' || d.catId === 'uni')) { d.catId = ic0; n++; } }
+  for (const e of state.events || []) if (/^(Lernen|Arbeiten): /.test(e.title || '') && e.catId !== 'lernzeit' && !e.workCatKeep) { const dl = state.deadlines.find(d => e.title.endsWith(d.title)); if ((dl && e.catId === dl.catId) || e.catId === 'arbeit') { e.catId = ensureWorkCat(); n++; } }
   if (n) commit();
 }
 function workPlan(){
@@ -7794,7 +7806,7 @@ function weekList(days){
   return `<div class="wlist">${days.map(d => {
     const items = dayItems(d).filter(layerOk), timed = items.filter(isTimed).concat(workFor(d)), allday = items.filter(o => !isTimed(o));
     const legs = L.travel ? planDay(d).legs.filter(l => l.kind === 'go' || l.needHome) : [];
-    const rows = timed.map(o => ({t:o.start, html:`<button class="wrow${o.kind==='work'?' work':''}" style="--c:${o.cat.color}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(d)}"><span class="t">${hm(o.start)}</span><span class="dot"></span><span class="ti">${esc(o.kind==='course' ? (o.ref.short||o.ref.title) + ' · ' + (COURSE_TYPES[o.ref.type]||'') : o.title)}<small>${hm(o.start)}–${hm(o.end)}${placeLabel(o) ? ' · ' + esc(placeLabel(o)) : ''}</small></span></button>`}))
+    const rows = timed.map(o => ({t:o.start, html:`<button class="wrow${o.kind === 'work' ? ' work' + (o.energy != null ? (o.energy >= 0.75 ? ' en-hi' : o.energy >= 0.5 ? ' en-mid' : ' en-lo') : '') : ''}" style="--c:${o.cat.color}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(d)}"><span class="t">${hm(o.start)}</span><span class="dot"></span><span class="ti">${esc(o.kind==='course' ? (o.ref.short||o.ref.title) + ' · ' + (COURSE_TYPES[o.ref.type]||'') : o.title)}<small>${hm(o.start)}–${hm(o.end)}${placeLabel(o) ? ' · ' + esc(placeLabel(o)) : ''}</small></span></button>`}))
       .concat(legs.map(l => ({t:l.depart, html:`<div class="wrow go"><span class="t">${hm(l.depart)}</span><span class="dot"></span><span class="ti">${l.kind==='go' ? `Losgehen · ${l.live ? esc(l.live.first) + ' · ' : ''}${dur(l.mins)} zu ${esc(l.to.name)}` : `Heimweg · zuhause ${hm(l.arrive)}`}${l.tight ? ' · knapp' : ''}</span></div>`})))
       .sort((a,b) => a.t - b.t).map(r => r.html).join('');
     const dw = wxDay(d), b = SP[ymd(addDays(d,1))], w = SP[ymd(d)], tint = dayTint(d);
@@ -7873,7 +7885,7 @@ function weekGrid(days){
       const solid = o.kind === 'course' || o.bb || o.ba, bc = solid ? 'buf block' : 'buf';
       if (o.bb) body += `<div class="${bc}" style="--c:${o.cat.color};top:${top - o.bb/60*PX}px;height:${o.bb/60*PX + 6}px;${pos}"></div>`;
       if (o.ba) body += `<div class="${bc}" style="--c:${o.cat.color};top:${top + h - 6}px;height:${Math.max(0,o.ba/60*PX + 6)}px;${pos}"></div>`;
-      body += `<button class="ev${solid?' solid':''}${isClash(o) ? ' clash' : ''}${o.kind==='work'?' work':''}${o.end<now?' past':''}" style="--c:${o.cat.color};top:${top}px;height:${h}px;${pos}" data-key="${esc(o.key)}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(d)}" ${isDraggable(o)?'data-drag="1"':''}><b>${esc(o.title)}</b><span class="m"><span class="mono">${hm(o.start)}</span>${placeLabel(o)?`<span>${esc(placeLabel(o))}</span>`:''}</span><span class="wm" aria-hidden="true">${sy(o.kind === 'work' ? (o.ref.exam ? 'buch' : 'feder') : o.cat.symbol)}</span></button>`;
+      body += `<button class="ev${solid?' solid':''}${isClash(o) ? ' clash' : ''}${o.kind === 'work' ? ' work' + (o.energy != null ? (o.energy >= 0.75 ? ' en-hi' : o.energy >= 0.5 ? ' en-mid' : ' en-lo') : '') : ''}${o.end<now?' past':''}" style="--c:${o.cat.color};top:${top}px;height:${h}px;${pos}" data-key="${esc(o.key)}" data-act="detail" data-kind="${o.kind}" data-id="${o.id}" data-date="${ymd(d)}" ${isDraggable(o)?'data-drag="1"':''}><b>${esc(o.title)}</b><span class="m"><span class="mono">${hm(o.start)}</span>${placeLabel(o)?`<span>${esc(placeLabel(o))}</span>`:''}</span><span class="wm" aria-hidden="true">${sy(o.kind === 'work' ? (o.ref.exam ? 'buch' : 'feder') : o.cat.symbol)}</span></button>`;
     }
     if (b) {
       if (sameDay(b.bed, d) && b.bed.getHours() >= h0) body += `<div class="sleepzone" style="top:${y(b.bed)}px;bottom:0"></div><div class="marker sleep" style="top:${y(b.bed)}px"><span data-act="sleepInfo" data-date="${ymd(addDays(d,1))}">${ic('mond','s')}${hm(b.bed)}</span></div>`;
@@ -9816,7 +9828,7 @@ function energyCard(d, compact){
   const span = w => w ? `${hm(w.a)}–${hm(w.b)}` : '';
   const grp = {}; work.forEach(w => { (grp[w.id] = grp[w.id] || []).push(w); });
   const rows = Object.values(grp).map(ws => { ws.sort((a, b) => a.start - b.start); const w0 = ws[0], e = sAvg(ws.map(w => E.lv(new Date((+w.start + +w.end) / 2))));
-    return `<div class="en-w"><span class="ic">${ic('aufgaben', 's')}</span><span class="tx"><b>${esc(w0.title)}</b><small>${ws.map(w => `${hm(w.start)}–${hm(w.end)}`).join(', ')} · ${e >= 0.66 ? 'in deiner wachsten Zeit' : e >= 0.4 ? 'mittlere Wachheit' : 'nur noch müde Zeit frei'}</small></span><button class="btn sm" data-act="pinWork" data-id="${esc(w0.id)}" data-date="${ymd(d)}">Eintragen</button></div>`; }).join('');
+    return `<div class="en-w"><span class="ic" style="--c:${w0.cat.color}">${sy(w0.cat.symbol)}</span><span class="tx"><b>${esc(w0.title)}</b><small>${ws.map(w => `${hm(w.start)}–${hm(w.end)}`).join(', ')} · ${e >= 0.66 ? 'in deiner wachsten Zeit' : e >= 0.4 ? 'mittlere Wachheit' : 'nur noch müde Zeit frei'}</small></span><button class="btn sm" data-act="pinWork" data-id="${esc(w0.id)}" data-date="${ymd(d)}">Eintragen</button></div>`; }).join('');
   const sv = isToday && typeof Sens !== 'undefined' && Sens.on() && Sens.stepsOk() ? stepsDay(now) : null, stepsChip = sv != null ? `<span class="stp">${sv.toLocaleString('de-DE')} Schritte</span>` : '';
   const pv = isToday && typeof PVT !== 'undefined' ? PVT.todayLine() : '';
   const lbl = isToday ? 'Energie heute' : sameDay(d, addDays(startOfDay(now), 1)) ? 'Energie morgen' : `Energie ${esc(fmtShort(d))}`;
@@ -9825,7 +9837,7 @@ function energyCard(d, compact){
     <p>Am wachsten <b>${span(E.hi)}</b>${E.lo ? `, Tief um <b>${hm(E.lo.a)}</b>` : ''}.${E.form[0] === 'low' ? ' Nach den letzten Nächten ist dein Schlafdruck hoch, plane Schweres in die wache Zeit und Leichtes ins Tief.' : ''}</p>
     <div class="en-plot"><svg class="en-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wachheit über den Tag, am höchsten ${span(E.hi)}">${g}</svg>${nowDot}<div class="suns">${suns}</div><div class="hrs">${lb}</div></div>
     ${(() => { const LT = typeof lightTips === 'function' ? lightTips(d) : []; const L2 = compact ? LT.slice(0, 1) : LT; return L2.length ? `<div class="en-lt">${L2.map(x => `<div><span class="ic">${ic(x.ic, 's')}</span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></div>`).join('')}</div>` : ''; })()}
-    ${rows ? `<div class="en-ws">${rows}</div>` : ''}
+    ${rows ? `<div class="en-ws">${rows}</div><div class="en-legend" style="--c:${workCat().color}"><span><i class="hi"></i>hellwach</span><span><i class="mid"></i>wach</span><span><i class="lo"></i>eher müde</span></div>` : ''}
     ${isToday ? `<div class="en-pvt">${pv}<button class="btn sm" data-act="pvtOpen">${ic('uhr', 's')}Wachheit testen, 60 s</button></div>` : ''}
     ${compact ? '' : `<small class="en-src">Berechnet aus deinen letzten 7 Nächten, deiner inneren Uhr und der Tageszeit (Drei-Prozess-Modell nach Borbély und Åkerstedt)${state.pvtCal ? `, angepasst an ${state.pvtCal.n} Wachheitstests` : ''}. Lern- und Arbeitsblöcke für Fristen legt der Kalender bevorzugt in die wache Zeit.</small>`}
   </section>`;
@@ -10225,7 +10237,8 @@ const Isis = {
     }
     return out;
   },
-  catId(){ return state.categories.find(c => c.id === 'abgabe') ? 'abgabe' : (state.categories.find(c => c.id === 'uni') || state.categories[0]).id; },
+  ensureCat(){ let c = state.categories.find(x => x.id === 'isis'); if (!c) { c = {id: 'isis', name: 'ISIS-Abgaben', color: '#4D7C0F', symbol: 'zirkel'}; state.categories.push(c); } return c.id; },
+  catId(){ return this.ensureCat(); },
   apply(text){
     const evs = this.parse(text), now = Date.now(), C = this.cfg(); let added = 0, changed = 0, seen = 0;
     if (!evs.length && !/BEGIN:VCALENDAR/.test(text)) throw new Error('Das ist keine Kalenderdatei. Prüf den Link.');
@@ -11621,7 +11634,7 @@ function dayPeek(days){
   const sp = s.sleep.on ? sleepPlan() : {}, wake = sp[ymd(d)], bed = sp[ymd(addDays(d,1))], plan = planDay(d), di = dayInfo(d), wd = wxDay(d);
   const rows = [];
   const its = dayItems(d).filter(o => o.kind !== 'holiday' && layerOk(o)).concat(workFor(d));
-  for (const o of its) rows.push({t: o.allDay ? -1 : +o.start, html: `<button class="pk-row${o.kind === 'work' ? ' work' : ''}${!o.allDay && o.end < now ? ' past' : ''}" style="--c:${o.cat.color}" data-act="detail" data-kind="${o.kind}" data-id="${esc(o.id)}" data-date="${ymd(d)}"><span class="tm">${o.allDay ? 'ganzt.' : o.kind === 'deadline' ? hm(o.start) : hm(o.start)}</span><span class="dt"></span><span class="ti">${esc(o.kind === 'course' ? o.ref.title : o.title)}${placeLabel(o) ? `<small>${esc(placeLabel(o))}${o.kind !== 'deadline' && !o.allDay ? ' · bis ' + hm(o.end) : ''}</small>` : (o.kind !== 'deadline' && !o.allDay ? `<small>bis ${hm(o.end)}</small>` : '')}</span></button>`});
+  for (const o of its) rows.push({t: o.allDay ? -1 : +o.start, html: `<button class="pk-row${o.kind === 'work' ? ' work' + (o.energy != null ? (o.energy >= 0.75 ? ' en-hi' : o.energy >= 0.5 ? ' en-mid' : ' en-lo') : '') : ''}${!o.allDay && o.end < now ? ' past' : ''}" style="--c:${o.cat.color}" data-act="detail" data-kind="${o.kind}" data-id="${esc(o.id)}" data-date="${ymd(d)}"><span class="tm">${o.allDay ? 'ganzt.' : o.kind === 'deadline' ? hm(o.start) : hm(o.start)}</span><span class="dt"></span><span class="ti">${esc(o.kind === 'course' ? o.ref.title : o.title)}${placeLabel(o) ? `<small>${esc(placeLabel(o))}${o.kind !== 'deadline' && !o.allDay ? ' · bis ' + hm(o.end) : ''}</small>` : (o.kind !== 'deadline' && !o.allDay ? `<small>bis ${hm(o.end)}</small>` : '')}</span></button>`});
   if (s.layers.travel) plan.legs.forEach((l, i) => { if (!sameDay(l.depart, d)) return; rows.push({t: +l.depart - 1, html: `<button class="pk-row leg${l.tight ? ' tight' : ''}${l.arrive < now ? ' past' : ''}" data-act="travelInfo" data-date="${ymd(d)}" data-i="${i}"><span class="tm">${hm(l.depart)}</span><span class="dt"></span><span class="ti">${l.kind === 'go' ? 'Losgehen nach ' + esc(l.to && l.to.name || '') + (l.live ? ' · ' + esc(l.live.first) : '') : 'Heimweg'} · ${l.mins} min</span></button>`}); });
   rows.sort((a,b) => a.t - b.t);
   const todos = state.todos.filter(t => !t.done && (today ? (!t.date || parseYMD(t.date) <= startOfDay(now)) : t.date === ymd(d)));
