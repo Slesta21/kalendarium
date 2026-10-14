@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 46  ·  persönlicher Kalender für alles
+ KALENDARIUM 47  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2902,6 +2902,8 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .where .src{font-size:11px;color:var(--faint);white-space:nowrap;text-align:right}
 .tm + .rl,.rl{font-size:11px;font-weight:700;color:var(--warn);margin-left:4px;white-space:nowrap}
 @media (max-width:560px){ .where{grid-template-columns:40px minmax(0,1fr)} .where .src{grid-column:2;text-align:left;margin-top:-6px} }
+
+.lt-shift{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:600;color:var(--zone-ink);margin-top:6px}.lt-shift svg{width:14px;height:14px}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6668,7 +6670,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '46';
+const APP_VERSION = '47';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -8654,6 +8656,7 @@ const ACTIONS = {
   isisSync(){ Isis.sync(true); },
   isisOff(){ const C = Isis.cfg(); C.url = ''; C.last = null; commit(); toast('ISIS getrennt', 'Die bisherigen Fristen bleiben.'); },
   whereInfo(){ const w = Where.now(); toast(w.t, [w.s, w.src].filter(Boolean).join(' · ') || 'Mehr weiß die App gerade nicht.'); },
+  shiftUndo(){ const k = ui._shiftKey || (LiveTrip.skey && LiveTrip.skey()); TripShift.clear(k); invalidate(); LiveTrip.render(true); renderSoft(); Native.queue(); toast('Wieder nach Fahrplan', ''); },
   noiseStart(el){ if (!Sens.micOk()) { Sens.call('askMic'); toast('Mikrofon erlauben', 'Danach noch einmal tippen. Gemessen wird nur die Lautstärke, nichts wird aufgenommen.'); return; }
     const ok = Sens.call('noiseStart', +el.dataset.until); toast(ok ? 'Nachtmessung läuft' : 'Hat nicht geklappt', ok ? 'Leg das Handy neben das Bett, am besten ans Ladekabel. Morgens siehst du das Ergebnis bei „Letzte Nacht“.' : 'Das Mikrofon ist nicht erlaubt.'); setTimeout(render, 900); },
   noiseStop(){ Sens.call('noiseStop'); setTimeout(render, 600); },
@@ -10757,7 +10760,7 @@ const Transit = {
     }
     return {st, list: out.filter(x => x.earlier).slice(-5).concat(out.filter(x => !x.earlier).slice(0, 2))};
   },
-  liveFor(key, arriveBy){ const c = this.cache[key]; return c && c.depart && Math.abs(c.arriveBy - arriveBy) < 60000 ? c : null; },
+  liveFor(key, arriveBy){ const c = this.cache[key]; return c && c.depart && Math.abs(c.arriveBy - arriveBy) < 60000 ? TripShift.apply(key, c) : null; },
   hint(l){
     const miss = [l.from && !l.from.vbb ? l.from.name : null, l.to && !l.to.vbb ? l.to.name : null].filter(Boolean);
     if (l.to && l.to.mode !== 'oepnv') return 'Live-Verbindungen gibt es für Orte mit „ÖPNV“.';
@@ -11172,6 +11175,25 @@ function distToTrip(lv, p){
   for (const g of lv.legs) for (const q of [...(g.poly || []), g.fromLL, g.toLL, ...(g.stops || []).map(v => v.ll)]) if (q) best = Math.min(best, distM(p, q));
   return best;
 }
+/* ---------- Eigene Zeitkorrektur einer laufenden Fahrt (v47) ----------
+   Tippst du in der Bahn auf den Halt, an dem du gerade bist, und die Bahn
+   ist früher oder später dran als laut Fahrplan, werden alle folgenden
+   Zeiten um diese Minuten verschoben: Halte, Umstiege, Ankunft, Tagesplan,
+   Widget. Gilt bis zur Ankunft, Rückgängig jederzeit. */
+const TripShift = {
+  db: (() => { try { const o = JSON.parse(localStorage.getItem('kal-shift') || '{}') || {}, now = Date.now(); for (const k in o) if (!o[k] || o[k].until < now) delete o[k]; return o; } catch { return {}; } })(),
+  save(){ try { localStorage.setItem('kal-shift', JSON.stringify(this.db)); } catch {} },
+  get(key){ const s = key && this.db[key]; if (s && s.until < Date.now()) { delete this.db[key]; this.save(); return null; } return s || null; },
+  set(key, min, since, until){ if (!key) return; if (!min) delete this.db[key]; else this.db[key] = {min, since, until: until + 15 * 60000}; this.save(); },
+  clear(key){ if (key && this.db[key]) { delete this.db[key]; this.save(); } },
+  apply(key, lv){
+    if (!lv) return lv; const s = this.get(key), base = lv._base || lv;
+    if (!s || !base.legs) return base; if (lv._shift === s.min) return lv; lv = base;
+    const d = s.min * 60000, from = s.since - 2 * 60000, mv = v => { if (v == null) return v; const t = +new Date(v); return t >= from ? new Date(t + d).toISOString() : v; };
+    const legs = lv.legs.map(g => ({...g, dep: mv(g.dep), arr: mv(g.arr), stops: (g.stops || []).map(v => ({...v, dep: mv(v.dep), arr: mv(v.arr)}))}));
+    return {...lv, legs, arrive: new Date(+new Date(lv.arrive) + (+new Date(lv.arrive) >= from ? d : 0)), depart: +new Date(lv.depart) >= from ? new Date(+new Date(lv.depart) + d) : lv.depart, _shift: s.min, _base: base};
+  }
+};
 const LiveTrip = {
   src: null, lv: null, timer: null, rerouted: false, drawn: false,
   async open(src){
@@ -11186,7 +11208,8 @@ const LiveTrip = {
   /* Antippen eines Halts: „hier bin ich jetzt“. Passt eine andere Fahrt derselben
      Linie besser (früher oder später), wird sie übernommen, sonst wird die Zeit verschoben. */
   async calibrate(k){
-    const lv = this.lv; if (!lv) return; const pts = tripPoints(lv), p = pts[k]; if (!p) return;
+    ui._shiftKey = this.skey && this.skey();
+    const lv = this.view(); if (!lv) return; const pts = tripPoints(lv), p = pts[k]; if (!p) return;
     const now = Date.now(), pace = Math.round((now < p.t0 ? now - p.t0 : now > p.t1 ? now - p.t1 : 0) / 60000);
     haptic();
     const g = lv.legs.find(x => !x.walk && (x.stops || []).some(v => stopKey(v.name) === stopKey(p.name)));
@@ -11197,9 +11220,18 @@ const LiveTrip = {
         if (fit && fit.d < 4 * 60000) { this._pick = {st, list}; this.cal = null; return this.caught(list.indexOf(fit.x)); }
       } catch {}
     }
+    const inTrain = g && now >= +new Date(g.dep) - 60000, key = this.skey();
+    if (Math.abs(pace) >= 2 && inTrain && key) {
+      const old = TripShift.get(key), before = +new Date(lv.arrive);
+      TripShift.set(key, (old ? old.min : 0) + pace, now, +new Date(this.lv.arrive) + Math.max(0, (old ? old.min : 0) + pace) * 60000);
+      this.cal = null; ui._shiftKey = key; invalidate(); this.render(true); renderSoft(); Native.queue(); if (typeof Push !== 'undefined') Push.queue();
+      const nv = this.view();
+      toast(`${Math.abs(pace)} min ${pace < 0 ? 'früher' : 'später'} als der Fahrplan`, `Ankunft jetzt ${hm(new Date(nv.arrive))} statt ${hm(new Date(before))}. Halte, Umstiege, Tagesplan und Widget sind angepasst.`, {sym: 'zug', action: {act: 'shiftUndo', label: 'Rückgängig'}, ttl: 8000});
+      return;
+    }
     this.cal = Math.abs(pace) <= 1 ? null : {k, at: now, pace, off: now - (now < p.t0 ? p.t0 : now > p.t1 ? p.t1 : now)};
     this.render();
-    toast(`Du bist bei ${p.name}`, Math.abs(pace) <= 1 ? 'Genau im Plan.' : pace > 0 ? `${pace} min hinter dem Plan. Ich rechne damit weiter.` : `${-pace} min vor dem Plan. Ich rechne damit weiter.`, {ttl: 3200});
+    toast(`Du bist bei ${p.name}`, Math.abs(pace) <= 1 ? 'Genau im Plan.' : !inTrain && g ? `${Math.abs(pace)} min ${pace > 0 ? 'hinter' : 'vor'} dem Plan. Die ${lineLabel(g)} fährt laut Fahrplan um ${hm(new Date(g.dep))}${pace > 0 ? ', wird knapp' : ''}.` : `${Math.abs(pace)} min ${pace > 0 ? 'hinter' : 'vor'} dem Plan. Der Pfeil zeigt jetzt deine Position.`, {ttl: 4500});
   },
   pathHtml(lv, now){
     const pts = tripPoints(lv); if (pts.length < 2) return '';
@@ -11215,7 +11247,9 @@ const LiveTrip = {
   },
   key(){ const s = this.src; if (!s || s.home) return null; const l = planDay(parseYMD(s.date)).legs[+s.i]; return !l ? null : l.kind === 'go' ? l.before.key : l.after ? 'back:' + l.after.key : null; },
   /* Abschnitt, für den „andere Bahn erwischt“ gilt: der, auf den man wartet oder in dem man sitzt */
-  pickLeg(){ const lv = this.lv; if (!lv) return null; const now = Date.now(); return lv.legs.find(g => !g.walk && g.fromId && +new Date(g.arr) > now) || null; },
+  skey(){ return this.key() || (this.src && this.src.home ? 'home:' + ymd(new Date()) : null); },
+  view(){ return TripShift.apply(this.skey(), this.lv); },
+  pickLeg(){ const lv = this.view(); if (!lv) return null; const now = Date.now(); return lv.legs.find(g => !g.walk && g.fromId && +new Date(g.arr) > now) || null; },
   async pick(){
     const box = document.querySelector('[data-ltpick]'), g = this.pickLeg(), dest = this.destL(); if (!box) return;
     if (!box.hidden) { box.hidden = true; return; }
@@ -11275,14 +11309,14 @@ const LiveTrip = {
   },
   render(redraw){
     const box = document.querySelector('[data-lteta]'); if (!box) return;
-    const lv = this.lv, now = Date.now();
+    const lv = this.view(), now = Date.now(), sh = TripShift.get(this.skey());
     if (!lv) { box.innerHTML = `<span class="muted">${navigator.onLine === false ? 'Du bist offline.' : 'Gerade keine Live-Daten. Neuer Versuch in einer Minute.'}</span>`; return; }
     const left = Math.max(0, Math.round((+new Date(lv.arrive) - now) / 60000)), f = lv.legs.find(g => !g.walk), st = tripStatus(lv, now);
     box.innerHTML = `<span class="lt-sub">Ankunft</span><span class="lt-big">${hm(new Date(lv.arrive))}</span><span class="lt-sub">${left ? `noch ${dur(left)}` : 'gleich da'}${f && f.ddel > 0 ? ` · ${esc(f.line)} +${f.ddel} min` : ''}${Loc.pos ? '' : ' · ohne Standort'}</span>${this.rerouted ? '<span class="lt-note">Neu berechnet ab deinem Standort</span>' : ''}`;
     const pace0 = Loc.pos ? tripPace(lv, [Loc.pos.lat, Loc.pos.lon], now) : null, pace = this.cal && now - this.cal.at < 20 * 60000 && (pace0 == null || now - this.cal.at < 4 * 60000) ? this.cal.pace : pace0, pk = this.pickLeg(), started = now >= +new Date(lv.depart) - 10 * 60000;
     const paceT = pace == null ? '' : Math.abs(pace) <= 1 ? '<span class="lt-pace ok">Du bist im Plan</span>' : pace > 0 ? `<span class="lt-pace late">Du bist ca. ${pace} min hinter dem Plan</span>` : `<span class="lt-pace early">Du bist ca. ${-pace} min vor dem Plan</span>`;
     const nb = document.querySelector('[data-ltnow]'); nb.hidden = false;
-    nb.innerHTML = `<span class="lt-k">Jetzt laut Plan</span><b>${esc(st.head)}</b>${st.sub ? `<small>${esc(st.sub)}</small>` : ''}${paceT}
+    nb.innerHTML = `<span class="lt-k">Jetzt laut Plan</span><b>${esc(st.head)}</b>${st.sub ? `<small>${esc(st.sub)}</small>` : ''}${paceT}${sh ? `<span class="lt-shift">${ic('uhr', 's')}Zeiten von dir um ${Math.abs(sh.min)} min ${sh.min < 0 ? 'vorgezogen' : 'verschoben'}<button type="button" class="btn ghost sm" data-act="shiftUndo">Zurücksetzen</button></span>` : ''}
       <div class="lt-acts">${pk && started && st.head !== 'Angekommen' ? `<button type="button" class="btn sm" data-act="ltPick">${ic('zug','s')}Frühere Bahn erwischt</button>` : ''}${lv.over ? `<button type="button" class="btn ghost sm" data-act="overUndo">${ic('zurueck','s')}Rückgängig</button>` : ''}</div>`;
     const pb = document.querySelector('[data-ltpath]'); if (pb) pb.innerHTML = this.pathHtml(lv, now);
     const el0 = document.querySelector('[data-livemap]');
