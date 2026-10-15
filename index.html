@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 52  ·  persönlicher Kalender für alles
+ KALENDARIUM 53  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -3003,6 +3003,34 @@ main section.panel.kp > .row-item:last-child{padding-bottom:8px}
 #sheetCard h3.ksh,main h3.ksh{display:flex;align-items:center;gap:8px;margin:22px 0 10px;font-family:var(--f-body);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 #sheetCard h3.ksh::after,main h3.ksh::after{content:"";flex:1;height:1px;background:var(--line)}
 #sheetCard h3.ksh svg,main h3.ksh svg{width:15px;height:15px;flex:none;color:color-mix(in oklab, var(--zone) 80%, var(--ink))}
+.fit-b{display:inline-flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;font-weight:600;color:var(--muted);background:none;border:0;padding:0;font-family:inherit;text-align:left}
+.fit-b svg{width:13px;height:13px;flex:none}
+.fit-b.on{color:color-mix(in oklab, var(--sleep, var(--zone)) 80%, var(--ink))}
+.fit-b.man{cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+.fit-tile{display:flex;flex-direction:column;gap:0}
+.fit-top{display:flex;gap:16px;align-items:stretch;justify-content:space-between;padding-bottom:16px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.fit-top > div:first-child{min-width:0}
+.fit-k{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fit-big{display:block;font-family:var(--f-display);font-size:44px;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:4px 0 6px;color:var(--sleep, var(--zone))}
+.fit-top small{display:block;font-size:13px;color:var(--muted);line-height:1.4}
+.fit-side{flex:none;display:flex;flex-direction:column;gap:8px;min-width:150px}
+.fit-s{display:flex;flex-direction:column;padding:10px 14px;border-radius:14px;background:var(--tile-2)}
+.fit-s span{font-size:12px;font-weight:700;color:var(--muted)}
+.fit-s b{font-family:var(--f-display);font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.fit-s b.fit-ty{font-size:15px;font-family:var(--f-body);line-height:1.3;margin-top:3px}
+.fit-s small{font-size:12px;color:var(--muted)}
+.fit-r{display:flex;align-items:center;gap:12px;padding:12px 0}
+.fit-r + .fit-r{border-top:1px solid var(--line)}
+.fit-r .krow-ic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:color-mix(in oklab, var(--zone) 13%, var(--tile));color:color-mix(in oklab, var(--zone) 80%, var(--ink))}
+.fit-r .krow-ic svg{width:17px;height:17px}
+.fit-r .krow-t{flex:1;min-width:0}.fit-r .krow-t b{display:block}.fit-r .krow-t small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.fit-v{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.fit-v b{font-family:var(--f-display);font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.fit-c{display:flex;gap:3px}
+.fit-c em{width:12px;height:4px;border-radius:2px;background:var(--tile-2)}
+.fit-c.l1 em:nth-child(-n+1),.fit-c.l2 em:nth-child(-n+2),.fit-c.l3 em{background:var(--zone)}
+.fit-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (max-width:460px){.fit-top{flex-direction:column}.fit-side{flex-direction:row}.fit-s{flex:1;min-width:0}.fit-big{font-size:40px}}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -5531,7 +5559,7 @@ function defaultState(){
       loc:{ on:false },
       vib:{ go:'wecker', event:'doppelt', deadline:'puls' },
       live:{ on:true, lead:60 },
-      sleep:{ on:true, hours:8, latency:15, routine:45, wakeWeek:'07:30', wakeWeekend:'08:30', flex:60, shift:30, remind:30, auto:true, cycles:true, windDown:30 },
+      sleep:{ on:true, fit:true, hours:8, latency:15, routine:45, wakeWeek:'07:30', wakeWeekend:'08:30', flex:60, shift:30, remind:30, auto:true, cycles:true, windDown:30 },
       style:{ font:'classic', tone:'cool', density:'normal', radius:'soft', dayColors:true, motion:true },
       ntfy:{ on:false, topic:'' }
     },
@@ -6770,7 +6798,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '52';
+const APP_VERSION = '53';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -7357,7 +7385,7 @@ const VIEWS = {
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
     const en = energyCard(t0, false), exT = examTile();
-    return `<div class="sl2 sl3">${sec('Nacht')}${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${sec('Licht und Rückblick')}${lightTile()}${wrapTile()}${how}</div>`;
+    return `<div class="sl2 sl3">${sec('Nacht')}${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${(() => { try { return sleepProfileHtml(sec); } catch (e) { return ''; } })()}${muster}${chart}${rhythm}${proto}${sec('Licht und Rückblick')}${lightTile()}${wrapTile()}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7548,17 +7576,18 @@ const VIEWS = {
       ${sensePanel()}
       <section class="panel">
         <div class="panel-h"><h2>Schlaf</h2>${sw('sleep.on', S.on, 'Schlafplanung')}</div>
-        <div class="row"><div class="l"><b>Schlafdauer</b></div><span>${numIn('sleep.hours', S.hours, 5, 11, .5, 'Schlafdauer')} h</span></div>
+        <div class="row"><div class="l"><b>Automatisch einschätzen</b><small>Schlafbedarf, Einschlafzeit, Morgenroutine und Aufstehzeiten lernt die App aus deinen Nächten. Was du selbst änderst, bleibt fest.</small></div><button class="switch" role="switch" aria-checked="${S.fit !== false}" data-act="fitToggle" aria-label="Automatisch einschätzen"></button></div>
+        <div class="row"><div class="l"><b>Schlafbedarf</b>${SleepFit.badge('hours')}</div><span>${numIn('sleep.hours', S.hours, 5, 11, .25, 'Schlafbedarf')} h</span></div>
         ${Native.on() && !Native.has('sleep') ? `<div class="row"><div class="l"><b>Nächte vom Handy erkennen</b><small>Braucht die neue Android-App</small></div></div>` : ''}
         ${Native.has('sleep') ? `<div class="row"><div class="l"><b>Nächte vom Handy erkennen</b><small>${(() => { const a = sleepAutoStatus(); return a.t.replace('Automatisch erkennen: ', '').replace(/^./, c => c.toUpperCase()) + '. ' + a.sub; })()}</small></div>${SleepAuto.ok() ? sw('sleep.detect', S.detect !== false, 'Nächte vom Handy erkennen') : '<button class="btn sm" data-act="sleepUsage">Erlauben</button>'}</div>` : ''}
         <div class="row"><div class="l"><b>Automatisch berechnen</b><small>Fester Rhythmus aus deinem Stundenplan, frühe Tage vorbereitet, späte Abende berücksichtigt</small></div>${sw('sleep.auto', S.auto !== false, 'Schlafzeiten automatisch berechnen')}</div>
         ${S.auto !== false && state.settings.sleep.on ? (() => { sleepPlan(); const m = _sleepMeta; return m ? `<p class="note">Dein Rhythmus: werktags <b>${toHM(m.anchorW)}</b>, am Wochenende <b>${toHM(m.anchorWE)}</b> aufstehen (${m.anchorSrc}). Schlaf: ${m.cycles ? `${m.cycles} Zyklen, ${dur(m.sleepT)}` : dur(m.sleepT)}.</p>` : ''; })() : ''}
         <div class="row"><div class="l"><b>In Schlafzyklen planen</b><small>90-min-Zyklen, Wecker am Zyklusende</small></div>${sw('sleep.cycles', S.cycles !== false, 'Schlafzyklen')}</div>
         <div class="row"><div class="l"><b>Abschalten vor dem Schlafen</b><small>Nach dem letzten Termin oder der Ankunft zuhause</small></div><span>${numIn('sleep.windDown', S.windDown ?? 30, 0, 120, 5, 'Abschalten')} min</span></div>
-        <div class="row"><div class="l"><b>${S.auto !== false ? 'Spätestens aufstehen werktags' : 'Aufstehen werktags'}</b><small>${S.auto !== false ? 'Obergrenze für den Rhythmus' : 'Wenn nichts Früheres ansteht'}</small></div><input type="time" data-set="sleep.wakeWeek" value="${esc(S.wakeWeek)}" aria-label="Aufstehen werktags"></div>
-        <div class="row"><div class="l"><b>${S.auto !== false ? 'Wunsch am Wochenende' : 'Aufstehen am Wochenende'}</b>${S.auto !== false ? '<small>Höchstens 1 h nach dem Werktags-Rhythmus</small>' : ''}</div><input type="time" data-set="sleep.wakeWeekend" value="${esc(S.wakeWeekend)}" aria-label="Aufstehen am Wochenende"></div>
-        <div class="row"><div class="l"><b>Morgenroutine</b><small>Zeit zwischen Aufstehen und Losgehen</small></div><span>${numIn('sleep.routine', S.routine, 0, 180, 5, 'Morgenroutine')} min</span></div>
-        <div class="row"><div class="l"><b>Einschlafzeit</b></div><span>${numIn('sleep.latency', S.latency, 0, 60, 5, 'Einschlafzeit')} min</span></div>
+        <div class="row"><div class="l"><b>${S.auto !== false ? 'Spätestens aufstehen werktags' : 'Aufstehen werktags'}</b><small>${S.auto !== false ? 'Obergrenze für den Rhythmus' : 'Wenn nichts Früheres ansteht'}</small>${SleepFit.badge('wakeWeek')}</div><input type="time" data-set="sleep.wakeWeek" value="${esc(S.wakeWeek)}" aria-label="Aufstehen werktags"></div>
+        <div class="row"><div class="l"><b>${S.auto !== false ? 'Wunsch am Wochenende' : 'Aufstehen am Wochenende'}</b>${S.auto !== false ? '<small>Höchstens 1 h nach dem Werktags-Rhythmus</small>' : ''}${SleepFit.badge('wakeWeekend')}</div><input type="time" data-set="sleep.wakeWeekend" value="${esc(S.wakeWeekend)}" aria-label="Aufstehen am Wochenende"></div>
+        <div class="row"><div class="l"><b>Morgenroutine</b><small>Zeit zwischen Aufstehen und Losgehen</small>${SleepFit.badge('routine')}</div><span>${numIn('sleep.routine', S.routine, 0, 180, 5, 'Morgenroutine')} min</span></div>
+        <div class="row"><div class="l"><b>Einschlafzeit</b>${SleepFit.badge('latency')}</div><span>${numIn('sleep.latency', S.latency, 0, 60, 5, 'Einschlafzeit')} min</span></div>
         <div class="row"><div class="l"><b>Max. Verschiebung pro Nacht</b><small>Hält deinen Rhythmus stabil</small></div><span>${numIn('sleep.shift', S.shift, 10, 120, 5, 'Verschiebung')} min</span></div>
         <div class="row"><div class="l"><b>Später aufstehen höchstens</b><small>Auch wenn der erste Termin spät ist</small></div><span>${numIn('sleep.flex', S.flex, 0, 180, 15, 'Später aufstehen')} min</span></div>
         <div class="row"><div class="l"><b>Erinnerung vor Schlafenszeit</b></div><span>${numIn('sleep.remind', S.remind, 0, 120, 5, 'Erinnerung Schlafenszeit')} min</span></div>
@@ -8564,7 +8593,7 @@ const SAVE = {
     const num = k => { const v = fd.get(k); return v === '' || v == null ? null : +v; };
     const ex = (state.sleepLog || []).find(x => x.date === date && !x.ex), lat = num('lat'), woke = fd.get('woke') || null;
     const note = fd.get('note'); const o = {date, inBed, bed: toHM(minutesOf(inBed) + (lat || 0)), wake, lat, waso: num('waso'), woke, alarm: woke === 'wecker' ? true : woke === 'selbst' ? false : null, q: +fd.get('q') || 0, tags: fd.getAll('tags'), note: String(note != null ? note : (ex && ex.note) || '').trim(), bedRaw: false, auto: false};
-    upsertSleep(o); closeSheet(); haptic && haptic();
+    upsertSleep(o); closeSheet(); haptic && haptic(); try { SleepFit.apply(); } catch {}
     const n = sleepNight(o); toast('Nacht gespeichert', `${fmtH(n.dur)} Schlaf, ${fmtShort(addDays(parseYMD(date), -1))} auf ${fmtShort(parseYMD(date))}`);
   },
   onb(f, fd){
@@ -8776,7 +8805,7 @@ const ACTIONS = {
   sleepDetectOff(){ state.settings.sleep.detect = false; commit(); toast('Erkennung aus', 'Du kannst sie in den Einstellungen unter Schlaf wieder einschalten.'); },
   sleepQuickQ(el){ const x = (state.sleepLog || []).find(o => o.date === el.dataset.date); if (!x) return; x.q = +el.dataset.v; commit(); haptic && haptic(); toast('Danke', 'Erholung gespeichert.'); },
   sleepPick(el){ const f = el.closest('form'), grp = el.parentElement, inp = f.elements[el.dataset.k], guess = grp.classList.contains('g'), on = el.getAttribute('aria-pressed') === 'true' && !guess; inp.value = on ? '' : el.dataset.v; grp.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', !on && b === el)); if (f.classList.contains('sl3-form')) sleepFormTouch(f, grp); },
-  sleepNeedSet(el){ const m = +el.dataset.m; if (!(m >= 300 && m <= 660)) return; pushUndo(); state.settings.sleep.hours = Math.round(m / 30) / 2; commit(); toast('Bedarf angepasst', `${fmtH(m)} pro Nacht. Der Schlafplan rechnet ab jetzt damit.`, undoOpt); },
+  sleepNeedSet(el){ const m = +el.dataset.m; if (!(m >= 300 && m <= 660)) return; pushUndo(); state.settings.sleep.hours = Math.round(m / 30) / 2; SleepFit.setManual('hours'); commit(); toast('Bedarf angepasst', `${fmtH(m)} pro Nacht. Der Schlafplan rechnet ab jetzt damit.`, undoOpt); },
   transfer(){ transferSheet(); },
   async transferCopy(){
     const link = ui._xferLink; if (!link) return;
@@ -9052,6 +9081,10 @@ const ACTIONS = {
   overUndo(){ LiveTrip.undo(); },
   lightToggle(){ try { window.KalNative.lightSet(!window.KalNative.lightOn()); } catch {} Lite._c = null; render(); },
   offAns(el){ Offplan.answer(el.dataset.v); },
+  fitToggle(){ const S = state.settings.sleep; S.fit = S.fit === false; commit(); if (S.fit) { SleepFit.apply(); } render(); },
+  fitOn(){ state.settings.sleep.fit = true; commit(); SleepFit.apply(); render(); },
+  fitNow(){ const n = SleepFit.apply(true); commit(); render(); toast(n ? 'Schlafprofil angepasst' : 'Schlafprofil geprüft', n ? `${n} ${n === 1 ? 'Wert' : 'Werte'} neu eingeschätzt.` : 'Deine Werte passen noch.', {sym: 'mond', ttl: 3500}); },
+  fitAuto(el){ SleepFit.setManual(el.dataset.k, false); SleepFit.apply(true); commit(); render(); toast('Wieder automatisch', FIT_KEYS[el.dataset.k].l + ' wird aus deinen Nächten eingeschätzt.', {ttl: 3500}); },
   liveTrip(el){ LiveTrip.open(el.dataset.home ? {home: true} : {date: el.dataset.date, i: el.dataset.i}); },
   async stopInfo(el){
     const d = el.dataset, lat = parseFloat(d.lat), lon = parseFloat(d.lon), has = !isNaN(lat) && !isNaN(lon), name = d.name || 'Haltestelle';
@@ -9783,7 +9816,7 @@ const SleepAuto = {
       n++;
     }
     this.stat.n = n;
-    if (n) { state.sleepLog.sort((a, b) => a.date.localeCompare(b.date)); commit(); }
+    if (n) { state.sleepLog.sort((a, b) => a.date.localeCompare(b.date)); try { SleepFit.apply(); } catch {} commit(); }
     else if (ui.view === 'schlaf' || ui.view === 'einstellungen') render();
     return n;
   }
@@ -10903,7 +10936,7 @@ const Bau = {
   ICON: {
     'Jetzt': 'uhr', 'Hinweise': 'info', 'Dein Tag': 'heute', 'Der Tag': 'heute', 'Tagesablauf': 'uhr', 'Heute erledigen': 'haken', 'To-dos an diesem Tag': 'haken',
     'To-dos': 'haken', 'Fristen': 'flagge', 'Gewohnheiten': 'wdh', 'Passt das?': 'sprechblase', 'Wochenrückblick': 'balken',
-    'Nacht': 'mond', 'Überblick': 'balken', 'Muster': 'stern', 'Verlauf': 'liste', 'Rhythmus': 'wdh', 'Protokoll': 'stift', 'Klausur-Vorbereitung': 'flagge', 'Licht und Rückblick': 'sonne',
+    'Nacht': 'mond', 'Überblick': 'balken', 'Muster': 'stern', 'Verlauf': 'liste', 'Rhythmus': 'wdh', 'Protokoll': 'stift', 'Klausur-Vorbereitung': 'flagge', 'Licht und Rückblick': 'sonne', 'Dein Schlafprofil': 'blitz',
     'Kurse': 'buch', 'Handy in Vorlesungen': 'handy', 'Semester': 'stundenplan',
     'Überfällig': 'flagge', 'Heute': 'heute', 'Nächste 7 Tage': 'woche', 'Später': 'kalender', 'Erledigt': 'haken',
     'Nächste 12 Stunden': 'uhr', '10 Tage': 'kalender', 'Kursseiten': 'buch', 'Uni': 'buch', 'Discord': 'sprechblase', 'Termine': 'kalender', 'Links': 'links',
@@ -10972,6 +11005,147 @@ const Bau = {
     const first = main.querySelector('.kap-h'); if (first && !first.previousElementSibling) first.classList.add('kap-first');
   }
 };
+/* ================================================================
+   §F SCHLAFPROFIL: ALLES AUTOMATISCH EINSCHÄTZEN (v53)
+   Die App schätzt aus deinen Nächten selbst ein, was sonst in den
+   Einstellungen steht. Jeder Wert startet bei deiner Einstellung (bzw.
+   üblichen Werten) und wandert mit jeder passenden Nacht zu deinem
+   echten Wert („Schrumpfung“: wenige Daten zählen wenig).
+   · Schlafbedarf: Nächte ohne Wecker, wenn du davor ausgeschlafen warst
+     (beste Quelle); Nächte ohne Wecker nach Schlafmangel, um den
+     Nachholschlaf bereinigt; die Dauer, ab der deine Erholung nicht
+     mehr steigt; die Dauer, ab der dein Wachheitstest nicht mehr
+     besser wird. (Ohne-Wecker-Methode: Van Dongen 2003, Klerman 2012;
+     Nachholschlaf ≈ 30 % der Schuld: Banks 2010.)
+   · Einschlafzeit: deine bestätigten Angaben, sonst Licht aus → Schlaf.
+   · Morgenroutine: Aufwachen bis du laut GPS-Spur das Haus verlässt.
+   · Aufstehen frei: Aufwachen ohne Wecker an freien Tagen.
+   · Aufstehen werktags: dein übliches Aufwachen an Werktagen.
+   Änderst du einen Wert selbst, bleibt er fest, bis du wieder
+   „Automatisch“ wählst.
+   ================================================================ */
+const FIT_KEYS = {
+  hours: {l: 'Schlafbedarf', min: 3, fmt: v => fmtH(Math.round(v * 60)), unit: 'h'},
+  latency: {l: 'Einschlafzeit', min: 4, fmt: v => `${v} min`},
+  routine: {l: 'Morgenroutine', min: 3, fmt: v => `${v} min`},
+  wakeWeekend: {l: 'Aufstehen am Wochenende', min: 3, fmt: v => v},
+  wakeWeek: {l: 'Aufstehen werktags', min: 4, fmt: v => v}
+};
+const SleepFit = {
+  on(){ return state.settings.sleep.fit !== false; },
+  manual(k){ return !!((state.settings.sleep.fitOff || {})[k]); },
+  setManual(k, v = true){ const S = state.settings.sleep; S.fitOff = {...(S.fitOff || {}), [k]: v}; if (!v) delete S.fitOff[k]; },
+  prior(k){ const S = state.settings.sleep, P = (S.fitPrior = S.fitPrior || {}); if (P[k] == null) P[k] = S[k]; return P[k]; },
+  nights(){
+    const t0 = startOfDay(new Date()), from = ymd(addDays(t0, -42));
+    return (state.sleepLog || []).filter(x => !x.ex && x.date >= from && x.date <= ymd(t0) && x.bed && x.wake).map(x => { const d = parseYMD(x.date); return {...x, ...sleepNight(x), d, free: isoDow(d) >= 6 || isHoliday(d)}; }).sort((a, b) => a.date.localeCompare(b.date));
+  },
+  shrink(prior, k, obs){ const W = obs.reduce((a, o) => a + o.w, 0); return {v: (prior * k + obs.reduce((a, o) => a + o.v * o.w, 0)) / (k + W), w: W}; },
+  conf(w){ return w >= 10 ? 'sicher' : w >= 4 ? 'ziemlich sicher' : w > 0 ? 'erste Schätzung' : 'noch keine Daten'; },
+  /* ---------- Schlafbedarf ---------- */
+  need(N){
+    const prior = (+this.prior('hours') || 8) * 60, wkW = sMed(N.filter(n => !n.free).map(n => n.w)), obs = [], src = {rested: 0, debt: 0, sweet: 0, pvt: 0};
+    const alarmFree = n => n.alarm === false || n.woke === 'selbst' || (n.alarm == null && n.free && wkW != null && n.w - wkW >= 45);
+    let cur = prior;
+    N.forEach((n, i) => { if (!alarmFree(n) || n.dur < 240) return;
+      const prev = N.slice(Math.max(0, i - 3), i).filter(p => (n.d - p.d) <= 3 * 86400000);
+      const debt = prev.reduce((a, p) => a + Math.max(0, cur - p.dur), 0);
+      if (prev.length >= 2 && debt <= 60) { obs.push({v: n.dur, w: 1}); src.rested++; }
+      else { obs.push({v: n.dur - 0.3 * Math.min(debt, 300), w: 0.5}); src.debt++; } });
+    const rated = N.filter(n => n.q > 0), bins = {};
+    rated.forEach(n => { const k = Math.max(300, Math.min(570, Math.round(n.dur / 30) * 30)); (bins[k] = bins[k] || []).push(n.q); });
+    const bl = Object.entries(bins).map(([k, a]) => ({m: +k, n: a.length, q: sAvg(a)})).filter(x => x.n >= 2).sort((a, b) => a.m - b.m);
+    if (bl.length >= 3) { const top = Math.max(...bl.map(x => x.q)), first = bl.find(x => x.q >= top - 0.25); obs.push({v: first.m, w: 2}); src.sweet = 1; }
+    const PT = (state.pvt || []).filter(x => x.n >= 5).map(x => { const n = N.find(y => y.date === ymd(new Date(x.at))); return n ? {dur: n.dur, rt: x.med} : null; }).filter(Boolean);
+    if (PT.length >= 6) { const pb = {}; PT.forEach(x => { const k = Math.max(300, Math.min(570, Math.round(x.dur / 30) * 30)); (pb[k] = pb[k] || []).push(x.rt); });
+      const pl = Object.entries(pb).map(([k, a]) => ({m: +k, n: a.length, rt: sMed(a)})).filter(x => x.n >= 2).sort((a, b) => a.m - b.m);
+      if (pl.length >= 3) { const best = Math.min(...pl.map(x => x.rt)), first = pl.find(x => x.rt <= best + 12); obs.push({v: first.m, w: 2}); src.pvt = 1; } }
+    const r = this.shrink(prior, 3, obs);
+    return {v: Math.max(360, Math.min(600, Math.round(r.v / 15) * 15)), w: r.w, src, n: obs.length};
+  },
+  latency(N){
+    const prior = +this.prior('latency') || 15, obs = [];
+    N.filter(n => !n.auto && n.lat != null && n.lat !== '').forEach(n => obs.push({v: +n.lat, w: 1}));
+    const r = this.shrink(prior, 3, obs.slice(-21));
+    return {v: Math.max(0, Math.min(60, Math.round(r.v / 5) * 5)), w: r.w, n: obs.length};
+  },
+  routine(N){
+    const prior = +this.prior('routine') || 45, obs = [], H = typeof Loc !== 'undefined' ? Loc.homeL() : null;
+    if (H && typeof Sens !== 'undefined' && Sens.on()) for (const n of N.slice(-21)) {
+      const wakeT = +at(n.date, n.wake), P = planDay(n.d), go = P.legs.find(l => l.kind === 'go' && l.from && l.from.home);
+      if (!go || +go.depart - wakeT > 4 * 3600000 || +go.depart < wakeT) continue;
+      const T = Sens.get('trace', wakeT, +go.depart + 40 * 60000).filter(x => x[3] <= 100);
+      let lastNear = null, leave = null; for (const x of T) { const dd = distM([x[1], x[2]], [H.latitude, H.longitude]); if (dd <= 120) lastNear = x[0]; else if (dd > 220 && lastNear) { leave = (lastNear + x[0]) / 2; break; } }
+      if (leave) { const m = Math.round((leave - wakeT) / 60000); if (m >= 10 && m <= 180) obs.push({v: m, w: 1}); }
+    }
+    const r = this.shrink(prior, 2, obs);
+    return {v: Math.round(r.v / 5) * 5, w: r.w, n: obs.length};
+  },
+  wakeAt(N, free){
+    const key = free ? 'wakeWeekend' : 'wakeWeek', prior = minutesOf(this.prior(key) || (free ? '08:30' : '07:30')), wkW = sMed(N.filter(n => !n.free).map(n => n.w));
+    const pick = N.filter(n => n.free === free && n.dur >= 240 && (free ? (n.alarm === false || n.woke === 'selbst' || (n.alarm == null && wkW != null && n.w - wkW >= 30)) : true));
+    const obs = pick.map(n => ({v: minutesOf(n.wake), w: 1}));
+    const r = this.shrink(prior, 2, obs.slice(-14));
+    return {v: toHM(((Math.round(r.v / 15) * 15) % 1440 + 1440) % 1440), w: r.w, n: obs.length};
+  },
+  estimate(){
+    const N = this.nights();
+    return {hours: this.need(N), latency: this.latency(N), routine: this.routine(N), wakeWeekend: this.wakeAt(N, true), wakeWeek: this.wakeAt(N, false), n: N.length};
+  },
+  /* Werte übernehmen, wenn genug Daten da sind und sich etwas ändert */
+  apply(silent){
+    if (!state || !state.settings.sleep.on || !this.on()) return 0;
+    const S = state.settings.sleep, E = this.estimate(), info = {}, changed = [];
+    for (const k of Object.keys(FIT_KEYS)) { this.prior(k); const e = E[k]; if (!e) continue;
+      const val = k === 'hours' ? Math.round(e.v / 15) / 4 : e.v;
+      info[k] = {v: val, w: Math.round(e.w * 10) / 10, n: e.n, conf: this.conf(e.w), src: e.src || null};
+      if (this.manual(k) || e.n < FIT_KEYS[k].min) continue;
+      const old = S[k];
+      const diff = k === 'hours' ? Math.abs(val - old) * 60 : /wake/.test(k) ? Math.abs(minutesOf(val) - minutesOf(old)) : Math.abs(val - old);
+      if (diff >= (k === 'hours' ? 15 : /wake/.test(k) ? 15 : 5)) { S[k] = val; changed.push([k, old, val]); }
+    }
+    S.fitInfo = {...info, at: Date.now(), n: E.n};
+    if (changed.length) { invalidate(); Store.schedule(); if (typeof Native !== 'undefined') Native.queue();
+      if (!silent) { const h = changed.find(c => c[0] === 'hours');
+        toast('Schlafprofil angepasst', changed.map(([k, o, v]) => `${FIT_KEYS[k].l}: ${FIT_KEYS[k].fmt(k === 'hours' ? v : v)}${h && k === 'hours' ? ` (vorher ${FIT_KEYS.hours.fmt(o)})` : ''}`).join(' · '), {sym: 'mond', ttl: 7000}); } }
+    return changed.length;
+  },
+  daily(){ const d = ymd(new Date()); if (state.settings.sleep.fitDay === d) return; state.settings.sleep.fitDay = d; this.apply(); },
+  /* Kleiner Hinweis neben einem Wert in den Einstellungen */
+  badge(k){
+    if (!this.on()) return '';
+    const I = (state.settings.sleep.fitInfo || {})[k];
+    if (this.manual(k)) return `<button class="fit-b man" data-act="fitAuto" data-k="${k}">${ic('stift', 's')}selbst gesetzt${I && I.n >= FIT_KEYS[k].min ? ` · geschätzt ${esc(String(FIT_KEYS[k].fmt(I.v)))}` : ''} · Automatisch</button>`;
+    if (!I || I.n < FIT_KEYS[k].min) return `<span class="fit-b">${ic('blitz', 's')}automatisch, sobald ${FIT_KEYS[k].min} passende Nächte da sind${I ? ` (${I.n})` : ''}</span>`;
+    return `<span class="fit-b on">${ic('blitz', 's')}automatisch · ${I.n} ${I.n === 1 ? 'Wert' : 'Werte'} · ${I.conf}</span>`;
+  }
+};
+function fitAgo(t){ const m = Math.round((Date.now() - t) / 60000); return m < 2 ? 'gerade eben' : m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} Tagen`; }
+
+/* Schlaf-Tab: Kapitel „Dein Schlafprofil“ */
+function sleepProfileHtml(sec){
+  const S = state.settings.sleep; if (!S.on) return '';
+  if (!S.fitInfo) try { SleepFit.apply(true); } catch {}
+  const I = S.fitInfo || {}, st = typeof sleepStats === 'function' ? sleepStats(28) : {};
+  const row = (k, icn, extra) => { const i = I[k], man = SleepFit.manual(k), ready = i && i.n >= FIT_KEYS[k].min, cur = S[k];
+    const sub = man ? `Selbst gesetzt${ready ? `, die Daten sagen ${FIT_KEYS[k].fmt(i.v)}` : ''}` : ready ? `${extra || ''}${extra ? ' · ' : ''}aus ${i.n} ${i.n === 1 ? 'Wert' : 'Werten'}, ${i.conf}` : `Noch Startwert, ab ${FIT_KEYS[k].min} passenden Nächten geschätzt${i ? ` (${i.n} bisher)` : ''}`;
+    const lvl = man ? 0 : !ready ? 0 : i.w >= 10 ? 3 : i.w >= 4 ? 2 : 1;
+    return `<div class="fit-r"><span class="krow-ic">${ic(icn, 's')}</span><span class="krow-t"><b>${FIT_KEYS[k].l}</b><small>${esc(sub)}</small></span><span class="fit-v"><b>${esc(String(FIT_KEYS[k].fmt(cur)))}</b><i class="fit-c l${lvl}" title="${esc(i ? i.conf : '')}"><em></em><em></em><em></em></i></span></div>`; };
+  const src = I.hours && I.hours.src ? [I.hours.src.rested ? `${I.hours.src.rested} ausgeschlafene Nächte ohne Wecker` : '', I.hours.src.debt ? `${I.hours.src.debt} Nächte ohne Wecker nach Schlafmangel, bereinigt` : '', I.hours.src.sweet ? 'deine Erholungs-Bewertungen' : '', I.hours.src.pvt ? 'deine Wachheitstests' : ''].filter(Boolean) : [];
+  const nx = (() => { const PL = sleepPlan(), t0 = startOfDay(new Date()); for (let k = 1; k <= 8; k++) { const d = addDays(t0, k); if (isoDow(d) >= 6) continue; const x = PL[ymd(d)]; if (x) return {d, x}; } return null; })();
+  const chrono = st.msfsc != null ? chronoLabel(st.msfsc) : null;
+  return `${sec('Dein Schlafprofil', SleepFit.on() ? 'automatisch eingeschätzt' : 'aus, Werte von Hand')}
+    <section class="sl2-tile fit-tile">
+      <div class="fit-top"><div><span class="fit-k">Du brauchst etwa</span><b class="fit-big">${fmtH((+S.hours || 8) * 60)}</b><small>Schlaf pro Nacht${src.length ? `, geschätzt aus ${src.join(', ')}` : ''}.</small></div>
+        <div class="fit-side">${nx ? `<div class="fit-s"><span>Ins Bett ${(() => { const l = dayLabel(addDays(nx.d, -1)); return /^(Heute|Morgen|Gestern)$/.test(l) ? l.toLowerCase() : 'am ' + esc(l); })()}</span><b>${hm(nx.x.bed)}</b><small>Wecker ${hm(nx.x.wake)}</small></div>` : ''}${chrono ? `<div class="fit-s"><span>Dein Typ</span><b class="fit-ty">${esc(chrono)}</b></div>` : ''}</div></div>
+      ${row('hours', 'mond')}
+      ${row('latency', 'uhr')}
+      ${row('routine', 'sonne', Sens && Sens.on && Sens.on() ? 'aus deiner GPS-Spur' : '')}
+      ${row('wakeWeek', 'kalender')}
+      ${row('wakeWeekend', 'heute')}
+      <div class="fit-foot"><span>${SleepFit.on() ? `Zuletzt geprüft ${I.at ? fitAgo(I.at) : 'noch nie'}. Wird jeden Tag neu gerechnet.` : 'Automatisches Einschätzen ist aus.'}</span><button class="btn sm" data-act="${SleepFit.on() ? 'fitNow' : 'fitOn'}">${SleepFit.on() ? 'Jetzt neu rechnen' : 'Einschalten'}</button></div>
+    </section>`;
+}
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
@@ -12619,6 +12793,7 @@ function bindEvents(){
       if (t.type === 'number' && isNaN(v)) return;
       if (t.type === 'text') v = v.trim();
       setPath(t.dataset.set, v);
+      { const fk = /^sleep\.(hours|latency|routine|wakeWeek|wakeWeekend)$/.exec(t.dataset.set); if (fk) SleepFit.setManual(fk[1]); }
       if (t.dataset.set === 'isis.effort') { let n = 0; for (const d of state.deadlines) if (d.src === 'isis' && !d.effortManual && +d.effort !== v) { d.effort = v; n++; } invalidate(); if (n) toast('Aufwand übernommen', `${n} ${n === 1 ? 'Aufgabe' : 'Aufgaben'} aus ISIS jetzt mit ${String(v).replace('.', ',')} h, die Blöcke sind neu geplant.`); }
       if (t.dataset.set === 'work.maxDay') invalidate();
       if (t.dataset.set === 'accent') applyTheme();
@@ -12672,6 +12847,7 @@ function init(){
   BackNav.init();
   if (STANDALONE) { Loc.sync(); document.addEventListener('visibilitychange', () => Loc.sync()); }
   setTimeout(() => { try { migrateWorkCat(); } catch {} }, 1500);
+  setTimeout(() => { try { SleepFit.daily(); } catch {} }, 4000);
   Offplan.opened(); document.addEventListener('visibilitychange', () => { if (!document.hidden) Offplan.opened(); });
   setInterval(() => { if (!document.hidden) { try { TrainMatch.tick(); } catch {} try { Offplan.tick(); } catch {} try { Where.paint(); } catch {} } }, 20000);
   setTimeout(() => Isis.auto(), 6000); document.addEventListener('visibilitychange', () => { if (!document.hidden) Isis.auto(); });
