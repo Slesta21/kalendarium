@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 53  ·  persönlicher Kalender für alles
+ KALENDARIUM 54  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -3031,6 +3031,21 @@ main section.panel.kp > .row-item:last-child{padding-bottom:8px}
 .fit-c.l1 em:nth-child(-n+1),.fit-c.l2 em:nth-child(-n+2),.fit-c.l3 em{background:var(--zone)}
 .fit-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 @media (max-width:460px){.fit-top{flex-direction:column}.fit-side{flex-direction:row}.fit-s{flex:1;min-width:0}.fit-big{font-size:40px}}
+.en-svg .lbx-ln{fill:none;stroke:#C2416B;stroke-width:2.2;stroke-dasharray:6 5;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.en-svg .lbw{fill:color-mix(in oklab, #C2416B 13%, transparent)}
+.lb-row{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:12px;border-top:1px solid var(--line)}
+.lb-ic{flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:color-mix(in oklab, #C2416B 14%, var(--tile));color:#C2416B}
+.lb-ic svg{width:16px;height:16px}
+.lb-t{flex:1;min-width:0;font-size:14px;line-height:1.5}
+.lb-t > b{margin-right:4px}
+.lb-t small{display:block;font-size:12px;color:var(--muted)}
+.lb-w{color:var(--muted);font-size:13px}
+.lbt{display:inline-block;margin:2px 0 2px 6px;padding:1px 8px;border-radius:999px;font-weight:700;font-size:12px;font-variant-numeric:tabular-nums;color:#A3274F;background:color-mix(in oklab, #C2416B 13%, var(--tile))}
+:root[data-theme="dark"] .lbt{color:#F08DAE}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .lbt{color:#F08DAE}}
+.lbt.past{opacity:.45}
+.lib-code{display:flex;gap:8px;align-items:center}
+.lib-code input{width:92px;text-align:center;letter-spacing:.3em}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6798,7 +6813,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '53';
+const APP_VERSION = '54';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -7524,6 +7539,7 @@ const VIEWS = {
       <section class="panel">
         <div class="panel-h"><h2>Darstellung</h2></div>
         <div class="row"><div class="l"><b>Name</b><small>Für die Begrüßung</small></div><input type="text" data-set="name" value="${esc(s.name)}" placeholder="Dein Name" aria-label="Name"></div>
+        ${(() => { const L = s.lib || {}; return L.ok ? `<div class="row"><div class="l"><b>Lust-Kurve</b><small>Zweite Linie in der Energiekurve mit den besten freien Zeiten. Im Privatmodus ausgeblendet.</small></div><div class="lib-code"><button class="switch" role="switch" aria-checked="${L.on !== false}" data-act="toggle" data-k="lib.on" aria-label="Lust-Kurve"></button><button class="btn sm ghost" data-act="libLock">Sperren</button></div></div>` : `<div class="row"><div class="l"><b>Code</b><small>Schaltet versteckte Funktionen frei</small></div><div class="lib-code"><input id="libCode" type="password" inputmode="numeric" autocomplete="off" maxlength="12" aria-label="Code"><button class="btn sm" data-act="libUnlock">OK</button></div></div>`; })()}
         <div class="row"><div class="l"><b>Akzentfarbe</b></div></div>
         <div class="swatches" style="padding-bottom:12px">${ACCENTS.map(a => `<button class="swatch" style="--c:${a.c}" data-act="accent" data-c="${a.c}" aria-pressed="${s.accent.toLowerCase()===a.c.toLowerCase()}" aria-label="${a.name}" title="${a.name}"></button>`).join('')}<label class="swatch" style="--c:conic-gradient(#b33,#c93,#5a3,#38a,#73a,#b33);cursor:pointer;overflow:hidden" title="Eigene Farbe"><input type="color" data-set="accent" value="${esc(s.accent)}" style="opacity:0;width:100%;height:100%;border:0;padding:0" aria-label="Eigene Akzentfarbe"></label></div>
         <div class="row"><div class="l"><b>Modus</b></div><div class="seg">${[['system','System'],['light','Hell'],['dark','Dunkel']].map(([v,l]) => `<button data-act="setv" data-k="theme" data-v="${v}" aria-pressed="${s.theme===v}">${l}</button>`).join('')}</div></div>
@@ -9085,6 +9101,10 @@ const ACTIONS = {
   fitOn(){ state.settings.sleep.fit = true; commit(); SleepFit.apply(); render(); },
   fitNow(){ const n = SleepFit.apply(true); commit(); render(); toast(n ? 'Schlafprofil angepasst' : 'Schlafprofil geprüft', n ? `${n} ${n === 1 ? 'Wert' : 'Werte'} neu eingeschätzt.` : 'Deine Werte passen noch.', {sym: 'mond', ttl: 3500}); },
   fitAuto(el){ SleepFit.setManual(el.dataset.k, false); SleepFit.apply(true); commit(); render(); toast('Wieder automatisch', FIT_KEYS[el.dataset.k].l + ' wird aus deinen Nächten eingeschätzt.', {ttl: 3500}); },
+  async libUnlock(){ const el = document.getElementById('libCode'), v = el ? el.value : ''; if (await Lib.unlock(v)) { state.settings.lib = {ok: true, on: true}; _enCache = {}; commit(); render(); toast('Freigeschaltet', 'Die Lust-Kurve erscheint jetzt in der Energiekurve.', {sym: 'herz', ttl: 4000}); } else { if (el) { el.value = ''; el.focus(); } toast('Code stimmt nicht', '', {ttl: 2500}); } },
+  libLock(){ state.settings.lib = {}; _enCache = {}; commit(); render(); toast('Gesperrt', 'Die Lust-Kurve ist wieder versteckt.', {ttl: 3000}); },
+  libLog(){ Lib.add(); render(); },
+  libUndo(){ Lib.undo(); render(); },
   liveTrip(el){ LiveTrip.open(el.dataset.home ? {home: true} : {date: el.dataset.date, i: el.dataset.i}); },
   async stopInfo(el){
     const d = el.dataset, lat = parseFloat(d.lat), lon = parseFloat(d.lon), has = !isNaN(lat) && !isNaN(lon), name = d.name || 'Haltestelle';
@@ -10008,6 +10028,7 @@ function energyCard(d, compact){
   work.forEach(w => { g += `<rect class="wk" x="${X(Math.max(+w.start, x0))}" y="${top - 6}" width="${Math.max(2, X(Math.min(+w.end, x1)) - X(Math.max(+w.start, x0))).toFixed(1)}" height="${H - bot - top + 6}" rx="6"/>`; });
   const line = E.pts.map(([t, v], i) => `${i ? 'L' : 'M'}${X(+t)} ${Y(v)}`).join(' ');
   g += `<path class="ar" d="${line} L${W} ${H - bot} L0 ${H - bot} Z"/><path class="ln" d="${line}"/>`;
+  try { g += Lib.svg(E, d, X, Y, H, bot, top); } catch { E._lib = null; }
   busy.forEach(o => { g += `<rect class="bz" x="${X(Math.max(+o.start, x0))}" y="${H - bot + 4}" width="${Math.max(2, X(Math.min(+o.end, x1)) - X(Math.max(+o.start, x0))).toFixed(1)}" height="5" rx="2.5"/>`; });
   let lb = ''; for (let h = Math.ceil(E.wake.getHours() + 1); h <= 30; h += 3) { const t = addMin(d, h * 60); if (t > addMin(E.bed, -20)) break; lb += `<span style="left:${(X(+t) / W * 100).toFixed(2)}%">${String(h % 24).padStart(2, '0')}</span>`; }
   const SN = typeof sunHere === 'function' ? sunHere(d) : null; let suns = '';
@@ -10025,6 +10046,7 @@ function energyCard(d, compact){
     <div class="en-h"><span class="lbl">${ic('sonne', 's')}${lbl}</span><span class="r">${stepsChip}${(() => { if (!isToday || typeof Lite === 'undefined' || !Lite.has()) return ''; const L = lightDay(now); return L ? `<span class="lxc">${L.day} min Tageslicht</span>` : ''; })()}<span class="form ${E.form[0]}">${E.form[1]}</span></span></div>
     <p>Am wachsten <b>${span(E.hi)}</b>${E.lo ? `, Tief um <b>${hm(E.lo.a)}</b>` : ''}.${E.form[0] === 'low' ? ' Nach den letzten Nächten ist dein Schlafdruck hoch, plane Schweres in die wache Zeit und Leichtes ins Tief.' : ''}</p>
     <div class="en-plot"><svg class="en-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wachheit über den Tag, am höchsten ${span(E.hi)}">${g}</svg>${nowDot}<div class="suns">${suns}</div><div class="hrs">${lb}</div></div>
+    ${(() => { try { return Lib.html(E, d, compact); } catch { return ''; } })()}
     ${(() => { const LT = typeof lightTips === 'function' ? lightTips(d) : []; const L2 = compact ? LT.slice(0, 1) : LT; return L2.length ? `<div class="en-lt">${L2.map(x => `<div><span class="ic">${ic(x.ic, 's')}</span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></div>`).join('')}</div>` : ''; })()}
     ${rows ? `<div class="en-ws">${rows}</div><div class="en-legend" style="--c:${workCat().color}"><span><i class="hi"></i>hellwach</span><span><i class="mid"></i>wach</span><span><i class="lo"></i>eher müde</span></div>` : ''}
     ${isToday ? `<div class="en-pvt">${pv}<button class="btn sm" data-act="pvtOpen">${ic('uhr', 's')}Wachheit testen, 60 s</button></div>` : ''}
@@ -11146,6 +11168,81 @@ function sleepProfileHtml(sec){
       <div class="fit-foot"><span>${SleepFit.on() ? `Zuletzt geprüft ${I.at ? fitAgo(I.at) : 'noch nie'}. Wird jeden Tag neu gerechnet.` : 'Automatisches Einschätzen ist aus.'}</span><button class="btn sm" data-act="${SleepFit.on() ? 'fitNow' : 'fitOn'}">${SleepFit.on() ? 'Jetzt neu rechnen' : 'Einschalten'}</button></div>
     </section>`;
 }
+/* ================================================================
+   §X LUST-KURVE (v54), nur nach Code in den Einstellungen sichtbar
+   Zweite Linie in der Energiekurve: wann deine Lust über den Tag am
+   höchsten ist, mit den besten freien Zeitfenstern.
+   · Morgens: Testosteron ist kurz nach dem Aufwachen am höchsten und
+     sinkt über den Tag (Brambilla 2009). Kurzer Schlaf senkt es spürbar
+     (Leproult & Van Cauter 2011), deshalb zählt die letzte Nacht mit.
+   · Abends: Viele berichten die meiste Lust am späten Abend, wenn der
+     Tag vorbei und man entspannt ist.
+   · Nach einem Samenerguss braucht der Körper ein paar Stunden Erholung
+     (Prolaktin), die Kurve sinkt danach und steigt wieder an.
+   · Deine eigenen Einträge („Notieren“) verschieben die Kurve zu deinen
+     Zeiten, je mehr Einträge, desto stärker.
+   Alles bleibt auf dem Gerät. Im Privatmodus ist die Kurve ausgeblendet.
+   ================================================================ */
+const Lib = {
+  H: '0107e8a93a0006b0e185ee2b191f77c32734fb6cdef421c5f96a81a43282da23',
+  st(){ return (state.settings.lib = state.settings.lib || {}); },
+  on(){ const L = state.settings.lib; return !!(L && L.ok && L.on !== false) && !(typeof Priv !== 'undefined' && Priv.on()); },
+  async unlock(code){
+    try { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('kalendarium:' + String(code || '').trim()));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('') === this.H; } catch { return false; }
+  },
+  log(){ return (state.libLog = state.libLog || []); },
+  /* Kurve für einen Tag aus der Energiekurve E */
+  curve(E, d){
+    const S = state.settings.sleep, need = (+S.hours || 8) * 60, ex = (state.sleepLog || []).find(x => x.date === ymd(d));
+    const dur = ex ? sleepNight(ex).dur : need, sleepF = Math.max(0.7, Math.min(1.05, 0.75 + 0.25 * dur / need));
+    const L = this.log().map(x => x.t).filter(t => t < +E.bed + 3600000).sort((a, b) => a - b);
+    const recent = L.filter(t => t > +E.wake - 20 * 3600000);
+    const hrs = L.filter(t => t > Date.now() - 90 * 86400000).map(t => { const x = new Date(t); return x.getHours() + x.getMinutes() / 60; });
+    const learn = hrs.length >= 5 ? Math.min(0.6, hrs.length / 30) : 0;
+    const dens = h => { let s = 0; for (const x of hrs) { let dd = Math.abs(h - x); dd = Math.min(dd, 24 - dd); s += Math.exp(-dd * dd / 2); } return s; };
+    const dmax = learn ? Math.max(...Array.from({length: 96}, (_, i) => dens(i / 4))) : 1;
+    const raw = t => {
+      const hW = (t - E.wake) / 3600000, hB = (E.bed - t) / 3600000, c = t.getHours() + t.getMinutes() / 60;
+      const morning = Math.exp(-((hW - 1) ** 2) / (2 * 1.8 ** 2)) * sleepF, base = Math.max(0, 1 - 0.3 * hW / 16) * 0.35 * sleepF;
+      const evening = Math.exp(-((hB - 2) ** 2) / (2 * 1.3 ** 2));
+      let v = 0.5 * morning + base + 0.42 * evening + 0.12 * (E.lv(t) || 0);
+      for (const e of recent) if (+t > e) v *= 1 - 0.75 * Math.exp(-(+t - e) / (4 * 3600000));
+      if (learn) v = v * (1 - learn) + learn * (dens(c) / dmax) * 1.1;
+      return v;
+    };
+    const pts = E.pts.map(([t]) => [t, raw(t)]), mx = Math.max(...pts.map(p => p[1]), 0.01);
+    return pts.map(([t, v]) => [t, Math.max(0, Math.min(1, v / mx))]);
+  },
+  /* Bis zu 3 gute, freie Zeitfenster */
+  windows(E, d, C){
+    const busy = dayItems(d).filter(o => isTimed(o) && o.kind !== 'deadline' && o.kind !== 'holiday').map(o => [+o.start, +o.end]);
+    const legs = planDay(d).legs.map(l => [+l.depart, +l.arrive]), all = busy.concat(legs);
+    const free = t => !all.some(([a, b]) => +t >= a - 10 * 60000 && +t < b + 10 * 60000);
+    const out = []; let cur = null;
+    for (const [t, v] of C) { const ok = v >= 0.72 && free(t);
+      if (ok) { if (!cur) cur = {a: t, b: t, s: 0, n: 0, pk: [t, v]}; cur.b = t; cur.s += v; cur.n++; if (v > cur.pk[1]) cur.pk = [t, v]; }
+      else if (cur) { out.push(cur); cur = null; } }
+    if (cur) out.push(cur);
+    return out.filter(w => w.n >= 2).map(w => { const a = Math.max(+w.a, +w.pk[0] - 45 * 60000), b = Math.min(+w.b + 15 * 60000, +w.pk[0] + 60 * 60000); return {a: new Date(a), b: new Date(b), m: w.s / w.n}; })
+      .sort((x, y) => y.m - x.m).slice(0, 3).sort((x, y) => x.a - y.a);
+  },
+  svg(E, d, X, Y, H, bot, top){
+    if (!this.on()) return '';
+    const C = this.curve(E, d), W = this.windows(E, d, C); E._lib = {C, W};
+    let g = W.map(w => `<rect class="lbw" x="${X(+w.a)}" y="${top - 6}" width="${Math.max(3, X(+w.b) - X(+w.a)).toFixed(1)}" height="${H - bot - top + 6}" rx="6"/>`).join('');
+    g += `<path class="lbx-ln" d="${C.map(([t, v], i) => `${i ? 'L' : 'M'}${X(+t)} ${Y(v)}`).join(' ')}"/>`;
+    return g;
+  },
+  html(E, d, compact){
+    if (!this.on() || !E._lib) return '';
+    const {W} = E._lib, now = new Date(), isToday = sameDay(d, now), n = this.log().length;
+    const ws = W.map(w => `<span class="lbt${isToday && w.b < now ? ' past' : ''}">${hm(w.a)}–${hm(w.b)}</span>`).join('');
+    return `<div class="lb-row"><span class="lb-ic">${ic('herz', 's')}</span><span class="lb-t"><b>Lust</b> ${W.length ? `<span class="lb-w">beste freie Zeiten ${ws}</span>` : '<small>heute kein freies Hoch</small>'}${!compact ? `<small>${n >= 5 ? `Angepasst an ${n} Einträge.` : n ? `${n} ${n === 1 ? 'Eintrag' : 'Einträge'}, ab 5 lernt die Kurve deine Zeiten.` : 'Morgens nach dem Schlaf und am späten Abend am höchsten. Mit „Notieren“ lernt die Kurve deine Zeiten.'}</small>` : ''}</span>${isToday ? '<button class="btn sm ghost" data-act="libLog">Notieren</button>' : ''}</div>`;
+  },
+  add(){ const L = this.log(), t = Date.now(); L.push({t}); state.libLog = L.slice(-400); _enCache = {}; commit(); toast('Notiert', '', {ttl: 4000, action: {act: 'libUndo', label: 'Rückgängig'}}); },
+  undo(){ const L = this.log(); if (L.length && Date.now() - L[L.length - 1].t < 10 * 60000) L.pop(); _enCache = {}; commit(); }
+};
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
