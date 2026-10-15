@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 51  ·  persönlicher Kalender für alles
+ KALENDARIUM 52  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -2931,6 +2931,78 @@ html.wr-open,html.wr-open body{overflow:hidden}
 .oa-opt b{display:block;font-size:15px}
 .oa-opt small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
 .oa-opt.ghost{background:transparent;border:1.5px solid var(--line)}
+
+/* ================= §B BAUKASTEN (v52) ================= */
+:root{--kap-gap:36px;--kap-ic-bg:color-mix(in oklab, var(--zone) 13%, var(--tile));--kap-ic-ink:color-mix(in oklab, var(--zone) 82%, var(--ink))}
+:root[data-theme="dark"]{--kap-ic-bg:color-mix(in oklab, var(--zone) 24%, var(--tile));--kap-ic-ink:color-mix(in oklab, var(--zone) 55%, white)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--kap-ic-bg:color-mix(in oklab, var(--zone) 24%, var(--tile));--kap-ic-ink:color-mix(in oklab, var(--zone) 55%, white)}}
+/* 1 · Kapitel */
+main .kap-h{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:var(--kap-gap) 0 14px;padding:0 2px 12px;border-bottom:1px solid var(--line);min-width:0}
+main .sl2 > .kap-h,main .sl2 > .kap-sep{grid-column:1/-1}
+main .kap-h.kap-first,main .stack > .kap-h:first-child,main .grid2 > div > .kap-h:first-child,main .grid2 > section > .kap-h:first-child,main .kap-col > .kap-h:first-child{margin-top:6px}
+main .kap-ic{flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--kap-ic-bg);color:var(--kap-ic-ink)}
+main .kap-ic svg{width:18px;height:18px;stroke-width:1.8}
+main .kap-h h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:20px;line-height:1.2;letter-spacing:-.015em;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+main .kap-n{flex:none;min-width:22px;height:22px;padding:0 7px;border-radius:999px;display:inline-grid;place-items:center;font-size:12px;font-weight:800;background:var(--tile-2);color:var(--muted);font-variant-numeric:tabular-nums}
+main .kap-m{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+main .kap-a{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;flex:none;max-width:100%}
+main .kap-a .chips{margin:0;display:flex;gap:8px;flex-wrap:wrap}
+main .kap-h + .kap-h{margin-top:14px}
+main .kap{display:contents}
+/* 2 · Abschnitt */
+main .kap-sep{display:flex;align-items:center;gap:8px;margin:22px 2px 10px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);grid-column:1/-1}
+main .kap-sep:first-child{margin-top:4px}
+main .kap-sep > svg{width:15px;height:15px;flex:none;color:var(--kap-ic-ink);stroke-width:1.9}
+main .kap-sep em{font-style:normal;font-weight:700;letter-spacing:0;color:var(--faint);font-variant-numeric:tabular-nums}
+main .kap-sep > i{flex:1;height:1px;background:var(--line);min-width:12px}
+main .kap-sep .btn{letter-spacing:0;text-transform:none}
+main .kap-sep.over,main .kap-sep.over > svg{color:var(--danger)}
+/* 3 · Karte, Karten-Kopf, Zeile, Wert */
+main .kcard{background:var(--tile);border-radius:var(--r-tile, 20px);padding:16px 18px}
+main .kh,main .sl2-h h3,main .sl3-top .lbl,main .en-h .lbl,main .lx-h > b,main .sl3-tonight .lbl{display:flex;align-items:center;gap:7px;margin:0;font-family:var(--f-body);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+main .kh svg,main .sl2-h h3 svg,main .en-h .lbl svg,main .lx-h svg,main .sl3-tonight .lbl svg{width:15px;height:15px;color:var(--kap-ic-ink)}
+main .kh{margin-bottom:12px}
+main .kh > span{font-weight:600;letter-spacing:0;text-transform:none;color:var(--faint)}
+main .kh-a{margin-left:auto;text-transform:none;letter-spacing:0}
+main .krow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 0;border:0;background:none;color:inherit;font:inherit;text-align:left}
+main .krow + .krow{border-top:1px solid var(--line)}
+main button.krow{cursor:pointer}
+main .krow-ic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:color-mix(in oklab, var(--c, var(--zone)) 13%, var(--tile));color:color-mix(in oklab, var(--c, var(--zone)) 80%, var(--ink))}
+main .krow-ic svg{width:17px;height:17px}
+main .krow-t{flex:1;min-width:0}
+main .krow-t b{display:block;font-weight:700}
+main .krow-t small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+main .krow-e{flex:none;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+main .kstat{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:var(--tile-2)}
+main .kstat > span{font-size:12px;font-weight:700;color:var(--muted)}
+main .kstat > b{font-family:var(--f-display);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+main .kstat > small{font-size:12px;color:var(--muted)}
+/* Umgewandelte Karten: Inhalt ohne doppelten Kopf */
+main section.panel.kp{margin-top:0}
+main .stack{display:flex;flex-direction:column;gap:0}
+main .stack > section.panel.kp + .kap-h,main .grid2 > div > section.panel + .kap-h{margin-top:var(--kap-gap)}
+/* Schlaf-Raster: Kapitel über die volle Breite */
+main .sl2 > .kap-h{margin-top:calc(var(--kap-gap) - 12px)}
+main .sl2 > .kap-h.kap-first{margin-top:4px}
+/* Einstellungen: Gruppen */
+main .settings.acc > .kap-h{margin-top:30px}
+main .settings.acc > .kap-h.kap-first,main .settings.acc > .kap-h:first-child{margin-top:4px}
+main .settings.acc > .kap-h + details.sx{margin-top:0}
+/* Hinweise unter „Jetzt“ */
+main .kap-h + .next,main .kap-h + .notices{margin-top:0}
+main .next + .notices{margin-top:10px}
+@media (max-width:760px){
+  main{--kap-gap:30px}
+  main .kap-h h2{font-size:19px}
+  main .kap-a .btn.sm{padding-inline:10px}
+}
+main .settings.acc{align-items:stretch}
+main section.panel.kp{padding:14px 18px}
+main section.panel.kp > .row-item:first-child,main section.panel.kp > .habit:first-child{padding-top:6px}
+main section.panel.kp > .row-item:last-child{padding-bottom:8px}
+#sheetCard h3.ksh,main h3.ksh{display:flex;align-items:center;gap:8px;margin:22px 0 10px;font-family:var(--f-body);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#sheetCard h3.ksh::after,main h3.ksh::after{content:"";flex:1;height:1px;background:var(--line)}
+#sheetCard h3.ksh svg,main h3.ksh svg{width:15px;height:15px;flex:none;color:color-mix(in oklab, var(--zone) 80%, var(--ink))}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -6698,7 +6770,7 @@ const NAV = [
 ];
 const NAV_IDS = NAV.filter(n => !n.sep).map(n => n.id);
 const TABS = ['kalender','aufgaben','stundenplan','schlaf','mehr'];
-const APP_VERSION = '51';
+const APP_VERSION = '52';
 const MODES_CAL = [['tag','Tag'],['woche','Woche'],['monat','Monat'],['jahr','Jahr']];
 const LEGACY = {heute:'tag', tag:'tag', woche:'woche', monat:'monat', jahr:'jahr'};
 const openDeadlines = () => visDeadlines().filter(d => !d.done);
@@ -6778,7 +6850,8 @@ function renderNow(){
   const motion = state.settings.style.motion !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const before = {}; if (motion && !changed) main.querySelectorAll('[data-key]').forEach(el => { before[el.dataset.key] = el.getBoundingClientRect(); });
   document.documentElement.dataset.zone = v;
-  main.innerHTML = viewLead(v) + exampleBanner() + (VIEWS[v] || VIEWS.kalender)();
+  main.innerHTML = viewLead(v) + exampleBanner() + (VIEWS[v] || VIEWS.kalender)() + Bau.slotsHtml(v);
+  try { Bau.adapt(main, v); } catch (e) { console.warn('Bau.adapt', e); }
   if (motion && !changed) main.querySelectorAll('[data-key]').forEach(el => { const b = before[el.dataset.key]; if (!b) return; const a = el.getBoundingClientRect(), dx = b.left - a.left, dy = b.top - a.top; if (Math.abs(dx) > 1 || Math.abs(dy) > 1) try { el.animate([{transform:`translate(${dx}px,${dy}px)`}, {transform:'none'}], {duration:260, easing:'cubic-bezier(.2,.8,.2,1)'}); } catch {} });
   if (motion && changed) main.querySelectorAll('[data-count]').forEach(countUp);
   main.classList.remove('enter');
@@ -7284,7 +7357,7 @@ const VIEWS = {
       <p class="faint">Kein Ersatz für eine ärztliche Untersuchung. Wenn du über Wochen schlecht schläfst oder tagsüber oft einschläfst, sprich mit einer Ärztin oder einem Arzt.</p>
     </details></section>`;
     const en = energyCard(t0, false), exT = examTile();
-    return `<div class="sl2 sl3">${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${lightTile()}${wrapTile()}${how}</div>`;
+    return `<div class="sl2 sl3">${sec('Nacht')}${last}${night}${setup}${en ? sec('Dein Tag') + en : ''}${exT ? sec('Klausur-Vorbereitung') + exT : ''}${over}${muster}${chart}${rhythm}${proto}${sec('Licht und Rückblick')}${lightTile()}${wrapTile()}${how}</div>`;
   },
 
   /* ---------- MONAT ---------- */
@@ -7355,7 +7428,7 @@ const VIEWS = {
         ${Priv.on() ? emptyArt('augezu', 'Fristen sind im Privatmodus ausgeblendet.', 'Erinnerungen kommen weiter. Zum Anzeigen den Privatmodus oben ausschalten.') : body || emptyArt('flagge', 'Keine offenen Fristen.', 'Abgaben, Kündigungen, Anmeldungen, Rechnungen: alles mit Datum gehört hierher.')}
       </div>
       <div>
-        <div style="margin-bottom:36px">${habitsPanel(startOfDay(new Date()))}</div>
+        ${habitsPanel(startOfDay(new Date()))}
         <div class="toolbar"><h2 class="h2">To-dos</h2></div>
         <section class="panel">
           ${open.map(todoRow).join('') || emptyArt('liste', 'Alles erledigt.', 'Neue To-dos schreibst du einfach unten hinein.')}
@@ -7373,8 +7446,8 @@ const VIEWS = {
       prog = `<div class="semprog"><div class="track"><i style="width:${pct}%"></i></div><div class="lbl"><span class="num">${parseYMD(sem.start).toLocaleDateString(DE)}</span><span>${now < sr.start ? 'beginnt bald' : now >= sr.end ? 'beendet' : `noch ${wl} Wochen`}</span><span class="num">${parseYMD(sem.end).toLocaleDateString(DE)}</span></div></div>`; }
     const days = state.courses.some(c => +c.day === 6) ? 6 : 5;
     const courses = [...state.courses].sort((a,b) => a.day - b.day || minutesOf(a.start) - minutesOf(b.start));
-    return `<section class="panel" style="margin-bottom:18px"><div class="sem"><div><div class="eyebrow">Semester</div><div class="big">${esc(sem.name || 'Noch nicht festgelegt')}</div></div>${prog || '<span class="muted">Beginn und Ende festlegen, damit Kurse nur in der Vorlesungszeit erscheinen.</span>'}<button class="btn sm" data-act="editSemester">${ic('stift','s')}Bearbeiten</button></div></section>
-      ${state.courses.length ? `<div class="scroller" style="margin-bottom:22px">${ttGrid(days)}</div>` : ''}
+    return `${Bau.kap({ic: 'stundenplan', t: 'Semester', cls: 'kap-first'})}<section class="panel"><div class="sem"><div><div class="big">${esc(sem.name || 'Noch nicht festgelegt')}</div></div>${prog || '<span class="muted">Beginn und Ende festlegen, damit Kurse nur in der Vorlesungszeit erscheinen.</span>'}<button class="btn sm" data-act="editSemester">${ic('stift','s')}Bearbeiten</button></div></section>
+      ${state.courses.length ? Bau.kap({ic: 'raster', t: 'Wochenplan', m: days === 6 ? 'Mo bis Sa' : 'Mo bis Fr'}) + `<div class="scroller">${ttGrid(days)}</div>` : ''}
       <div class="toolbar"><h2 class="h2">Kurse</h2><div class="chips"><button class="btn sm" data-act="importIcsPrompt">${ic('hoch','s')}ICS importieren</button><button class="btn primary sm" data-act="newCourse">${ic('plus','s')}Kurs</button></div></div>
       ${courses.length ? `<div class="cards">${courses.map(c => { const cat = catById(c.catId); return `<button class="card" style="--c:${cat.color}" data-act="edit" data-kind="course" data-id="${c.id}"><span class="sym">${sy(cat.symbol)}</span><span style="min-width:0"><b>${esc(PV(c.title, cat))}</b><small>${WD_SHORT[c.day-1]} <span class="num">${esc(c.start)}–${esc(c.end)}</span> · ${COURSE_TYPES[c.type]||c.type}${c.weeks!=='all'?` · ${c.weeks==='odd'?'ungerade':'gerade'} KW`:''}${c.room?` · ${esc(PV(c.room, null, ''))}`:''}</small></span></button>`; }).join('')}</div>`
         : emptyArt('buch', 'Noch keine Kurse.', 'Tippe auf einen freien Block oder importiere den Stundenplan als ICS aus MOSES.')}
@@ -7669,10 +7742,12 @@ function dayDashboard(d){
     ${today ? Where.chip() : ''}
     ${dayLead(d, plan, wake, bed, today)}
     ${wxStatusNote()}
-    ${notes.length ? `<div class="notices">${notes.join('')}</div>` : ''}
+    ${notes.length || nextHtml ? Bau.kap({ic: today ? 'uhr' : 'info', t: today ? 'Jetzt' : 'Hinweise', n: notes.length || ''}) : ''}
     ${nextHtml}
-    ${s.sleep.on && (today || sameDay(d, addDays(t0, 1))) ? energyCard(d, true) : ''}
+    ${notes.length ? `<div class="notices">${notes.join('')}</div>` : ''}
+    ${Bau.kap({ic: 'heute', t: today ? 'Dein Tag' : 'Der Tag', m: fmtShort ? esc(fmtShort(d)) : ''})}
     <div class="days">${strip}</div>
+    ${s.sleep.on && (today || sameDay(d, addDays(t0, 1))) ? energyCard(d, true) : ''}
     <div class="grid2">
       <section class="panel">
         <div class="panel-h"><h2>Tagesablauf</h2><button class="btn sm" data-act="newEvent" data-date="${ymd(d)}">${ic('plus','s')}Termin</button></div>
@@ -7680,8 +7755,6 @@ function dayDashboard(d){
         <p class="faint" style="font-size:var(--t-sm);margin:12px 0 0">Stunde antippen für das Wetter, freie Stelle antippen für einen neuen Termin.</p>
       </section>
       <div class="stack">
-        ${chatPanel()}
-        ${habitsPanel(d)}
         <section class="panel">
           <div class="panel-h"><h2>${today ? 'Heute erledigen' : 'To-dos an diesem Tag'}</h2><span class="faint num">${todos.length}</span></div>
           ${todos.map(todoRow).join('') || emptyArt('liste', 'Nichts offen.', 'Ein guter Moment für eine Pause.')}
@@ -7691,6 +7764,8 @@ function dayDashboard(d){
           <div class="panel-h"><h2>Fristen</h2><button class="btn ghost sm" data-act="go" data-v="aufgaben">Alle</button></div>
           ${dls.length ? dls.map(x => deadlineRow(x.d, now)).join('') : emptyArt('flagge', 'Keine Fristen in Sicht.', 'Die nächsten zehn Tage sind frei davon.')}
         </section>
+        ${habitsPanel(d)}
+        ${chatPanel()}
       </div>
     </div>`;
 }
@@ -8164,7 +8239,7 @@ function chatAddCand(c){
    §17 DETAILS  (große Leseansicht beim Antippen)
    ================================================================ */
 const sheet = { el:null, card:null, ctx:null };
-function openSheet(html, ctx){ clearTimeout(sheet._t); sheet.el.classList.remove('closing', 'cmdmode', 'onbmode'); sheet.card.innerHTML = html; sheet.ctx = ctx || null; sheet.el.hidden = false; sheet.card.scrollTop = 0; const f = sheet.card.querySelector('input.title'); if (f && !f.value) setTimeout(() => f.focus(), 40); }
+function openSheet(html, ctx){ clearTimeout(sheet._t); sheet.el.classList.remove('closing', 'cmdmode', 'onbmode'); sheet.card.innerHTML = html; try { Bau.adaptSheet(sheet.card); } catch {} sheet.ctx = ctx || null; sheet.el.hidden = false; sheet.card.scrollTop = 0; const f = sheet.card.querySelector('input.title'); if (f && !f.value) setTimeout(() => f.focus(), 40); }
 /* Zurück-Geste (Android, installierte App, Browser): schließt zuerst die offene
    Ansicht, dann geht es zum Kalender. Ein Platzhalter im Verlauf fängt die Geste ab. */
 const BackNav = {
@@ -8638,19 +8713,19 @@ function setPath(path, value){ const ks = path.split('.'); let o = state.setting
 const getPath = path => path.split('.').reduce((o,k) => o && o[k], state.settings);
 /* Einstellungen als ruhige Liste: jeder Bereich zugeklappt, nur einer offen */
 const SX = [
-  ['Erinnerungen', 'glocke', 'Vibration, Live-Banner, Zeiten'],
-  ['ISIS', 'buch', 'Abgaben automatisch als Fristen'],
-  ['Orte und Wege', 'ort', 'Zuhause, Uni, Losgehen'],
-  ['Schlaf', 'mond', 'Schlafdauer und Aufstehen'],
-  ['Handy-Sensoren', 'handy', 'Ladekabel, Lärm, Licht, Schritte, Bahn, Wachheitstest'],
-  ['Darstellung', 'stift', 'Name, Farbe, Hell oder Dunkel'],
-  ['Stil', 'stern', 'Schrift, Farbton, Dichte'],
-  ['Kategorien', 'kreis', 'Farben und Symbole'],
-  ['Wetter', 'wetter', 'Städte'],
-  ['Feiertage', 'feiertag', 'Region und besondere Tage'],
-  ['Vorlagen und Blöcke', 'block', 'Schnell eintragen'],
-  ['Geburtstage', 'geschenk', 'Mit Erinnerung'],
-  ['Export und Daten', 'runter', 'Übertragen, Sicherung, Abgleich']
+  ['Erinnerungen', 'glocke', 'Vibration, Live-Banner, Zeiten', 'Erinnern'],
+  ['Geburtstage', 'geschenk', 'Mit Erinnerung', 'Erinnern'],
+  ['Feiertage', 'feiertag', 'Region und besondere Tage', 'Erinnern'],
+  ['ISIS', 'buch', 'Abgaben automatisch als Fristen', 'Uni und Wege'],
+  ['Orte und Wege', 'ort', 'Zuhause, Uni, Losgehen', 'Uni und Wege'],
+  ['Vorlagen und Blöcke', 'block', 'Schnell eintragen', 'Uni und Wege'],
+  ['Schlaf', 'mond', 'Schlafdauer und Aufstehen', 'Schlaf und Sensoren'],
+  ['Handy-Sensoren', 'handy', 'Ladekabel, Lärm, Licht, Schritte, Bahn, Wachheitstest', 'Schlaf und Sensoren'],
+  ['Darstellung', 'stift', 'Name, Farbe, Hell oder Dunkel', 'Aussehen'],
+  ['Stil', 'stern', 'Schrift, Farbton, Dichte', 'Aussehen'],
+  ['Kategorien', 'kreis', 'Farben und Symbole', 'Aussehen'],
+  ['Wetter', 'wetter', 'Städte', 'Aussehen'],
+  ['Export und Daten', 'runter', 'Übertragen, Sicherung, Abgleich', 'Daten']
 ];
 function settingsAcc(html){
   const secs = [];
@@ -8659,8 +8734,9 @@ function settingsAcc(html){
   if (!secs.length) return html;
   const ord = t => { const i = SX.findIndex(x => x[0] === t); return i < 0 ? 99 : i; };
   secs.sort((a, b) => ord(a.title) - ord(b.title));
-  return `<div class="settings acc">${secs.map(x => { const meta = SX.find(y => y[0] === x.title) || [x.title, 'weiter', ''];
-    return `<details class="sx" data-sx="${esc(x.title)}" ${ui._sxOpen === x.title ? 'open' : ''}><summary><span class="sx-ic">${ic(meta[1])}</span><span class="sx-t"><b>${x.title}</b><small>${meta[2]}</small></span><span class="sx-chev">${ic('weiter','s')}</span></summary>
+  let grp = null;
+  return `<div class="settings acc">${secs.map(x => { const meta = SX.find(y => y[0] === x.title) || [x.title, 'weiter', '', 'Weitere'], g = meta[3] || 'Weitere', gh = g !== grp ? Bau.kap({t: g, n: SX.filter(y => (y[3] || 'Weitere') === g && secs.some(z => z.title === y[0])).length || ''}) : ''; grp = g;
+    return gh + `<details class="sx" data-sx="${esc(x.title)}" ${ui._sxOpen === x.title ? 'open' : ''}><summary><span class="sx-ic">${ic(meta[1])}</span><span class="sx-t"><b>${x.title}</b><small>${meta[2]}</small></span><span class="sx-chev">${ic('weiter','s')}</span></summary>
       <div class="sx-body">${x.tools ? `<div class="sx-tools">${x.tools}</div>` : ''}${x.body}</div></details>`; }).join('')}</div>`;
 }
 const ACTIONS = {
@@ -10791,6 +10867,111 @@ Object.assign(Offplan, {
     else toast('Weg ab hier', 'Losgehzeit, Erinnerung und Widget sind angepasst.', {sym: 'ort', ttl: 3500});
   }
 });
+/* ================================================================
+   §B BAUKASTEN (v52): ein Aussehen für alle Ansichten
+
+   Drei Ebenen, überall gleich:
+   1. Kapitel    Bau.kap({ic, t, n, m, act})
+                 Symbol-Kachel in der Farbe der Ansicht, Titel, Zahl oder
+                 kurze Info, Aktionen rechts, darunter eine feine Linie.
+   2. Abschnitt  Bau.sep(t, n, act)
+                 Kleine Großbuchstaben mit Symbol, Linie bis zum Rand.
+   3. Karte      Bau.card({ic, t, m, act, body})
+                 Fläche mit optionalem Karten-Kopf (klein, mit Symbol).
+                 Darin Zeilen Bau.row({...}) und Werte Bau.stat({...}).
+
+   Neue Funktion einbauen:
+     Bau.slot('schlaf', {id: 'meins', ic: 'stern', t: 'Mein Feature',
+       order: 10, render: () => Bau.card({body: '…'})});
+   Das Kapitel erscheint dann von selbst am Ende der Ansicht, mit
+   Symbol, Titel und Linie. Für eine bestimmte Stelle im Code einfach
+   Bau.kap({...}) vor die eigenen Karten setzen.
+
+   Ältere Überschriften (panel-h, toolbar, group-h, sl3-sec) wandelt
+   Bau.adapt() nach jedem Rendern in dieselben Bausteine um. Symbole
+   kommen aus Bau.ICON (Titel → Symbol), sonst aus dem Symbol der Ansicht.
+   ================================================================ */
+Object.assign(UI, {
+  balken: '<path d="M5.5 19.5v-7M10 19.5V6M14.5 19.5v-9M19 19.5v-5"/><path d="M3.5 19.5h17"/>',
+  liste: '<path d="M9.5 7h10M9.5 12h10M9.5 17h10"/><circle cx="5.2" cy="7" r="1.15" fill="currentColor"/><circle cx="5.2" cy="12" r="1.15" fill="currentColor"/><circle cx="5.2" cy="17" r="1.15" fill="currentColor"/>',
+  blitz: '<path d="M13.2 3.5 5.5 13.2h6l-1 7.3 7.9-9.8h-6z"/>',
+  info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.9" r="1.05" fill="currentColor"/>',
+  raster: '<rect x="4" y="4" width="6.8" height="6.8" rx="1.6"/><rect x="13.2" y="4" width="6.8" height="6.8" rx="1.6"/><rect x="4" y="13.2" width="6.8" height="6.8" rx="1.6"/><rect x="13.2" y="13.2" width="6.8" height="6.8" rx="1.6"/>',
+  pinsel: '<path d="M14.5 4.5l5 5-8.2 8.2a3 3 0 0 1-2.1.9H5.5v-3.7a3 3 0 0 1 .9-2.1z"/><path d="M12.5 6.5l5 5"/>'
+});
+const Bau = {
+  ICON: {
+    'Jetzt': 'uhr', 'Hinweise': 'info', 'Dein Tag': 'heute', 'Der Tag': 'heute', 'Tagesablauf': 'uhr', 'Heute erledigen': 'haken', 'To-dos an diesem Tag': 'haken',
+    'To-dos': 'haken', 'Fristen': 'flagge', 'Gewohnheiten': 'wdh', 'Passt das?': 'sprechblase', 'Wochenrückblick': 'balken',
+    'Nacht': 'mond', 'Überblick': 'balken', 'Muster': 'stern', 'Verlauf': 'liste', 'Rhythmus': 'wdh', 'Protokoll': 'stift', 'Klausur-Vorbereitung': 'flagge', 'Licht und Rückblick': 'sonne',
+    'Kurse': 'buch', 'Handy in Vorlesungen': 'handy', 'Semester': 'stundenplan',
+    'Überfällig': 'flagge', 'Heute': 'heute', 'Nächste 7 Tage': 'woche', 'Später': 'kalender', 'Erledigt': 'haken',
+    'Nächste 12 Stunden': 'uhr', '10 Tage': 'kalender', 'Kursseiten': 'buch', 'Uni': 'buch', 'Discord': 'sprechblase', 'Termine': 'kalender', 'Links': 'links',
+    'Wochentage': 'woche', 'Nächste Nächte': 'mond', 'Teilschritte': 'liste', 'Ablauf': 'uhr', 'Gesetzliche Feiertage': 'feiertag', 'Geburtstage': 'geschenk', 'Innere Uhr': 'uhr', 'Erinnern': 'glocke', 'Uni und Wege': 'weg', 'Schlaf und Sensoren': 'mond', 'Aussehen': 'pinsel', 'Daten': 'runter'
+  },
+  VIEW_IC: {kalender: 'kalender', aufgaben: 'aufgaben', stundenplan: 'stundenplan', schlaf: 'mond', wetter: 'wetter', links: 'links', einstellungen: 'einstellungen', suche: 'suche'},
+  icFor(t, v){
+    const k = String(t || '').replace(/\s+/g, ' ').trim();
+    if (this.ICON[k]) return this.ICON[k];
+    const hit = Object.keys(this.ICON).find(x => x.length > 3 && k.startsWith(x)); if (hit) return this.ICON[hit];
+    return this.VIEW_IC[v || (typeof ui !== 'undefined' ? ui.view : '')] || 'kreis';
+  },
+  kap({id = '', ic: i, t, n, m, act = '', cls = ''}){
+    return `<header class="kap-h ${cls}"${id ? ` data-kap="${esc(id)}"` : ''}><span class="kap-ic">${ic(i || this.icFor(t), 's')}</span><h2>${t}</h2>${n != null && n !== '' ? `<span class="kap-n">${n}</span>` : ''}${m ? `<span class="kap-m">${m}</span>` : ''}${act ? `<div class="kap-a">${act}</div>` : ''}</header>`;
+  },
+  sep(t, n, act = '', i){ return `<div class="kap-sep">${ic(i || this.icFor(t), 's')}<span>${t}</span>${n != null && n !== '' ? `<em>${n}</em>` : ''}<i></i>${act}</div>`; },
+  card({ic: i, t, m, act = '', body = '', cls = ''}){
+    return `<section class="kcard ${cls}">${t ? `<div class="kh">${ic(i || this.icFor(t), 's')}<b>${t}</b>${m ? `<span>${m}</span>` : ''}${act ? `<div class="kh-a">${act}</div>` : ''}</div>` : ''}${body}</section>`;
+  },
+  row({ic: i, c, t, s, end = '', act = '', data = ''}){
+    const inner = `<span class="krow-ic"${c ? ` style="--c:${c}"` : ''}>${ic(i || 'kreis', 's')}</span><span class="krow-t"><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${end ? `<span class="krow-e">${end}</span>` : ''}`;
+    return act ? `<button class="krow" data-act="${act}" ${data}>${inner}</button>` : `<div class="krow">${inner}</div>`;
+  },
+  stat({k, v, s, tone = ''}){ return `<div class="kstat ${tone}"><span>${k}</span><b>${v}</b>${s ? `<small>${s}</small>` : ''}</div>`; },
+  /* Steckplätze für neue Funktionen */
+  slots: {},
+  slot(view, def){ const L = (this.slots[view] = this.slots[view] || []); const i = L.findIndex(x => x.id === def.id); if (i >= 0) L[i] = def; else L.push(def); },
+  slotsHtml(view){
+    return (this.slots[view] || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map(d => { let h = ''; try { h = d.render() || ''; } catch { h = ''; }
+      return h ? `<div class="kap">${this.kap({id: d.id, ic: d.ic, t: d.t, m: d.m})}${h}</div>` : ''; }).join('');
+  },
+  /* Ältere Überschriften in Bausteine umwandeln */
+  _head(el, title, v, cls = ''){
+    const tpl = document.createElement('div');
+    tpl.innerHTML = this.kap({t: esc(title), ic: this.icFor(title, v), cls});
+    const h = tpl.firstElementChild, act = document.createElement('div'); act.className = 'kap-a';
+    for (const node of [...el.childNodes]) {
+      if (node.nodeType === 3) { if (node.textContent.trim()) { const m = document.createElement('span'); m.className = 'kap-m'; m.textContent = node.textContent.trim(); h.insertBefore(m, null); } continue; }
+      if (node.nodeType !== 1 || /^H[1-4]$/.test(node.tagName)) continue;
+      const txt = node.textContent.trim();
+      if (/^(SPAN|SMALL|EM)$/.test(node.tagName) && !node.querySelector('button')) {
+        if (!txt) continue;
+        const m = document.createElement('span'); m.className = /^\d+$/.test(txt) ? 'kap-n' : 'kap-m'; m.textContent = txt; h.appendChild(m);
+      } else act.appendChild(node);
+    }
+    if (act.childNodes.length) h.appendChild(act);
+    return h;
+  },
+  adaptSheet(card){
+    if (!card) return;
+    card.querySelectorAll('h3:not([data-act])').forEach(h => { if (h.classList.contains('ksh') || h.closest('.kap-h')) return; h.classList.add('ksh'); if (!h.querySelector('svg')) h.insertAdjacentHTML('afterbegin', ic(this.icFor(h.textContent.trim()), 's')); });
+  },
+  adapt(main, v){
+    if (!main) return;
+    const skip = el => el.closest('.settings, details, .sheet, #sheetCard, .kap-h');
+    main.querySelectorAll('.sl3-sec').forEach(el => { if (skip(el)) return; const h = el.querySelector('h2'); el.replaceWith(this._head(el, h ? h.textContent.trim() : '', v)); });
+    main.querySelectorAll('.toolbar').forEach(el => { if (skip(el)) return; const h = el.querySelector(':scope > h2, :scope > h3'); if (!h) return; el.replaceWith(this._head(el, h.textContent.trim(), v)); });
+    main.querySelectorAll('section.panel > .panel-h').forEach(ph => { const p = ph.parentElement; if (skip(p)) return; const h = ph.querySelector('h2, h3'); if (!h) return;
+      const head = this._head(ph, h.textContent.trim(), v); ph.remove(); p.classList.add('kp');
+      if (p.parentElement.classList.contains('grid2')) { const w = document.createElement('div'); w.className = 'kap-col'; p.replaceWith(w); w.append(head, p); } else p.parentNode.insertBefore(head, p); });
+    main.querySelectorAll('.group-h').forEach(el => { if (skip(el)) return; const h = el.querySelector('h3, h2'); if (!h) return; const t = h.textContent.trim();
+      const tpl = document.createElement('div'); tpl.innerHTML = this.sep(esc(t)); const s = tpl.firstElementChild; if (el.classList.contains('over')) s.classList.add('over');
+      [...el.children].filter(c => c !== h).forEach(c => { const txt = c.textContent.trim(); if (/^(SPAN|SMALL)$/.test(c.tagName) && /^\d+$/.test(txt)) { const e = document.createElement('em'); e.textContent = txt; s.insertBefore(e, s.querySelector('i')); } else s.appendChild(c); });
+      el.replaceWith(s); });
+    main.querySelectorAll('.sl2-h > h3').forEach(h => { if (h.querySelector('svg')) return; h.insertAdjacentHTML('afterbegin', ic(this.icFor(h.textContent.trim(), v), 's')); });
+    const first = main.querySelector('.kap-h'); if (first && !first.previousElementSibling) first.classList.add('kap-first');
+  }
+};
 function sleepMorningCard(d){
   const k = ymd(d), now = new Date(), sp = sleepPlan()[k];
   const au = (state.sleepLog || []).find(x => x.date === k && x.auto && !x.q);
