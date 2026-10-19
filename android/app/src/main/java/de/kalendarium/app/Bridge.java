@@ -20,13 +20,14 @@ public class Bridge {
     }
 
     /* Was diese App-Version kann, damit die Web-App passend reagiert */
-    @JavascriptInterface public String features() { return "vib,live,widget,widget2,sleep,sense,fetch,light"; }
+    @JavascriptInterface public String features() { return "vib,live,widget,widget2,widget3,pos,sleep,sense,fetch,light"; }
 
     /* Startbildschirm-Widget mit den nächsten Terminen füttern */
     @JavascriptInterface public void widget(String json) { Widget.save(ctx, json); }
     @JavascriptInterface public boolean widgetPin() { return Widget.pin(ctx); }
     @JavascriptInterface public boolean widgetOn() { return Widget.any(ctx); }
     @JavascriptInterface public boolean bgLocationOk() { return Widget.bgOk(ctx); }
+    @JavascriptInterface public String pos() { return Widget.pos(ctx); }
     /* Standort „Immer erlauben“: Android lässt das nur über die App-Einstellungen zu */
     @JavascriptInterface public void bgLocation() {
         Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + ctx.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

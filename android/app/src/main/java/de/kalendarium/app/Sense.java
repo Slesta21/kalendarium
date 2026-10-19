@@ -40,6 +40,7 @@ public class Sense extends JobService {
     static final String PREF = "kal_sense";
     static final int JOB_TICK = 8101, JOB_PLUG = 8102;
     static final String TRACE = "de.kalendarium.app.TRACE";
+    static final String LOC = "de.kalendarium.app.LOC";
     static final long DAY = 86400000L;
 
     /* ---------- Planung ---------- */
@@ -54,6 +55,7 @@ public class Sense extends JobService {
             else if (js.getPendingJob(JOB_PLUG) == null) schedulePlug(c);
         } catch (Exception ignored) { }
         planTrace(c);
+        startPassive(c);
         Light.plan(c);
     }
     static void schedulePlug(Context c) {
@@ -70,6 +72,8 @@ public class Sense extends JobService {
         logCharge(this, ch, now);
         if (!ch) { JobScheduler js = getSystemService(JobScheduler.class); if (js != null && js.getPendingJob(JOB_PLUG) == null) schedulePlug(this); }
         planTrace(this);
+        startPassive(this);
+        if (Widget.bgOk(this) && System.currentTimeMillis() - getSharedPreferences(Widget.PREF, Context.MODE_PRIVATE).getLong("posAt", 0) > 10 * 60000L) fix(this, false);
         return readSteps(this, p);
     }
     @Override public boolean onStopJob(JobParameters p) { return false; }
@@ -131,27 +135,87 @@ public class Sense extends JobService {
             if (next > 0 && Widget.bgOk(c)) Alarms.set(c, am, next, pi);
         } catch (Exception ignored) { }
     }
+    /* Bester verfügbarer Anbieter: Fused (Android 12+, kombiniert GPS, WLAN, Mobilfunk), sonst GPS, sonst Netz */
+    static String provider(LocationManager lm, boolean precise) {
+        try {
+            if (Build.VERSION.SDK_INT >= 31 && lm.hasProvider(LocationManager.FUSED_PROVIDER) && lm.isProviderEnabled(LocationManager.FUSED_PROVIDER)) return LocationManager.FUSED_PROVIDER;
+        } catch (Exception ignored) { }
+        boolean gps = false, net = false;
+        try { gps = lm.isProviderEnabled(LocationManager.GPS_PROVIDER); } catch (Exception ignored) { }
+        try { net = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER); } catch (Exception ignored) { }
+        if (precise && gps) return LocationManager.GPS_PROVIDER;
+        if (net) return LocationManager.NETWORK_PROVIDER;
+        return gps ? LocationManager.GPS_PROVIDER : null;
+    }
+    static void tracePoint(Context c) { fix(c, true); }
+    /* Einmal orten. trace = während eines Weges (genau, in die Spur), sonst sparsam nur für „wo bin ich“ */
     @SuppressWarnings("MissingPermission")
-    static void tracePoint(Context c) {
+    static void fix(Context c, boolean trace) {
         if (!Widget.bgOk(c)) return;
         LocationManager lm = (LocationManager) c.getSystemService(Context.LOCATION_SERVICE);
         if (lm == null) return;
         try {
+            /* Ein frischer Punkt von einer anderen App reicht oft schon (kostet keinen Akku) */
+            Location fresh = null;
+            for (String p : new String[]{"fused", LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER}) {
+                try { Location l = lm.getLastKnownLocation(p); if (l != null && System.currentTimeMillis() - l.getTime() < (trace ? 45000L : 180000L) && l.getAccuracy() <= (trace ? 60 : 250) && (fresh == null || l.getAccuracy() < fresh.getAccuracy())) fresh = l; } catch (Exception ignored) { }
+            }
+            if (fresh != null) { use(c, fresh, trace); return; }
+            String prov = provider(lm, trace);
+            if (prov == null) return;
             if (Build.VERSION.SDK_INT >= 30) {
-                String prov = lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ? LocationManager.GPS_PROVIDER : LocationManager.NETWORK_PROVIDER;
-                lm.getCurrentLocation(prov, null, c.getMainExecutor(), l -> { if (l != null) savePoint(c, l); });
+                lm.getCurrentLocation(prov, null, c.getMainExecutor(), l -> {
+                    if (l == null) return;
+                    use(c, l, trace);
+                    /* Ungenau (z. B. nur Funkzelle) während eines Weges: einmal mit GPS nachlegen */
+                    try { if (trace && l.getAccuracy() > 80 && !LocationManager.GPS_PROVIDER.equals(prov) && lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                        lm.getCurrentLocation(LocationManager.GPS_PROVIDER, null, c.getMainExecutor(), g -> { if (g != null && g.getAccuracy() < l.getAccuracy()) use(c, g, true); }); } catch (Exception ignored) { }
+                });
             } else {
                 Location best = null;
                 for (String p : new String[]{LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER}) {
                     Location l = lm.getLastKnownLocation(p); if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
                 }
-                if (best != null) savePoint(c, best);
+                if (best != null) use(c, best, trace);
             }
         } catch (Exception ignored) { }
     }
+    static void use(Context c, Location l, boolean trace) {
+        if (trace) savePoint(c, l);
+        else { Widget.savePos(c, l.getLatitude(), l.getLongitude(), l.getTime(), l.getAccuracy()); Widget.renderOnly(c); }
+    }
+    /* Passiv: Standorte, die ohnehin für andere Apps bestimmt werden, kostenlos mitlesen */
+    @SuppressWarnings("MissingPermission")
+    static void startPassive(Context c) {
+        if (!Widget.bgOk(c)) return;
+        try {
+            LocationManager lm = (LocationManager) c.getSystemService(Context.LOCATION_SERVICE);
+            if (lm == null) return;
+            int fl = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+            PendingIntent pi = PendingIntent.getBroadcast(c, 8300, new Intent(c, SenseReceiver.class).setAction(LOC), fl);
+            lm.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 60000L, 30f, pi);
+        } catch (Exception ignored) { }
+    }
+    static void passive(Context c, Location l) {
+        if (l == null || l.getAccuracy() > 250) return;
+        SharedPreferences sp = c.getSharedPreferences(Widget.PREF, Context.MODE_PRIVATE);
+        /* Nicht durch einen ungenaueren, kaum neueren Punkt ersetzen */
+        if (l.getTime() - sp.getLong("posAt", 0) < 60000L && l.getAccuracy() > sp.getFloat("posAcc", 9999f)) return;
+        Widget.savePos(c, l.getLatitude(), l.getLongitude(), l.getTime(), l.getAccuracy());
+        /* Während eines geplanten Weges zählt jeder gute Punkt auch für die Spur */
+        if (inTrip(c, l.getTime()) && l.getAccuracy() <= 80) savePoint(c, l);
+    }
+    static boolean inTrip(Context c, long now) {
+        try {
+            String raw = c.getSharedPreferences(Widget.PREF, Context.MODE_PRIVATE).getString("data", "{}");
+            JSONArray items = raw.trim().startsWith("[") ? new JSONArray(raw) : new JSONObject(raw).optJSONArray("items");
+            if (items != null) for (int i = 0; i < items.length(); i++) { JSONObject o = items.getJSONObject(i); long d = o.optLong("depart", 0), a = o.optLong("arrive", 0); if (d > 0 && now >= d - 20 * 60000L && now <= a + 10 * 60000L) return true; }
+        } catch (Exception ignored) { }
+        return false;
+    }
     static void savePoint(Context c, Location l) {
         try { append(c, "trace", new JSONArray().put(l.getTime()).put(Math.round(l.getLatitude() * 1e5) / 1e5).put(Math.round(l.getLongitude() * 1e5) / 1e5).put(Math.round(l.getAccuracy()))); } catch (Exception ignored) { }
-        Widget.savePos(c, l.getLatitude(), l.getLongitude(), l.getTime());
+        Widget.savePos(c, l.getLatitude(), l.getLongitude(), l.getTime(), l.getAccuracy());
         Reroute.check(c, l.getLatitude(), l.getLongitude(), l.getAccuracy());
     }
 

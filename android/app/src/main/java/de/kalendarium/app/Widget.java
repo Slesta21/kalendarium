@@ -43,10 +43,17 @@ public class Widget extends AppWidgetProvider {
         Sense.planTrace(c);
     }
 
-    static void savePos(Context c, double lat, double lon, long at) {
+    static void savePos(Context c, double lat, double lon, long at) { savePos(c, lat, lon, at, 50f); }
+    static void savePos(Context c, double lat, double lon, long at, float acc) {
         SharedPreferences sp = c.getSharedPreferences(PREF, Context.MODE_PRIVATE);
         if (at <= sp.getLong("posAt", 0)) return;
-        sp.edit().putString("pos", lat + "," + lon).putLong("posAt", at).apply();
+        sp.edit().putString("pos", lat + "," + lon).putLong("posAt", at).putFloat("posAcc", acc).apply();
+    }
+    /* Für die Web-App: letzter bekannter Standort mit Genauigkeit */
+    static String pos(Context c) {
+        SharedPreferences sp = c.getSharedPreferences(PREF, Context.MODE_PRIVATE);
+        String p = sp.getString("pos", ""); if (p.isEmpty()) return "";
+        return "{\"ll\":[" + p + "],\"at\":" + sp.getLong("posAt", 0) + ",\"acc\":" + Math.round(sp.getFloat("posAcc", 50f)) + "}";
     }
 
     static void updateAll(Context c) {
@@ -62,6 +69,7 @@ public class Widget extends AppWidgetProvider {
 
     @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { updateAll(c); }
     @Override public void onEnabled(Context c) { updateAll(c); }
+    @Override public void onAppWidgetOptionsChanged(Context c, AppWidgetManager m, int id, android.os.Bundle o) { updateAll(c); }
     @Override public void onReceive(Context c, Intent i) {
         super.onReceive(c, i);
         if (TICK.equals(i.getAction())) { refreshLocation(c); updateAll(c); LiveRefresh.run(c, goAsync()); }
@@ -76,23 +84,7 @@ public class Widget extends AppWidgetProvider {
         if (!locOk(c)) return false;
         return Build.VERSION.SDK_INT < 29 || c.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
-    @SuppressWarnings("MissingPermission")
-    static void refreshLocation(Context c) {
-        if (!bgOk(c)) return;
-        LocationManager lm = (LocationManager) c.getSystemService(Context.LOCATION_SERVICE);
-        if (lm == null) return;
-        Location best = null;
-        for (String p : new String[]{"fused", LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER}) {
-            try { Location l = lm.getLastKnownLocation(p); if (l != null && (best == null || l.getTime() > best.getTime())) best = l; } catch (Exception ignored) { }
-        }
-        if (best != null) savePos(c, best.getLatitude(), best.getLongitude(), best.getTime());
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                String prov = lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ? LocationManager.GPS_PROVIDER : LocationManager.NETWORK_PROVIDER;
-                lm.getCurrentLocation(prov, null, c.getMainExecutor(), l -> { if (l != null) { savePos(c, l.getLatitude(), l.getLongitude(), l.getTime()); renderOnly(c); } });
-            } catch (Exception ignored) { }
-        }
-    }
+    static void refreshLocation(Context c) { Sense.fix(c, false); }
     static void renderOnly(Context c) {
         AppWidgetManager m = AppWidgetManager.getInstance(c);
         for (int id : m.getAppWidgetIds(new ComponentName(c, Widget.class))) render(c, m, id);
@@ -118,11 +110,11 @@ public class Widget extends AppWidgetProvider {
     static long render(Context c, AppWidgetManager m, int id) {
         SharedPreferences sp = c.getSharedPreferences(PREF, Context.MODE_PRIVATE);
         long now = System.currentTimeMillis(), next = 0;
-        JSONArray items = new JSONArray(); String style = "dunkel"; boolean useLoc = true;
+        JSONArray items = new JSONArray(), dls = new JSONArray(); String style = "dunkel"; boolean useLoc = true;
         try {
             String raw = sp.getString("data", sp.getString("items", "[]"));
             if (raw.trim().startsWith("[")) items = new JSONArray(raw);
-            else { JSONObject o = new JSONObject(raw); items = o.optJSONArray("items"); if (items == null) items = new JSONArray(); style = o.optString("style", "dunkel"); useLoc = o.optBoolean("loc", true); }
+            else { JSONObject o = new JSONObject(raw); items = o.optJSONArray("items"); if (items == null) items = new JSONArray(); style = o.optString("style", "dunkel"); useLoc = o.optBoolean("loc", true); JSONArray d = o.optJSONArray("dl"); if (d != null) dls = d; }
         } catch (Exception ignored) { }
 
         boolean light = "hell".equals(style);
@@ -131,12 +123,15 @@ public class Widget extends AppWidgetProvider {
         v.setInt(R.id.w_root, "setBackgroundResource", light ? R.drawable.widget_bg_light : "farbe".equals(style) ? R.drawable.widget_bg : R.drawable.widget_bg_dark);
         for (int t : new int[]{R.id.w_big, R.id.w_count, R.id.w_title}) v.setTextColor(t, ink);
         for (int t : new int[]{R.id.w_label, R.id.w_l1, R.id.w_l2}) v.setTextColor(t, soft);
-        for (int t : new int[]{R.id.w_stand, R.id.w_next}) v.setTextColor(t, faint);
+        for (int t : new int[]{R.id.w_stand, R.id.w_next, R.id.w_dl}) v.setTextColor(t, faint);
+        for (int t : new int[]{R.id.w_a1, R.id.w_a2, R.id.w_a3}) v.setTextColor(t, soft);
         Intent open = new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         v.setOnClickPendingIntent(R.id.w_root, PendingIntent.getActivity(c, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
 
-        JSONObject cur = null, after = null;
-        for (int i = 0; i < items.length(); i++) { JSONObject o = items.optJSONObject(i); if (o == null || o.optLong("end") <= now) continue; if (cur == null) cur = o; else { after = o; break; } }
+        int hDp = 0; try { hDp = m.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0); } catch (Exception ignored) { }
+        boolean tall = hDp >= 200;
+        JSONObject cur = null, after = null; java.util.List<JSONObject> rest = new java.util.ArrayList<>();
+        for (int i = 0; i < items.length(); i++) { JSONObject o = items.optJSONObject(i); if (o == null || o.optLong("end") <= now) continue; if (cur == null) cur = o; else if (after == null) after = o; if (cur != o) rest.add(o); if (rest.size() >= 3) break; }
 
         /* Standort, wenn frisch */
         double[] pos = null;
@@ -205,7 +200,7 @@ public class Widget extends AppWidgetProvider {
                 next = end; badge = "";
             }
         }
-        if (after != null) {
+        if (after != null && !(tall && !rest.isEmpty())) {
             long s2 = after.optLong("depart", 0) > 0 ? after.optLong("depart") : after.optLong("start");
             v.setTextViewText(R.id.w_next, "Danach: " + day(after.optLong("start"), now) + hm(after.optLong("start")) + " " + after.optString("title") + (after.optLong("depart", 0) > 0 ? " · los " + hm(s2) : ""));
             v.setViewVisibility(R.id.w_next, View.VISIBLE);
@@ -213,6 +208,21 @@ public class Widget extends AppWidgetProvider {
 
         v.setTextViewText(R.id.w_label, label);
         v.setTextViewText(R.id.w_title, title); v.setViewVisibility(R.id.w_title, title.isEmpty() ? View.GONE : View.VISIBLE);
+        int dot = 0; if (cur != null) { try { dot = Color.parseColor(cur.optString("color", "")); } catch (Exception e) { dot = 0; } }
+        if (dot != 0 && !title.isEmpty()) { v.setViewVisibility(R.id.w_dot, View.VISIBLE); v.setTextColor(R.id.w_dot, dot); } else v.setViewVisibility(R.id.w_dot, View.GONE);
+        /* Groß: die nächsten Termine als Liste, darunter die nächste Frist */
+        int[] rows = {R.id.w_a1, R.id.w_a2, R.id.w_a3};
+        for (int r = 0; r < rows.length; r++) {
+            if (tall && r < rest.size()) { JSONObject o = rest.get(r); long st = o.optLong("start"); String pl = o.optString("place", "");
+                v.setTextViewText(rows[r], (day(st, now).isEmpty() ? "" : new SimpleDateFormat("EE", Locale.GERMANY).format(new Date(st)) + " ") + hm(st) + "   " + o.optString("title") + (pl.isEmpty() ? "" : " · " + pl));
+                v.setViewVisibility(rows[r], View.VISIBLE); }
+            else v.setViewVisibility(rows[r], View.GONE);
+        }
+        JSONObject nd = dls.optJSONObject(0);
+        if (tall && nd != null) { long due = nd.optLong("due"); long dd = Math.max(0, (due - now) / 86400000L);
+            v.setTextViewText(R.id.w_dl, "Frist " + (dd == 0 ? "heute " + hm(due) : dd == 1 ? "morgen" : "in " + dd + " Tagen") + ": " + nd.optString("t") + (dls.length() > 1 ? "  +" + (dls.length() - 1) : ""));
+            v.setViewVisibility(R.id.w_dl, View.VISIBLE); }
+        else v.setViewVisibility(R.id.w_dl, View.GONE);
         v.setTextViewText(R.id.w_l1, l1); v.setViewVisibility(R.id.w_l1, l1.isEmpty() ? View.GONE : View.VISIBLE);
         v.setTextViewText(R.id.w_l2, l2); v.setViewVisibility(R.id.w_l2, l2.isEmpty() ? View.GONE : View.VISIBLE);
         if (!badge.isEmpty()) {
@@ -233,7 +243,7 @@ public class Widget extends AppWidgetProvider {
             v.setChronometer(R.id.w_count, SystemClock.elapsedRealtime(), null, false);
         }
         long at = sp.getLong("at", 0), pa = sp.getLong("posAt", 0);
-        v.setTextViewText(R.id.w_stand, at > 0 ? (pos != null ? "Standort " + hm(pa) : "Stand " + hm(at)) : "App öffnen");
+        v.setTextViewText(R.id.w_stand, at > 0 ? (pos != null ? "Standort " + hm(pa) + " ±" + Math.round(sp.getFloat("posAcc", 50f)) + " m" : "Stand " + hm(at)) : "App öffnen");
         m.updateAppWidget(id, v);
         /* Während eines Weges jede Minute neu, sonst zur nächsten Grenze */
         if (tripWindow) next = next > 0 ? Math.min(next, now + 60000L) : now + 60000L;
