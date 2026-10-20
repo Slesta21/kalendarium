@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 84  ·  persönlicher Kalender für alles
+ KALENDARIUM 85  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -3230,6 +3230,24 @@ main{animation:none}
 @media (prefers-reduced-motion:reduce){.hx *,.hub *,.sxl *,.sxp{animation:none!important}}
 .sxl,.hx,.hub{grid-template-columns:minmax(0,1fr);min-width:0}.sxl>*,.hx>*{min-width:0}.sx-prof .btn{flex:none}
 html[data-zone="einstellungen"] #fab,html[data-zone="bereiche"] #fab{display:none}@media (min-width:861px){#nav [data-v=bereiche]{display:none}}
+/* ===== v85 Klarheit ===== */
+html[data-zone="heute"] #top{display:none}
+.hx-ib{flex:none}.hx-ib.on{background:var(--ink);color:var(--surface)}
+.hx-quick{grid-template-columns:repeat(3,1fr)}
+html[data-zone="heute"] #fab,html[data-zone="wetter"] #fab,html[data-zone="links"] #fab,html[data-zone="schlaf"] #fab{display:none}
+main>.banner{margin:0 0 4px;padding:8px 12px;border-radius:14px;font-size:13px}
+.wk-h .bed,.marker.sleep.late{display:none!important}
+.k-bar{display:none!important}
+.dl{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding-bottom:28px}
+.dl-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dl-strip button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 6px;border:0;border-radius:16px;background:none;color:var(--ink);font:inherit;cursor:pointer;transition:background .2s,transform .15s}
+.dl-strip button:active{transform:scale(.92)}
+.dl-strip small{font-size:11px;font-weight:700;color:var(--muted)}.dl-strip b{font-size:19px;font-variant-numeric:tabular-nums}
+.dl-strip span{display:flex;gap:2px;height:5px}.dl-strip i{width:5px;height:5px;border-radius:50%;background:var(--c)}
+.dl-strip .today b{color:var(--zone)}.dl-strip .hol b{color:#B8860B}
+.dl-strip .sel{background:var(--zone);color:var(--on-zone,#fff)}.dl-strip .sel small,.dl-strip .sel b{color:inherit}.dl-strip .sel i{background:currentColor}
+.dl-tl{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:12px 10px 12px 4px}
+.wk-col .marker.sleep,.wk-col .travel{display:none!important}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -3256,7 +3274,7 @@ html[data-zone="einstellungen"] #fab,html[data-zone="bereiche"] #fab{display:non
   <div class="toasts" id="toasts" aria-live="polite"></div>
 </div>
 
-<script src="app.js?v=202610192232"></script>
+<script src="app.js?v=202610200702"></script>
 
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
