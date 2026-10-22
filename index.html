@@ -16,7 +16,7 @@
 <title>Kalendarium</title>
 <!--
 =====================================================================
- KALENDARIUM 86  ·  persönlicher Kalender für alles
+ KALENDARIUM 87  ·  persönlicher Kalender für alles
 =====================================================================
  ARCHITEKTUR (für spätere Erweiterungen). Suche nach "§" für Sprungmarken.
 
@@ -3261,6 +3261,13 @@ main>.banner{margin:0 0 4px;padding:8px 12px;border-radius:14px;font-size:13px}
 .tx-s.done{background:rgba(0,0,0,.14)}.tx-s.done>span{background:#fff;color:var(--c)}
 .tx-more{display:flex;gap:8px;justify-content:center;position:relative}.tx-more:empty{display:none}
 .tx-more button{display:flex;align-items:center;gap:5px;border:0;background:none;color:#fff;opacity:.9;font:inherit;font-size:13px;font-weight:700;padding:4px 8px;cursor:pointer}
+/* ===== v87 Gedämpfte Farben ===== */
+html[data-colors="sanft"] :is(#main,#top,#tabbar,#fab,#nav,#railWx,.brand,#sheetCard,#toasts>*){filter:saturate(.6)}
+html[data-colors="blass"] :is(#main,#top,#tabbar,#fab,#nav,#railWx,.brand,#sheetCard,#toasts>*){filter:saturate(.32) contrast(.94) brightness(1.03)}
+html[data-colors="blass"][data-theme="dark"] :is(#main,#top,#tabbar,#fab,#nav,#railWx,.brand,#sheetCard,#toasts>*){filter:saturate(.32) contrast(.94)}
+@media (prefers-color-scheme:dark){html[data-colors="blass"]:not([data-theme="light"]) :is(#main,#top,#tabbar,#fab,#nav,#railWx,.brand,#sheetCard,#toasts>*){filter:saturate(.32) contrast(.94)}}
+.col-prev{display:inline-flex;gap:3px;margin-right:6px;vertical-align:middle}.col-prev i{width:9px;height:9px;border-radius:50%}
+.row.col-row{flex-wrap:wrap}.row.col-row>.seg{flex:1 1 100%;display:grid;grid-template-columns:repeat(3,1fr)}.row.col-row>.seg button{display:flex;align-items:center;justify-content:center}
 </style>
 <style>body{margin:0;background:var(--paper)}</style>
 </head>
@@ -3287,7 +3294,7 @@ main>.banner{margin:0 0 4px;padding:8px 12px;border-radius:14px;font-size:13px}
   <div class="toasts" id="toasts" aria-live="polite"></div>
 </div>
 
-<script src="app.js?v=202610220934"></script>
+<script src="app.js?v=202610220951"></script>
 
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
